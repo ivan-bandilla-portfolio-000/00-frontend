@@ -1,5 +1,6 @@
 import { useContext, useState } from "react";
 import { LLMContext } from "@/features/webllm/services/LLMService";
+import { aboutMeInstruction } from "@/constants/webLLM";
 
 const AboutMeChatLLM = () => {
     const llm = useContext(LLMContext);
@@ -13,6 +14,7 @@ const AboutMeChatLLM = () => {
 
     const handleSend = async () => {
         if (sending) return;
+        llm.setSystemPrompt(aboutMeInstruction);
         setSending(true);
         setResponse("...");
         let streamedResponse = "";
