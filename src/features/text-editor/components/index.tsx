@@ -12,7 +12,7 @@ import Youtube from '@tiptap/extension-youtube'
 import Blockquote from '@tiptap/extension-blockquote'
 import { Placeholder, CharacterCount } from '@tiptap/extensions'
 import MenuBar from '@/features/text-editor/components/MenuBar'
-import '@/components/text-editor/styles/index.scss'
+import '@/features/text-editor/styles/index.scss'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils';
 
@@ -109,8 +109,6 @@ const TextEditor = ({
     })
 
     function isInvalid(charCount: number, editor: any) {
-        console.log("Character Count:", charCount);
-        console.log("Character Limit:", maxLength);
         return charCount > maxLength;
     }
 
