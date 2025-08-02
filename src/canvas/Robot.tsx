@@ -5,7 +5,7 @@ import { LLMContext } from '@/features/webllm/services/LLMService';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Preload, useGLTF } from '@react-three/drei';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { choosePortfolioContextInstruction } from '@/constants/webLLM';
+import { choosePortfolioContextInstruction } from '@/features/webllm/constants/webLLM';
 import { useInView } from 'react-intersection-observer';
 
 

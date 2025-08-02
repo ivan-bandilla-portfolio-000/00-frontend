@@ -1,5 +1,5 @@
 import { CreateMLCEngine } from "@mlc-ai/web-llm";
-import { defaultModel } from "@/constants/webLLM"
+import { defaultModel } from "@/features/webllm/constants/webLLM"
 
 import { createContext } from "react";
 
