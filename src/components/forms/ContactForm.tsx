@@ -163,6 +163,7 @@ const ContactForm = ({
         <form ref={formRef} id='contact-form' className='space-y-8' onSubmit={async (e) => {
             clearErrors("emailContent");
             handleSubmit(onValid)(e);
+            setStatus(getRequestStatusById("ready")!);
         }}>
             <div className='space-y-1'>
                 <Label htmlFor="sender-email">Your email address</Label>
@@ -175,7 +176,7 @@ const ContactForm = ({
                     placeholder="Email"
                     {...register("email", validationSchema.email)}
                 />
-                <span>{formErrors.email && <span>{formErrors.email.message}</span>}</span>
+                <span className='text-red-500'>{formErrors.email && <span>{formErrors.email.message}</span>}</span>
             </div>
             <TextEditor
                 editorRef={editorRef}
