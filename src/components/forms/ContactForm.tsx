@@ -1,17 +1,17 @@
 import React, { useRef, useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import TextEditor from '@/components/text-editor'
+import TextEditor from '@/features/text-editor/components'
 import { useForm } from "react-hook-form";
 import { getRequestStatusById, REQUEST_STATUSES } from '@/constants/requestStatuses'
 
 // @ts-ignore
 import { Filter } from "bad-words";
 import filipinoBadwords from "filipino-badwords-list";
-import { checkProfanity } from '@/services/profanityService';
-import { validateEmail as validateEmailPrimary } from '@/services/emailValidationServicePrimary';
-import { validateEmail as validateEmailSecondary } from '@/services/emailValidationServiceSecondary';
-import { verifyEmail } from '@/services/emailValidationService';
+import { checkProfanity } from '@/features/validations/services/profanityService';
+import { validateEmail as validateEmailPrimary } from '@/features/validations/services/emailValidationServicePrimary';
+import { validateEmail as validateEmailSecondary } from '@/features/validations/services/emailValidationServiceSecondary';
+import { verifyEmail } from '@/features/validations/services/emailValidationService';
 
 
 type MessageInputs = {

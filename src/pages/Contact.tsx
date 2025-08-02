@@ -5,7 +5,7 @@ import ContactForm from '@/components/forms/ContactForm';
 import { SectionWrapper } from '@/hoc';
 import { Suspense } from 'react';
 import Hyperspeed from '@/components/blocks/backgrounds/Hyperspeed/Hyperspeed';
-import { usePrefersDarkMode } from '@/hooks/usePrefersDarkMode';
+import { usePrefersDarkMode } from '@/features/theming/hooks/usePrefersDarkMode';
 import {
     Card,
     CardAction,

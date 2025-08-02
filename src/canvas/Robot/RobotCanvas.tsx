@@ -17,7 +17,7 @@ const RobotCanvas = () => {
     const handleRobotLoaded = useCallback(() => {
         setRobotLoaded(true);
         // Lazy load the overlay component
-        import('./SpeechBubbleOverlay').then(module => {
+        import('../../features/webllm/landing-page-robot/components/SpeechBubbleOverlay').then(module => {
             setSpeechBubbleOverlay(() => module.default);
         });
     }, []);

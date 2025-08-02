@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import SpeechBubble from './SpeechBubble';
-import { useLLMBubble } from './hooks/useLLMBubble';
+import { useLLMBubble } from '../hooks/useLLMBubble';
 
 const SpeechBubbleOverlay = () => {
     const { bubbleText, showButtons } = useLLMBubble();
