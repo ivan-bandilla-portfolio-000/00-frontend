@@ -5,7 +5,7 @@ import ContactForm from '@/components/forms/ContactForm';
 import { SectionWrapper } from '@/hoc';
 import { Suspense } from 'react';
 import Hyperspeed from '@/components/blocks/backgrounds/Hyperspeed/Hyperspeed';
-import { usePrefersDarkMode } from '@/features/theming/hooks/usePrefersDarkMode';
+import { useTheme } from "@/features/theming/components/theme-provider";
 import {
     Card,
     CardAction,
@@ -24,7 +24,12 @@ import { set } from "react-hook-form";
 const hyperspeedRef = React.createRef<any>();
 
 const HyperSpeedCanvas = forwardRef((props, ref) => {
-    const isDark = usePrefersDarkMode();
+    const { theme } = useTheme();
+    console.log("HyperSpeedCanvas theme:", theme);
+    const isDark =
+        theme === "dark" ||
+        (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    console.log("HyperSpeedCanvas isDark:", isDark);
     const hyperspeedOptions = {
         onSpeedUp: () => { },
         onSlowDown: () => { },
