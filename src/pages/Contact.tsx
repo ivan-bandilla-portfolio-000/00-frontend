@@ -72,13 +72,11 @@ const Contact = ({ llmReady, hyperspeedRef }: { llmReady: boolean, hyperspeedRef
     const [status, setStatus] = useState(getRequestStatusById("ready")!);
 
     const handleSpeedUp = () => {
-        console.log("Speeding up hyperspeed effect");
         hyperspeedRef.current?.speedUp();
         hyperspeedRef.current?.setLocked(true);
     };
 
     const handleSlowDown = () => {
-        console.log("Slowing down hyperspeed effect");
         hyperspeedRef.current?.setLocked(false);
         hyperspeedRef.current?.slowDown();
     };
@@ -153,7 +151,7 @@ const Contact = ({ llmReady, hyperspeedRef }: { llmReady: boolean, hyperspeedRef
                     <CardFooter className="select-none ">
                         <Button variant="link" className="flex-1 text-left justify-start group">
                             <MoveLeft className="group-hover:-translate-x-1 transition-transform" />
-                            Back to Home
+                            <a href="/">Back to Home</a>
                         </Button>
                         <Button
                             type="button"

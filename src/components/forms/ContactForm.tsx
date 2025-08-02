@@ -1,17 +1,15 @@
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import TextEditor from '@/features/text-editor/components'
 import { useForm } from "react-hook-form";
-import { getRequestStatusById, REQUEST_STATUSES } from '@/constants/requestStatuses'
+import { getRequestStatusById } from '@/constants/requestStatuses'
 
 // @ts-ignore
 import { Filter } from "bad-words";
-import filipinoBadwords from "filipino-badwords-list";
-import { checkProfanity } from '@/features/validations/services/profanityService';
-import { validateEmail as validateEmailPrimary } from '@/features/validations/services/emailValidationServicePrimary';
-import { validateEmail as validateEmailSecondary } from '@/features/validations/services/emailValidationServiceSecondary';
-import { verifyEmail } from '@/features/validations/services/emailValidationService';
+import { RateLimiter } from '@/features/rate-limiting/client/services/RateLimiter';
+import { NonceManager } from '@/features/nonce/client/services/NonceManager';
+import { FormService } from '@/services/FormService';
 
 
 type MessageInputs = {
@@ -36,14 +34,6 @@ const validationSchema = {
 const CHARACTER_LIMIT = 1000;
 const MIN_LENGTH = 5;
 
-const filter = new Filter({ list: filipinoBadwords.array });
-
-function sleep(ms: number) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-
-
 type ContactFormProps = {
     formRef?: React.RefObject<HTMLFormElement>;
     callbacks?: {
@@ -60,19 +50,26 @@ const ContactForm = ({
     status,
     setStatus,
 }: ContactFormProps) => {
+    const [nonce, setNonce] = useState<string | null>(null);
+
+    useEffect(() => {
+        NonceManager.create().then(setNonce);
+    }, []);
+
     const { register, handleSubmit, setError, clearErrors, formState: { errors: formErrors } } = useForm<MessageInputs>({
         defaultValues: {
-            email: ""
+            email: sessionStorage.getItem("contactFormEmail") || ""
         }
     });
 
     const editorRef = useRef<any>(null)
 
     const onValid = async (data: MessageInputs) => {
+        await RateLimiter.throwIfLimited('contact-form', 3, 60000);
         const editor = editorRef.current;
         const content = editor?.getText?.() || "";
 
-        if (filter.isProfane(data.email)) {
+        if (FormService.isProfane(data.email)) {
             setError("email", { type: "manual", message: "Profanity detected in your email address." });
             return;
         }
@@ -97,40 +94,53 @@ const ContactForm = ({
 
         setStatus(getRequestStatusById("filtering_profanity")!);
         let originalContent = editor?.getHTML();
-        let censoredContent = filter.clean(originalContent);
+        let censoredContent = FormService.cleanProfanity(originalContent);
 
-        try {
-            const { censored: result, isProfane } = await checkProfanity(censoredContent);
-            censoredContent = result;
-        } catch (e) {
-            console.error("Error checking profanity:", e);
-        }
+        // const { censored: checkedContent } = await FormService.checkProfanityAsync(censoredContent);
+        // censoredContent = checkedContent;
 
         if (callbacks?.onSubmitting) callbacks.onSubmitting();
 
         let formObj: any = {
             email: data.email,
             content: censoredContent,
+            clientNonce: nonce,
         };
 
         if (originalContent !== censoredContent) {
             formObj.originalContent = originalContent;
         }
 
-        console.log("Form Data:", formObj);
+        if (nonce) {
+            await FormService.useNonce(nonce);
+            setNonce(null);
 
-        setStatus(getRequestStatusById("processing")!);
+            console.log("Form Data:", formObj);
 
-        setStatus(getRequestStatusById("ready")!);
-        if (callbacks?.onStop) callbacks.onStop();
+            setStatus(getRequestStatusById("processing")!);
+
+            // Insert the REST API call here
+
+            setStatus(getRequestStatusById("ready")!);
+            if (callbacks?.onStop) callbacks.onStop();
+
+            sessionStorage.setItem("contactFormEmail", data.email);
+
+            FormService.clearForm(formRef?.current as HTMLFormElement, () => {
+                editor?.setContent?.("");
+                window.location.reload();
+            });
+        }
+
+        // Termination of the form submission
+        // Resets the form state
 
     }
 
     return (
-        <form ref={formRef} id='contact-form' className='space-y-8' onSubmit={(e) => {
+        <form ref={formRef} id='contact-form' className='space-y-8' onSubmit={async (e) => {
             clearErrors("emailContent");
             handleSubmit(onValid)(e);
-            setStatus(getRequestStatusById("ready")!);
         }}>
             <div className='space-y-1'>
                 <Label htmlFor="sender-email">Your email address</Label>
