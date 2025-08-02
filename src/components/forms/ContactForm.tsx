@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import TextEditor from '@/features/text-editor/components'
-import { useForm } from "react-hook-form";
+import { Form, useForm } from "react-hook-form";
 import { getRequestStatusById } from '@/constants/requestStatuses'
 
 // @ts-ignore
@@ -10,6 +10,7 @@ import { Filter } from "bad-words";
 import { RateLimiter } from '@/features/rate-limiting/client/services/RateLimiter';
 import { NonceManager } from '@/features/nonce/client/services/NonceManager';
 import { FormService } from '@/services/FormService';
+import { toast } from 'sonner';
 
 
 type MessageInputs = {
@@ -54,6 +55,21 @@ const ContactForm = ({
 
     useEffect(() => {
         NonceManager.create().then(setNonce);
+    }, []);
+
+    useEffect(() => {
+        const success = localStorage.getItem("contactFormSuccess");
+        const defaultMessage = "Your message was sent successfully!";
+        if (success) {
+            try {
+                const { message } = JSON.parse(success);
+                console.log("Contact Form Success:", message || defaultMessage);
+                FormService.showSuccessMessage(message || defaultMessage);
+            } catch {
+                FormService.showSuccessMessage(defaultMessage);
+            }
+            localStorage.removeItem("contactFormSuccess");
+        }
     }, []);
 
     const { register, handleSubmit, setError, clearErrors, formState: { errors: formErrors } } = useForm<MessageInputs>({
@@ -119,12 +135,18 @@ const ContactForm = ({
 
             setStatus(getRequestStatusById("processing")!);
 
-            // Insert the REST API call here
+            // TODO: Insert the REST API call here
 
             setStatus(getRequestStatusById("ready")!);
             if (callbacks?.onStop) callbacks.onStop();
 
             sessionStorage.setItem("contactFormEmail", data.email);
+
+            localStorage.setItem("contactFormSuccess", JSON.stringify({
+                status: true,
+                // TODO: replace with message from server
+                message: "Your message was sent successfully!"
+            }));
 
             FormService.clearForm(formRef?.current as HTMLFormElement, () => {
                 editor?.setContent?.("");

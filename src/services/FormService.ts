@@ -3,6 +3,8 @@ import filipinoBadwords from "filipino-badwords-list";
 import { checkProfanity } from '@/features/validations/services/profanityService';
 import { verifyEmail } from '@/features/validations/services/emailValidationService';
 import { NonceManager } from '@/features/nonce/client/services/NonceManager';
+import { toast } from 'sonner';
+import type { ToastPositions } from '@/constants/toastPositions';
 
 const filter = new Filter({ list: filipinoBadwords.array });
 
@@ -12,6 +14,15 @@ export const FormService = {
     clearForm: (form: HTMLFormElement, callback?: () => void) => {
         form.reset();
         callback?.();
+    },
+    showSuccessMessage: (message: string, options?: { position?: ToastPositions }) => {
+        setTimeout(() => {
+            console.log("Form Success: delayed", message);
+            toast.success(message, {
+                position: options?.position || 'bottom-right',
+                duration: 5000,
+            });
+        }, 300);
     },
     async useNonce(nonce: string) {
         await NonceManager.use(nonce);
