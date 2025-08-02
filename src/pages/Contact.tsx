@@ -1,5 +1,6 @@
 import React, { forwardRef, useRef, useState } from "react";
 import { getRequestStatusById } from "@/constants/requestStatuses";
+import personalInfo from "@/constants/personalInfo";
 import ContactForm from '@/components/forms/ContactForm';
 
 import { SectionWrapper } from '@/hoc';
@@ -110,13 +111,13 @@ const Contact = ({ llmReady, hyperspeedRef }: { llmReady: boolean, hyperspeedRef
                         <address className="space-y-2">
                             <ContactItem type="email" label="Email:">
                                 <CopiableLink type="email" href="othercontact@example.com">
-                                    othercontact@example.com
+                                    {personalInfo.email}
                                 </CopiableLink>
                             </ContactItem>
 
                             <ContactItem type="phone" label="Phone:">
                                 <CopiableLink type="tel" href="+1234567890">
-                                    +1 (234) 567-890
+                                    {personalInfo.phone}
                                 </CopiableLink>
                             </ContactItem>
                         </address>
@@ -124,14 +125,14 @@ const Contact = ({ llmReady, hyperspeedRef }: { llmReady: boolean, hyperspeedRef
                         <br />
                         <div className="space-y-2">
                             <ContactItem type="linkedin" label="LinkedIn:">
-                                <CopiableLink href="https://www.linkedin.com/in/yourprofile">
-                                    yourprofile
+                                <CopiableLink href={personalInfo.linkedin.url}>
+                                    {personalInfo.linkedin.username}
                                 </CopiableLink>
                             </ContactItem>
 
                             <ContactItem type="github" label="Github:">
-                                <CopiableLink href="https://github.com/yourprofile">
-                                    yourprofile
+                                <CopiableLink href={personalInfo.github.url}>
+                                    {personalInfo.github.username}
                                 </CopiableLink>
                             </ContactItem>
                         </div>
