@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import { useIdInViewport } from '@/hooks/useIdInViewport'
 import IconLink from './ui/custom/IconLink'
+import { ModeToggle } from '@/features/theming/components/mode-toggle';
 
 const shrinkDuration: number = 0.3; // seconds
 
@@ -66,7 +67,22 @@ const NavArea: React.FC<NavAreaProps> = ({ active, setActive, shrink, className,
                             >
                                 <NavigationMenuLink
                                     active={active === link.id}
-                                    className={`text-md hover:underline font-medium ps-6 pe-5 group/link-icon`}
+                                    className={`
+    text-md hover:underline font-medium ps-6 pe-5 group/link-icon
+    relative
+    dark:text-green-400
+    dark:before:content-['']
+    dark:before:absolute
+    dark:before:left-1/2 dark:before:top-1/2
+    dark:before:w-[120%] dark:before:h-[110%]
+    dark:before:-translate-x-1/2 dark:before:-translate-y-1/2
+    dark:before:rounded-full
+    dark:before:pointer-events-none
+    dark:before:bg-[radial-gradient(circle,_rgba(34,197,94,0.28)_0%,_rgba(34,197,94,0.10)_60%,_rgba(34,197,94,0)_100%)]
+    dark:before:opacity-50
+    dark:hover:before:opacity-100
+    transition-all
+`}
                                     href={getHref(link)}
                                     onClick={() => setActive(link.id)}
                                 >
@@ -106,16 +122,37 @@ const TopBar = () => {
 
     return (
         <motion.div
-            className={`${styles.paddingX} w-full flex justify-between items-center fixed top-0 z-20 text-primary feather-shadow bg-clip-padding backdrop-filter backdrop-blur-sm bg-opacity-10`}
+            className={`
+        ${styles.paddingX}
+        w-svw flex justify-between items-center fixed top-0 z-20
+        feather-shadow bg-clip-padding backdrop-filter backdrop-blur-sm
+        dark:bg-background
+        text-primary
+    `}
             animate={{ height: shrink ? shrunkHeight : defaultHeight }}
             transition={{ duration: shrinkDuration }}
             style={{ height: shrink ? shrunkHeight : defaultHeight }}
         >
-            <div className=' items-center'>
+            <div
+                className={`
+        items-center
+        relative
+        dark:before:content-['']
+        dark:before:absolute
+        dark:before:left-1/2 dark:before:top-1/2
+        dark:before:w-[300%] dark:before:h-[210%]
+        dark:before:-translate-x-1/2 dark:before:-translate-y-1/2
+        dark:before:rounded-full
+        dark:before:pointer-events-none
+        dark:before:bg-[radial-gradient(circle,_rgba(34,197,94,0.22)_0%,_rgba(34,197,94,0.10)_60%,_rgba(34,197,94,0)_100%)]
+        dark:before:opacity-90
+    `}
+            >
                 <motion.div
                     animate={{ fontSize }}
                     transition={{ duration: shrinkDuration }}
                     style={{ fontWeight: 'bold', fontSize: defaultFontSize }}
+                    className="relative"
                 >
                     <span className='nunito-text font-black'>{!isHeroVisible && personalInfo.name}</span>
                 </motion.div>
@@ -124,7 +161,7 @@ const TopBar = () => {
             <NavArea active={active} setActive={setActive} shrink={shrink} isHeroVisible={isHeroVisible} className="content-center" />
 
             <div className=' w-2'>
-
+                <ModeToggle />
             </div>
         </motion.div>
 

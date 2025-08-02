@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
+import { useTheme } from "@/features/theming/components/theme-provider"; // import the hook
 
 const HeroSection = () => {
   const [height, setHeight] = useState("100vh");
+  const { theme } = useTheme(); // get the current theme
 
   useEffect(() => {
     const handleScroll = () => {
@@ -25,9 +27,10 @@ const HeroSection = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Option 1: Use Tailwind's dark: classes (recommended with shadcn/ui)
   return (
     <motion.section
-      className='relative w-full mx-auto bg-gray-100'
+      className='relative w-full mx-auto bg-gray-100 dark:bg-gray-800 transition-colors'
       id='hero'
       animate={{ height }}
       transition={{ type: "spring", stiffness: 100, damping: 20 }}
@@ -35,16 +38,17 @@ const HeroSection = () => {
     >
       <div className='absolute inset-0 z-10 flex items-center justify-center'>
         <div>
-          <h1 className='text-3xl font-bold text-gray-700 text-center '>
+          <h1 className='text-3xl font-bold text-gray-700 dark:text-gray-100 text-center '>
             Aspiring Junior Backend Developer
           </h1>
-          <div className="text-balance font-black text-5xl max-w-3xl mx-auto my-4 text-center">
+          <div className="text-balance font-black text-5xl max-w-3xl mx-auto my-4 text-center text-gray-900 dark:text-white">
             Crafting Code That Scales, Building Solutions That Last
           </div>
           <p
-            className="text-center text-lg text-gray-500 font-medium mt-4"
+            className="text-center text-lg text-gray-500 dark:text-gray-400 font-medium mt-4"
           >
-            This is Ivan Bandilla</p>
+            This is Ivan Bandilla
+          </p>
         </div>
       </div>
     </motion.section>

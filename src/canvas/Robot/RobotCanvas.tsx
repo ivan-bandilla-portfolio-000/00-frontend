@@ -23,7 +23,9 @@ const RobotCanvas = () => {
     }, []);
 
     return (
-        <div ref={ref} style={{ position: "relative", width: "100vw", height: "100vh" }}>
+        <div ref={ref}
+            className='bg-gray-200 dark:bg-gray-900'
+            style={{ position: "relative", width: "100vw", height: "100vh" }}>
             {robotLoaded && SpeechBubbleOverlay && <SpeechBubbleOverlay />}
 
             <Canvas

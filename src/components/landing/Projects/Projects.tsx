@@ -98,7 +98,7 @@ const Projects = () => {
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -10 }}
                                     transition={{ duration: 0.3, delay: 0.05 }}
-                                    className='mt-2 text-lg text-pretty text-gray-600'
+                                    className='mt-2 text-lg text-pretty text-gray-600 dark:text-gray-300'
                                 >
                                     {projects[current]?.description}
                                 </motion.p>
@@ -112,11 +112,11 @@ const Projects = () => {
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -10 }}
                                 transition={{ duration: 0.5, delay: 0.1 }}
-                                className="flex justify-self-end w-full gap-2 "
+                                className="flex justify-self-end w-full gap-2"
                             >
                                 {projects[current]?.tags?.map((tag, index) => (
-                                    <Badge className='bg-black ' key={index}>
-                                        <span className="text-sm text-white">{tag.name}</span>
+                                    <Badge className='bg-black dark:bg-white' key={index}>
+                                        <span className="text-sm text-white dark:text-black">{tag.name}</span>
                                     </Badge>
                                 ))}
                             </motion.div>
@@ -133,7 +133,7 @@ const Projects = () => {
                         <CarouselNext className="enabled:scale-125 transition-transform" />
                         <div className="flex justify-end mt-1 px-4">
                             {(
-                                <span className="text-sm text-gray-500">
+                                <span className="text-sm text-gray-500 dark:text-gray-300">
                                     {itemsLeft > 0 ? `${itemsLeft} more` : '\u00A0'}
                                 </span>
                             )}
@@ -146,4 +146,4 @@ const Projects = () => {
     )
 }
 
-export default SectionWrapper(Projects, "projects", { className: "bg-primary snap-start" })
+export default SectionWrapper(Projects, "projects", { className: "bg-gray-50 dark:bg-gray-950" })

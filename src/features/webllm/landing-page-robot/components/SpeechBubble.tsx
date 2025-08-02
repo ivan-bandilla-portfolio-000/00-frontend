@@ -16,11 +16,11 @@ const SpeechBubble = ({
     onNo,
     onDismiss,
 }: SpeechBubbleProps) => (
-    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-full z-20 bg-white rounded-2xl px-7 py-4 shadow-lg text-[1.15rem] text-[#333] text-pretty min-w-[220px] max-w-[320px] border-2 border-[#e0e0e0]">
+    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-full z-20 bg-background dark:bg-zinc-500 rounded-2xl px-7 py-4 shadow-lg text-[1.15rem] text-foreground text-pretty min-w-[220px] max-w-[320px] border-2 border-border">
         {onDismiss && (
             <button
                 onClick={onDismiss}
-                className="absolute top-2 right-3 text-2xl text-gray-400 hover:text-gray-700 hover:scale-140 focus:outline-none"
+                className="absolute top-2 right-3 text-2xl text-muted-foreground hover:text-foreground hover:scale-140 focus:outline-none"
                 aria-label="Close"
                 type="button"
             >
@@ -45,7 +45,7 @@ const SpeechBubble = ({
             style={{
                 borderLeft: "18px solid transparent",
                 borderRight: "18px solid transparent",
-                borderTop: "22px solid #fff"
+                borderTop: "22px solid var(--background)"
             }}
         />
     </div>

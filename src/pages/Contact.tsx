@@ -176,7 +176,7 @@ export default SectionWrapper(
     (props) => <Contact {...props} hyperspeedRef={hyperspeedRef} />,
     "contact",
     {
-        className: "h-dvh bg-gray-50",
+        className: "h-dvh bg-gray-50 dark:bg-gray-950",
         background: <HyperSpeedCanvas ref={hyperspeedRef} />
     }
 );
