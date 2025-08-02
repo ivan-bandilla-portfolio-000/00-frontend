@@ -44,7 +44,7 @@ export class LLMService {
     }
 
     checkRequirements() {
-        return false;
+        // return false;
         return this.checkAvailableMemory() && this.checkCpuAvailability();
     }
 

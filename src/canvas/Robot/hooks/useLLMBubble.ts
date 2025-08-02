@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState, useRef } from 'react';
-import { LLMContext } from '@/services/LLMService';
+import { LLMContext } from '@/features/webllm/services/LLMService';
 import { choosePortfolioContextInstruction } from '@/constants/webLLM';
 
 const initialMessages = [

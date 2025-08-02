@@ -1,4 +1,4 @@
-import { LLMService } from "./LLMService";
+import { LLMService } from "../features/webllm/services/LLMService";
 
 export class ChatLLMService extends LLMService {
     constructor(systemPrompt: string) {

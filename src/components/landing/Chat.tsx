@@ -1,5 +1,5 @@
 import { useContext, useState } from "react";
-import { LLMContext } from "@/services/LLMService";
+import { LLMContext } from "@/features/webllm/services/LLMService";
 
 const AboutMeChatLLM = () => {
     const llm = useContext(LLMContext);

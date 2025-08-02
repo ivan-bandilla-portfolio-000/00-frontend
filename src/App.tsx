@@ -1,6 +1,6 @@
 import TopBar from '@/components/TopBar';
 
-import { LLMService, LLMContext } from '@/services/LLMService';
+import { LLMService, LLMContext } from '@/features/webllm/services/LLMService';
 import { useEffect, useState, Suspense } from 'react';
 import Home from './pages/Home';
 import { Routes, Route, useLocation } from 'react-router';

@@ -1,7 +1,7 @@
 
 import * as THREE from 'three';
 import { Suspense, useRef, useEffect, useState, useContext } from 'react';
-import { LLMContext } from '@/services/LLMService';
+import { LLMContext } from '@/features/webllm/services/LLMService';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Preload, useGLTF } from '@react-three/drei';
 import { useIsMobile } from '@/hooks/useIsMobile';
