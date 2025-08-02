@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
+import { useLocation } from 'react-router';
 import { styles } from '@/styles/js/styles'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import personalInfo from '@/constants/personalInfo'
 import navLinks from '@/constants/topbarNavlinks'
@@ -16,6 +17,7 @@ import {
     NavigationMenuViewport,
 } from "@/components/ui/navigation-menu";
 import { useIdInViewport } from '@/hooks/useIdInViewport'
+import IconLink from './ui/custom/IconLink'
 
 const shrinkDuration: number = 0.3; // seconds
 
@@ -28,14 +30,35 @@ interface NavAreaProps {
 }
 
 const NavArea: React.FC<NavAreaProps> = ({ active, setActive, shrink, className, isHeroVisible }) => {
+    const location = useLocation();
+    const currentPath = location.pathname;
+
+    const getHref = (link: NavLink) => {
+        if (link.type === 'anchor') {
+            // If already on the correct page, just use #id
+            if (link.baseUrl === currentPath) {
+                return `#${link.id}`;
+            }
+            // Otherwise, go to the correct page and anchor
+            return `${link.baseUrl}#${link.id}`;
+        }
+        return link.url;
+    };
+
+    const isAnchorToCurrentPage = (link: NavLink) => {
+        // Internal if anchor and baseUrl matches current path
+        return link.type === 'anchor'
+            ? (link.baseUrl === currentPath ? 'anchor' : 'internal')
+            : link.type;
+    };
 
     return (
         <NavigationMenu>
             <NavigationMenuList className="gap-8">
                 {navLinks
                     .filter(link => !(link.id === 'hero' && isHeroVisible))
-                    .map((link: NavLink) => (
-                        <NavigationMenuItem key={link.id}>
+                    .map((link: NavLink, idx: number) => (
+                        <NavigationMenuItem key={link.id ?? idx}>
                             <motion.div
                                 animate={{ scale: shrink ? 0.85 : 1 }}
                                 transition={{ duration: shrinkDuration }}
@@ -43,11 +66,12 @@ const NavArea: React.FC<NavAreaProps> = ({ active, setActive, shrink, className,
                             >
                                 <NavigationMenuLink
                                     active={active === link.id}
-                                    className={`text-md underline ${link.id === 'projects' ? 'text font-extrabold' : 'font-medium '}`}
-                                    href={`#${link.id}`}
+                                    className={`text-md hover:underline font-medium ps-6 pe-5 group/link-icon`}
+                                    href={getHref(link)}
                                     onClick={() => setActive(link.id)}
                                 >
-                                    {link.title}
+                                    <span className='-translate-x-2'>{link.title}</span>
+                                    <IconLink type={isAnchorToCurrentPage(link)} />
                                 </NavigationMenuLink>
                             </motion.div>
                         </NavigationMenuItem>

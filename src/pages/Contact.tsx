@@ -1,0 +1,184 @@
+import React, { forwardRef, useRef, useState } from "react";
+import { getRequestStatusById } from "@/constants/requestStatuses";
+import ContactForm from '@/components/forms/ContactForm';
+
+import { SectionWrapper } from '@/hoc';
+import { Suspense } from 'react';
+import Hyperspeed from '@/components/blocks/backgrounds/Hyperspeed/Hyperspeed';
+import { usePrefersDarkMode } from '@/hooks/usePrefersDarkMode';
+import {
+    Card,
+    CardAction,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card"
+import { Button } from "@/components/ui/button";
+import CopiableLink from "@/components/ui/custom/CopiableLink";
+import ContactItem from "@/components/contact/ContactItem";
+import { MoveLeft } from "lucide-react";
+import { set } from "react-hook-form";
+
+const hyperspeedRef = React.createRef<any>();
+
+const HyperSpeedCanvas = forwardRef((props, ref) => {
+    const isDark = usePrefersDarkMode();
+    const hyperspeedOptions = {
+        onSpeedUp: () => { },
+        onSlowDown: () => { },
+        distortion: 'turbulentDistortion',
+        length: 400,
+        roadWidth: 10,
+        islandWidth: 2,
+        lanesPerRoad: 4,
+        fov: 90,
+        fovSpeedUp: 150,
+        speedUp: 2,
+        carLightsFade: 0.4,
+        totalSideLightSticks: 10,
+        lightPairsPerRoadWay: 40,
+        shoulderLinesWidthPercentage: 0.05,
+        brokenLinesWidthPercentage: 0.1,
+        brokenLinesLengthPercentage: 0.5,
+        lightStickWidth: [0.12, 0.5],
+        lightStickHeight: [1.3, 1.7],
+        movingAwaySpeed: [15, 20],
+        movingCloserSpeed: [-30, -40],
+        carLightsLength: [400 * 0.03, 400 * 0.2],
+        carLightsRadius: [0.05, 0.14],
+        carWidthPercentage: [0.3, 0.5],
+        carShiftX: [-0.8, 0.8],
+        carFloorSeparation: [0, 5],
+        colors: {
+            roadColor: !isDark ? 0xFFFFFF : 0x080808,
+            islandColor: !isDark ? 0xFFFFFF : 0x0a0a0a,
+            background: 0x000000,
+            shoulderLines: 0xFFFFFF,
+            brokenLines: 0xFFFFFF,
+            leftCars: [0xD856BF, 0x6750A2, 0xC247AC],
+            rightCars: [0x03B3C3, 0x0E5EA5, 0x324555],
+            sticks: 0x03B3C3,
+        }
+    }
+    return (
+        <Hyperspeed ref={ref} effectOptions={hyperspeedOptions} />
+    );
+});
+
+
+const Contact = ({ llmReady, hyperspeedRef }: { llmReady: boolean, hyperspeedRef: React.Ref<any> }) => {
+    const [status, setStatus] = useState(getRequestStatusById("ready")!);
+
+    const handleSpeedUp = () => {
+        console.log("Speeding up hyperspeed effect");
+        hyperspeedRef.current?.speedUp();
+        hyperspeedRef.current?.setLocked(true);
+    };
+
+    const handleSlowDown = () => {
+        console.log("Slowing down hyperspeed effect");
+        hyperspeedRef.current?.setLocked(false);
+        hyperspeedRef.current?.slowDown();
+    };
+
+    const formRef = useRef<HTMLFormElement>(null);
+
+    const handleExternalSubmit = () => {
+        if (formRef.current) {
+            setStatus(getRequestStatusById("validating")!);
+            setTimeout(() => {
+                formRef.current.requestSubmit();
+            }, 300);
+        }
+    };
+
+
+    return (
+        <div className="relative z-50 container h-full pointer-events-none">
+            <div className="flex lg:h-[80svh] gap-16 pointer-events-none">
+                <Card className="flex-[0.90] opacity-[95%] gap-12 py-10 px-6 pointer-events-auto">
+                    <CardHeader>
+                        <CardTitle className="nunito-text text-5xl font-black">Other Contact</CardTitle>
+                        {/* <CardDescription>Card Description</CardDescription> */}
+                    </CardHeader>
+                    <CardContent className="px-8 text-base space-y-2">
+                        <address className="space-y-2">
+                            <ContactItem type="email" label="Email:">
+                                <CopiableLink type="email" href="othercontact@example.com">
+                                    othercontact@example.com
+                                </CopiableLink>
+                            </ContactItem>
+
+                            <ContactItem type="phone" label="Phone:">
+                                <CopiableLink type="tel" href="+1234567890">
+                                    +1 (234) 567-890
+                                </CopiableLink>
+                            </ContactItem>
+                        </address>
+                        <br />
+                        <br />
+                        <div className="space-y-2">
+                            <ContactItem type="linkedin" label="LinkedIn:">
+                                <CopiableLink href="https://www.linkedin.com/in/yourprofile">
+                                    yourprofile
+                                </CopiableLink>
+                            </ContactItem>
+
+                            <ContactItem type="github" label="Github:">
+                                <CopiableLink href="https://github.com/yourprofile">
+                                    yourprofile
+                                </CopiableLink>
+                            </ContactItem>
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card className="flex-[1.1] opacity-[98%] gap-12 py-10 px-6 pointer-events-auto" >
+                    <CardHeader className="select-none opacity-100">
+                        <CardTitle className="nunito-text text-5xl font-black">Direct Message</CardTitle>
+                        <CardDescription>Card Description</CardDescription>
+                    </CardHeader>
+                    <CardContent className="px-8 opacity-100">
+                        <ContactForm
+                            formRef={formRef}
+                            callbacks={{
+                                onSubmitting: handleSpeedUp,
+                                onStop: handleSlowDown
+                            }}
+                            status={status}
+                            setStatus={setStatus}
+                        />
+                    </CardContent>
+                    <CardFooter className="select-none ">
+                        <Button variant="link" className="flex-1 text-left justify-start group">
+                            <MoveLeft className="group-hover:-translate-x-1 transition-transform" />
+                            Back to Home
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={handleExternalSubmit}
+                            className="flex-2 py-6"
+                            disabled={status.id !== "ready"}
+                        >
+                            {status.id !== "ready"
+                                ? `${status.label}...`
+                                : "Submit"}
+                        </Button>
+                    </CardFooter>
+                </Card>
+            </div>
+        </div>
+    );
+};
+
+
+
+export default SectionWrapper(
+    (props) => <Contact {...props} hyperspeedRef={hyperspeedRef} />,
+    "contact",
+    {
+        className: "h-dvh bg-gray-50",
+        background: <HyperSpeedCanvas ref={hyperspeedRef} />
+    }
+);

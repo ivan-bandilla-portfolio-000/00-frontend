@@ -27,15 +27,18 @@ Generate a single, direct question that meets all of the following criteria:
 
 7. Does not ask for additional information or background.
 
-8. Avoids vague terms like “digital tools,” “systems,” or “technical field.”
+8. Use second person perspective (e.g. "Are you...") to directly address the respondent.
 
-9. Avoids abstract, metaphorical, or ambiguous language.
+9. Avoids vague terms like “digital tools,” “systems,” or “technical field.”
 
-10. Should be at least 6-10 words
+10. Avoids abstract, metaphorical, or ambiguous language.
 
-11. Return only the plain question. No formatting. No explanation. No extra content.
+11. Should be at least 6-10 words
 
-Examples (for structure only):
-- Do you work in software development?
-- Are you an IT professional?
+12. Return only the plain question. No formatting. No explanation. No extra content.
+
+
 `;
+// Examples (for structure only):
+// - Do you work in software development?
+// - Are you an IT professional?

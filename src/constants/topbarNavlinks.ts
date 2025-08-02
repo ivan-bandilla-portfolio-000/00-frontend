@@ -1,14 +1,26 @@
-export type NavLink = {
+type AnchorNavLink = {
     title: string;
-    url: string;
-    id: string;
+    baseUrl: string;
+    id?: string;
+    type: 'anchor';
+    url?: never;
 };
 
-const topbarNavLinks: NavLink[] = [
-    { title: 'Hero', url: '/', id: 'hero' },
-    { title: 'Projects', url: '/projects', id: 'projects' },
-    { title: 'About', url: '/about', id: 'about' },
-    { title: 'Contact', url: '/contact', id: 'contact' },
-]
+type InternalOrExternalNavLink = {
+    title: string;
+    url: string;
+    type: 'internal' | 'external';
+    baseUrl?: never;
+    id?: string;
+};
 
-export default topbarNavLinks
+export type NavLink = AnchorNavLink | InternalOrExternalNavLink;
+
+const topbarNavLinks: NavLink[] = [
+    { title: 'Hero', baseUrl: '/', id: 'hero', type: 'anchor' },
+    { title: 'Projects', baseUrl: '/', id: 'projects', type: 'anchor' },
+    { title: 'About', url: '/about', type: 'internal' },
+    { title: 'Contact', url: '/contact', type: 'internal' },
+];
+
+export default topbarNavLinks;

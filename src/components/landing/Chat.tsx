@@ -1,7 +1,7 @@
 import { useContext, useState } from "react";
 import { LLMContext } from "@/services/LLMService";
 
-const LLMChat = () => {
+const AboutMeChatLLM = () => {
     const llm = useContext(LLMContext);
     const [input, setInput] = useState("");
     const [response, setResponse] = useState("");
@@ -38,4 +38,4 @@ const LLMChat = () => {
     );
 };
 
-export default LLMChat;
+export default AboutMeChatLLM;

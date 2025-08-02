@@ -1,11 +1,12 @@
 @import "./core.css";
 
 body {
+
     .text-primary {
         color: #2e7d32;
     }
 }
 
-/* .feather-shadow {
-    box-shadow: 0 4px 24px -8px rgba(0, 0, 0, 0.18);
-} */
+main {
+    contain: paint;
+}

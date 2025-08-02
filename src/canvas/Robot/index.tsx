@@ -1,2 +1,2 @@
-// import RobotCanvas from './RobotCanvas';
-// export default RobotCanvas;
+import RobotCanvas from './RobotCanvas';
+export default RobotCanvas;

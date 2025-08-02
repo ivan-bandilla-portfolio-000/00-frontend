@@ -1,9 +1,12 @@
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import RobotCanvas from "@/canvas/Robot";
+import { useEffect, useRef, useState } from "react";
+import { motion } from "motion/react";
+import RobotCanvas from "@/canvas/Robot/";
 
 const MiscRobot = () => {
     const [translateY, setTranslateY] = useState(0);
+
+    const [sectionHeight, setSectionHeight] = useState("110dvh");
+    const sectionRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -25,11 +28,32 @@ const MiscRobot = () => {
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
+    useEffect(() => {
+        const projects = document.getElementById("projects");
+        if (!projects) return;
+
+        const observer = new window.IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    setSectionHeight("80dvh");
+                } else {
+                    setSectionHeight("110dvh");
+                }
+            },
+            { threshold: 0.5 }
+        );
+
+        observer.observe(projects);
+
+        return () => observer.disconnect();
+    }, []);
+
     return (
         <motion.section
-            className='relative w-full h-[90vh] mx-auto z-1'
-            id='hero'
-            animate={{ y: translateY }}
+            ref={sectionRef}
+            className='relative w-full mx-auto z-1'
+            id='misc-robot'
+            animate={{ y: translateY, height: sectionHeight }}
             transition={{ type: "spring", stiffness: 100, damping: 20 }}
             style={{
                 marginTop: '-5vh'

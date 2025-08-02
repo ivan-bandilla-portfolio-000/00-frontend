@@ -1,9 +1,10 @@
 import TopBar from '@/components/TopBar';
-import HeroSection from '@/components/landing/HeroSection';
-import MiscRobot from './components/landing/MiscRobot';
-import Chat from './components/landing/Chat';
+
 import { LLMService, LLMContext } from '@/services/LLMService';
 import { useEffect, useState, Suspense } from 'react';
+import Home from './pages/Home';
+import { Routes, Route, useLocation } from 'react-router';
+import Contact from './pages/Contact';
 
 const llm = new LLMService("You are a helpful assistant.");
 
@@ -13,23 +14,31 @@ function App() {
   useEffect(() => {
     (async () => {
       await llm.init();
-      setLlmReady(true);
+      setLlmReady(llm.requirementsMet && llm.initialized);
     })();
   }, []);
+
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.hash) {
+      const id = location.hash.replace('#', '');
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  }, [location]);
 
   return (
     <LLMContext.Provider value={llm}>
       <TopBar />
-      <HeroSection />
-      {/* <Suspense >
-        {llmReady && <Chat />}
-      </Suspense> */}
-      <MiscRobot />
-      <div id='fsdaf' style={{ height: '2000px', background: 'linear-gradient(#fff, #eee)' }}>
-        <div style={{ paddingTop: '100px', textAlign: 'center', fontSize: '2rem' }}>
-          Scroll down to see the TopBar shrink!
-        </div>
-      </div>
+      <Routes>
+        <Route path="/" element={<main><Home llmReady={llmReady} /></main>} />
+        {/* <Route path="/projects" element={<main><Projects llmReady={llmReady} /></main>} /> */}
+        {/* <Route path="/about" element={<main><About llmReady={llmReady} /></main>} /> */}
+        <Route path="/contact" element={<main><Contact llmReady={llmReady} /></main>} />
+      </Routes>
     </LLMContext.Provider>
   )
 }

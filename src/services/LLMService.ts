@@ -4,12 +4,17 @@ import { defaultModel } from "@/constants/webLLM"
 import { createContext } from "react";
 
 export class LLMService {
+    protected static sharedEngine: any = null;
     protected engine: any = null;
     protected systemPrompt: string;
     public initialized: boolean = false;
+    private singleton: boolean = true;
+    public requirementsMet: boolean;
 
-    constructor(systemPrompt: string) {
+    constructor(systemPrompt: string, singleton: boolean = true) {
         this.systemPrompt = systemPrompt;
+        this.singleton = singleton;
+        this.requirementsMet = this.checkRequirements();
     }
 
     setSystemPrompt(prompt: string) {
@@ -24,26 +29,42 @@ export class LLMService {
         const minMemoryGB = 4;
         if (navigator.deviceMemory && navigator.deviceMemory < minMemoryGB) {
             console.warn(`Device has only ${navigator.deviceMemory}GB RAM. WebLLM may not work well.`);
+            return false;
         }
+        return true;
     }
 
     checkCpuAvailability() {
         const minCpuCores = 4;
         if (navigator.hardwareConcurrency && navigator.hardwareConcurrency < minCpuCores) {
             console.warn(`Device has only ${navigator.hardwareConcurrency} CPU cores. WebLLM may not work well.`);
+            return false;
         }
+        return true;
     }
 
     checkRequirements() {
-        this.checkAvailableMemory();
-        this.checkCpuAvailability();
+        return false;
+        return this.checkAvailableMemory() && this.checkCpuAvailability();
     }
 
     async init(model: string = defaultModel.model_id) {
+        if (!this.requirementsMet) {
+            console.warn("System requirements not met. Skipping model initialization.");
+            return;
+        }
         console.log("Initializing LLMService with model:", model);
-        this.checkRequirements();
         try {
-            this.engine = await CreateMLCEngine(model);
+            if (this.singleton) {
+                if (!LLMService.sharedEngine) {
+                    LLMService.sharedEngine = await CreateMLCEngine(model);
+                    await new Promise(res => setTimeout(res, 300));
+                }
+                this.engine = LLMService.sharedEngine;
+            } else {
+                this.engine = await CreateMLCEngine(model);
+                await new Promise(res => setTimeout(res, 300));
+            }
             this.initialized = true;
             console.log("Model loaded successfully");
         } catch (error) {
