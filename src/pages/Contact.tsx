@@ -140,7 +140,7 @@ const Contact = ({ llmReady, hyperspeedRef }: { llmReady: boolean, hyperspeedRef
                 <Card className="flex-[1.1] opacity-[98%] gap-12 py-10 px-6 pointer-events-auto" >
                     <CardHeader className="select-none opacity-100">
                         <CardTitle className="nunito-text text-5xl font-black">Direct Message</CardTitle>
-                        <CardDescription>Card Description</CardDescription>
+                        {/* <CardDescription>Card Description</CardDescription> */}
                     </CardHeader>
                     <CardContent className="px-8 opacity-100">
                         <ContactForm
