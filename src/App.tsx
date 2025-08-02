@@ -1,4 +1,5 @@
 import TopBar from '@/components/TopBar';
+import { Toaster } from "@/components/ui/sonner"
 
 import { LLMService, LLMContext } from '@/features/webllm/services/LLMService';
 import { useEffect, useState, Suspense } from 'react';
@@ -39,6 +40,7 @@ function App() {
         {/* <Route path="/about" element={<main><About llmReady={llmReady} /></main>} /> */}
         <Route path="/contact" element={<main><Contact llmReady={llmReady} /></main>} />
       </Routes>
+      <Toaster richColors closeButton />
     </LLMContext.Provider>
   )
 }
