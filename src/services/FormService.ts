@@ -17,7 +17,6 @@ export const FormService = {
     },
     showSuccessMessage: (message: string, options?: { position?: ToastPositions }) => {
         setTimeout(() => {
-            console.log("Form Success: delayed", message);
             toast.success(message, {
                 position: options?.position || 'bottom-right',
                 duration: 5000,

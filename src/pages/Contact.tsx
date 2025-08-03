@@ -1,7 +1,7 @@
 import React, { forwardRef, useRef, useState } from "react";
 import { getRequestStatusById } from "@/constants/requestStatuses";
 import personalInfo from "@/constants/personalInfo";
-import ContactForm from '@/components/forms/ContactForm';
+import ContactForm from '@/components/forms/ContactForm/';
 
 import { SectionWrapper } from '@/hoc';
 import { Suspense } from 'react';
@@ -21,12 +21,14 @@ import CopiableLink from "@/components/ui/custom/CopiableLink";
 import ContactItem from "@/components/contact/ContactItem";
 import { MoveLeft } from "lucide-react";
 import { set } from "react-hook-form";
+import { FormService } from "@/services/FormService";
+import { NonceManager } from "@/features/nonce/client/services/NonceManager";
 
 const hyperspeedRef = React.createRef<any>();
 
 const HyperSpeedCanvas = forwardRef((props, ref) => {
     const { theme } = useTheme();
-    console.log("HyperSpeedCanvas theme:", theme);
+
     const isDark =
         theme === "dark" ||
         (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
@@ -152,6 +154,8 @@ const Contact = ({ llmReady, hyperspeedRef }: { llmReady: boolean, hyperspeedRef
                             }}
                             status={status}
                             setStatus={setStatus}
+                            formService={FormService}
+                            nonceManager={NonceManager}
                         />
                     </CardContent>
                     <CardFooter className="select-none ">
