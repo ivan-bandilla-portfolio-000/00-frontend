@@ -7,7 +7,7 @@ export class LLMService {
     protected static sharedEngine: any = null;
     protected engine: any = null;
     protected systemPrompt: string;
-    public initialized: boolean = false;
+    private _initialized: boolean = false;
     private singleton: boolean = true;
     public requirementsMet: boolean;
 
@@ -15,6 +15,10 @@ export class LLMService {
         this.systemPrompt = systemPrompt;
         this.singleton = singleton;
         this.requirementsMet = this.checkRequirements();
+    }
+
+    public get initialized(): boolean {
+        return this._initialized;
     }
 
     setSystemPrompt(prompt: string) {
@@ -25,10 +29,15 @@ export class LLMService {
         return this.systemPrompt;
     }
 
+    getEngine() {
+        return this.engine;
+    }
+
     checkAvailableMemory() {
         const minMemoryGB = 4;
-        if (navigator.deviceMemory && navigator.deviceMemory < minMemoryGB) {
-            console.warn(`Device has only ${navigator.deviceMemory}GB RAM. WebLLM may not work well.`);
+        const deviceMemory = (navigator as any).deviceMemory as number | undefined;
+        if (deviceMemory && deviceMemory < minMemoryGB) {
+            console.warn(`Device has only ${deviceMemory}GB RAM. WebLLM may not work well.`);
             return false;
         }
         return true;
@@ -36,8 +45,9 @@ export class LLMService {
 
     checkCpuAvailability() {
         const minCpuCores = 4;
-        if (navigator.hardwareConcurrency && navigator.hardwareConcurrency < minCpuCores) {
-            console.warn(`Device has only ${navigator.hardwareConcurrency} CPU cores. WebLLM may not work well.`);
+        const cpuCores = navigator.hardwareConcurrency as number | undefined;
+        if (cpuCores && cpuCores < minCpuCores) {
+            console.warn(`Device has only ${cpuCores} CPU cores. WebLLM may not work well.`);
             return false;
         }
         return true;
@@ -65,7 +75,7 @@ export class LLMService {
                 this.engine = await CreateMLCEngine(model);
                 await new Promise(res => setTimeout(res, 300));
             }
-            this.initialized = true;
+            this._initialized = true; // Set to true
             console.log("Model loaded successfully");
         } catch (error) {
             console.warn("Failed to load the model: ", model, error);

@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { useTheme } from "@/features/theming/components/theme-provider"; // import the hook
 
 const HeroSection = () => {
   const [height, setHeight] = useState("100vh");
-  const { theme } = useTheme(); // get the current theme
 
   useEffect(() => {
     const handleScroll = () => {
@@ -27,7 +25,6 @@ const HeroSection = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Option 1: Use Tailwind's dark: classes (recommended with shadcn/ui)
   return (
     <motion.section
       className='relative w-full mx-auto bg-gray-100 dark:bg-gray-800 transition-colors'

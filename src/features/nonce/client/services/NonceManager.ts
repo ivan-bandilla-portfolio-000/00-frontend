@@ -1,5 +1,4 @@
 import { db } from '@/indexedDB/db';
-import type { NonceEntry } from '@/indexedDB/models/Nonce';
 
 export class NonceManager {
     /**

@@ -35,12 +35,17 @@ export class RateLimiter {
      * @param limit Max allowed actions in the window
      * @param windowMs Time window in ms
      */
-    static async throwIfLimited(key: string, limit: number, windowMs: number, options?: { toastPosition?: ToastPositions } = {}): Promise<void> {
+    static async throwIfLimited(
+        key: string,
+        limit: number,
+        windowMs: number,
+        options: { toastPosition?: ToastPositions } = {}
+    ): Promise<void> {
         const allowed = await this.isAllowed(key, limit, windowMs);
         if (!allowed) {
-            const error = new Error(RateLimiter.rateLimitedMessage);
-            // @ts-ignore
-            error.status = 429;
+            const error = new Error(RateLimiter.rateLimitedMessage) as Error & { httpStatus?: number };
+
+            error.httpStatus = 429;
             toast.error(RateLimiter.rateLimitedMessage, {
                 position: options?.toastPosition || 'bottom-right',
             });

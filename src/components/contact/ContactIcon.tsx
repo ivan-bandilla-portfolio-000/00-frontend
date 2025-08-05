@@ -1,7 +1,8 @@
 import { Github, Linkedin, Mail, Phone } from "lucide-react";
+import type { JSX } from "react";
 
 
-const icons: Record<string, TSX.Element> = {
+const icons: Record<string, JSX.Element> = {
     email: <Mail className="w-6 h-6" />,
     phone: <Phone className="w-6 h-6" />,
     linkedin: <Linkedin className="w-6 h-6" />,

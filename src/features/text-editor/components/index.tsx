@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { useEditor, EditorContent, ReactNodeViewRenderer } from '@tiptap/react'
+import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Highlight from '@tiptap/extension-highlight'
 import Typography from '@tiptap/extension-typography'
 import TextAlign from '@tiptap/extension-text-align'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import { all, createLowlight } from 'lowlight'
-// import CodeBlockComponent from '@/components/text-editor/CodeBlockComponent'
 import Emoji, { gitHubEmojis } from '@tiptap/extension-emoji'
 import Youtube from '@tiptap/extension-youtube'
 import Blockquote from '@tiptap/extension-blockquote'
@@ -15,12 +14,19 @@ import MenuBar from '@/features/text-editor/components/MenuBar'
 import '@/features/text-editor/styles/index.scss'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 const lowlight = createLowlight(all)
 
 
 const CHARACTER_LIMIT = 1000;
 
+interface TextEditorOptions {
+    content?: string;
+    characterLimit?: number;
+    classNames?: string;
+    error?: { message?: string };
+}
 
 const TextEditor = ({
     editorRef,
@@ -62,7 +68,7 @@ const TextEditor = ({
     const editorProps = {
         attributes: {
             class: cn(
-                'border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 flex field-sizing-content min-h-16 w-full rounded-md border bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 md:text-sm wrap-break-word break-all',
+                'border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 field-sizing-content min-h-16 w-full rounded-md border bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 md:text-sm wrap-break-word break-all',
                 $opt?.classNames || ''
             )
         }
@@ -88,7 +94,7 @@ const TextEditor = ({
             // Dynamically update aria-invalid attribute on contenteditable div
             editor.view.dom.setAttribute(
                 'aria-invalid',
-                isInvalid(charCount, editor) ? 'true' : 'false'
+                isInvalid(charCount) ? 'true' : 'false'
             );
         };
 
@@ -100,15 +106,11 @@ const TextEditor = ({
         };
     }, [editor, editorRef]);
 
-    editor.on('contentError', ({ editor, error, disableCollaboration }) => {
-        const emitUpdate = false
-
-        // editor.setEditable(false, emitUpdate)
-
-        console.log("An error occurred. Please refresh the application.")
+    editor.on('contentError', () => {
+        toast.error("An error occurred. Please refresh the application.")
     })
 
-    function isInvalid(charCount: number, editor: any) {
+    function isInvalid(charCount: number) {
         return charCount > maxLength;
     }
 
@@ -121,7 +123,7 @@ const TextEditor = ({
                     id='sender-email-message'
                     className={`border border-t-0 overflow-y-auto -mt-1 `}
                     editor={editor}
-                    aria-invalid={isInvalid(charCount, editor) ? "true" : "false"}
+                    aria-invalid={isInvalid(charCount) ? "true" : "false"}
                 />
                 <div
                     className={`text-xs text-right flex justify-between text-gray-500 ${charCount > maxLength || (opt?.error?.message?.trim())

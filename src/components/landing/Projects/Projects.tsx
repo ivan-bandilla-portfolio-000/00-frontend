@@ -4,12 +4,11 @@ import projects from "@/constants/projects";
 import { SectionWrapper } from "@/hoc";
 import type { CarouselApi } from "@/components/ui/carousel";
 import { AnimatePresence, motion } from "motion/react";
-import { fadeIn, textVariant } from "@/utils/motion";
+import { textVariant } from "@/utils/motion";
 import { styles } from "@/styles/js/styles";
 import {
     Carousel,
     CarouselContent,
-    CarouselItem,
     CarouselNext,
     CarouselPrevious,
 } from "@/components/ui/carousel"
@@ -63,7 +62,7 @@ const Projects = () => {
         <>
             <motion.div
                 ref={sectionRef}
-                variants={textVariant()}
+                variants={textVariant(0)}
                 animate={{ y: translateY }}
                 transition={{ duration: 0.3 }}
                 className="flex flex-col h-dvh justify-center pointer-events-auto"

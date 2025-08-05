@@ -8,13 +8,13 @@ import navLinks from '@/constants/topbarNavlinks'
 import type { NavLink } from '@/constants/topbarNavlinks'
 import {
     NavigationMenu,
-    NavigationMenuContent,
-    NavigationMenuIndicator,
+    // NavigationMenuContent,
+    // NavigationMenuIndicator,
     NavigationMenuItem,
     NavigationMenuLink,
     NavigationMenuList,
-    NavigationMenuTrigger,
-    NavigationMenuViewport,
+    // NavigationMenuTrigger,
+    // NavigationMenuViewport,
 } from "@/components/ui/navigation-menu";
 import { useIdInViewport } from '@/hooks/useIdInViewport'
 import IconLink from './ui/custom/IconLink'
@@ -23,7 +23,7 @@ import { ModeToggle } from '@/features/theming/components/mode-toggle';
 const shrinkDuration: number = 0.3; // seconds
 
 interface NavAreaProps {
-    active: string;
+    active: string | undefined;
     setActive: (id: string) => void;
     shrink: boolean;
     className?: string;
@@ -43,7 +43,7 @@ const NavArea: React.FC<NavAreaProps> = ({ active, setActive, shrink, className,
             // Otherwise, go to the correct page and anchor
             return `${link.baseUrl}#${link.id}`;
         }
-        return link.url;
+        return link.url ?? "#";
     };
 
     const isAnchorToCurrentPage = (link: NavLink) => {
@@ -54,7 +54,7 @@ const NavArea: React.FC<NavAreaProps> = ({ active, setActive, shrink, className,
     };
 
     return (
-        <NavigationMenu>
+        <NavigationMenu className={className ?? ""}>
             <NavigationMenuList className="gap-8">
                 {navLinks
                     .filter(link => !(link.id === 'hero' && isHeroVisible))
@@ -84,7 +84,7 @@ const NavArea: React.FC<NavAreaProps> = ({ active, setActive, shrink, className,
     transition-all
 `}
                                     href={getHref(link)}
-                                    onClick={() => setActive(link.id)}
+                                    onClick={() => setActive(link.id ?? "")}
                                 >
                                     <span className='-translate-x-2'>{link.title}</span>
                                     <IconLink type={isAnchorToCurrentPage(link)} />
@@ -149,16 +149,16 @@ const TopBar = () => {
     `}
             >
                 <motion.div
-                    animate={{ fontSize }}
+                    animate={{ fontSize: fontSize ?? defaultFontSize }}
                     transition={{ duration: shrinkDuration }}
-                    style={{ fontWeight: 'bold', fontSize: defaultFontSize }}
+                    style={{ fontWeight: 'bold', fontSize: fontSize ?? defaultFontSize }}
                     className="relative"
                 >
                     <span className='nunito-text font-black'>{!isHeroVisible && personalInfo.name}</span>
                 </motion.div>
             </div>
 
-            <NavArea active={active} setActive={setActive} shrink={shrink} isHeroVisible={isHeroVisible} className="content-center" />
+            <NavArea active={active} setActive={setActive} shrink={shrink} isHeroVisible={isHeroVisible} />
 
             <div className=' w-2'>
                 <ModeToggle />

@@ -1,5 +1,6 @@
 import { getRequestStatusById } from "@/constants/requestStatuses";
 import { RateLimiter } from "@/features/rate-limiting/client/services/RateLimiter";
+import { ContactFormService } from "@/services/ContactFormService";
 import { useCallback, type RefObject } from "react";
 
 export interface MessageInputs {
@@ -55,82 +56,95 @@ export function useContactFormSubmission({
     CHARACTER_LIMIT,
     MIN_LENGTH,
 }: UseContactFormSubmissionProps) {
-    return useCallback(async (data, nonce: string | null) => {
-        await RateLimiter.throwIfLimited('contact-form', 3, 60000);
-        const editor = editorRef.current;
-        const content = editor?.getText?.() || "";
+    return useCallback(async (data: MessageInputs, nonce: string | null) => {
+        try {
+            await RateLimiter.throwIfLimited('contact-form', 3, 60000);
+            const editor = editorRef.current;
+            const content = editor?.getText?.() || "";
 
-        if (formService.isProfane(data.email)) {
-            setError("email", { type: "manual", message: "Profanity detected in your email address." });
-            return;
-        }
-
-        // const isValidEmail = await verifyEmail(data.email);
-        // if (!isValidEmail) {
-        //     setError("email", { type: "manual", message: "Invalid or disposable email address." });
-        //     return;
-        // }
-
-        if (!content || content.trim().length < MIN_LENGTH) {
-            setError("emailContent", { type: "manual", message: "Message is empty or too short" });
-            return;
-        }
-
-        if (content.length > CHARACTER_LIMIT) {
-            setError("emailContent", { type: "manual", message: `Message cannot exceed ${CHARACTER_LIMIT} characters` });
-            return;
-        }
-
-        clearErrors("emailContent");
-
-        setStatus(getRequestStatusById("filtering_profanity")!);
-        let originalContent = editor?.getHTML();
-        let censoredContent = formService.cleanProfanity(originalContent);
-
-        // const { censored: checkedContent } = await formService.checkProfanityAsync(censoredContent);
-        // censoredContent = checkedContent;
-
-        callbacks?.onSubmitting();
-
-        let formObj: any = {
-            email: data.email,
-            content: censoredContent,
-            clientNonce: nonce,
-        };
-
-        if (originalContent !== censoredContent) {
-            formObj.originalContent = originalContent;
-        }
-
-        if (nonce) {
-            await formService.useNonce(nonce);
-            setNonce(null);
-
-            console.log("Form Data:", formObj);
-
-            setStatus(getRequestStatusById("processing")!);
-
-            // TODO: Insert the REST API call here
-            const response = {
-                status: true,
-                // TODO: replace with message from server
-                message: "Your message was sent successfully!"
+            if (formService.isProfane(data.email)) {
+                setError("email", { type: "manual", message: "Profanity detected in your email address." });
+                return;
             }
 
+            // const isValidEmail = await verifyEmail(data.email);
+            // if (!isValidEmail) {
+            //     setError("email", { type: "manual", message: "Invalid or disposable email address." });
+            //     return;
+            // }
+
+            if (!content || content.trim().length < MIN_LENGTH) {
+                setError("emailContent", { type: "manual", message: "Message is empty or too short" });
+                return;
+            }
+
+            if (content.length > CHARACTER_LIMIT) {
+                setError("emailContent", { type: "manual", message: `Message cannot exceed ${CHARACTER_LIMIT} characters` });
+                return;
+            }
+
+            clearErrors("emailContent");
+
+            setStatus(getRequestStatusById("filtering_profanity")!);
+            let originalContent = editor?.getHTML?.() ?? "";
+            let censoredContent = formService.cleanProfanity(originalContent);
+
+            // const { censored: checkedContent } = await formService.checkProfanityAsync(censoredContent);
+            // censoredContent = checkedContent;
+
+            editor?.commands?.clearContent?.();
+
+            let formObj: any = {
+                from: data.email,
+                body: censoredContent,
+                clientNonce: nonce,
+            };
+
+            if (originalContent !== censoredContent) {
+                formObj.originalContent = originalContent;
+            }
+
+            if (nonce) {
+                await formService.useNonce(nonce);
+                setNonce(null);
+
+                console.log("Form Data:", formObj);
+
+                setStatus(getRequestStatusById("processing")!);
+
+                // TODO: Insert the REST API call here
+
+                const contactFormReq = new ContactFormService()
+
+                const response = await contactFormReq.sendEmail(formObj);
+                const resData = response.data as { message: string };
+                console.log("Response from server:", response);
+
+                // const response = {
+                //     // TODO: replace with message from server
+                //     message: "Your message was sent successfully!"
+                // }
+
+                setStatus(getRequestStatusById("ready")!);
+
+                callbacks?.onStop?.();
+
+                sessionStorage.setItem("contactFormEmail", data.email);
+
+                formService.showSuccessMessage(resData.message);
+
+                formService.clearForm(formRef?.current as HTMLFormElement);
+
+                editor?.commands?.clearContent?.();
+
+                nonceManager.create().then(setNonce);
+                console.log("Form submitted successfully:", response);
+            }
+        } catch (error) {
+            console.error("Error submitting contact form:", error);
+        } finally {
             setStatus(getRequestStatusById("ready")!);
-
-            callbacks?.onStop();
-
-            sessionStorage.setItem("contactFormEmail", data.email);
-
-            formService.showSuccessMessage(response.message);
-
-            formService.clearForm(formRef?.current as HTMLFormElement);
-
-            editor?.commands?.clearContent();
-
-            nonceManager.create().then(setNonce);
-            console.log("Form submitted successfully:", response);
+            callbacks?.onStop?.();
         }
     }, [formService, nonceManager, setNonce, setStatus, callbacks, formRef, editorRef, setError, clearErrors, CHARACTER_LIMIT, MIN_LENGTH]);
 }

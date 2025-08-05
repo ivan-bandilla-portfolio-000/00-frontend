@@ -11,7 +11,7 @@ interface RobotProps {
 
 const Robot = ({ isMobile = false, isVisible = true, onLoaded }: RobotProps) => {
     const robot = useGLTF('/3dModels/cute_desktop_animated/scene.gltf');
-    const mixer = useRef<THREE.AnimationMixer>();
+    const mixer = useRef<THREE.AnimationMixer | null>(null);
 
     useEffect(() => {
         if (robot.animations.length) {
@@ -22,10 +22,12 @@ const Robot = ({ isMobile = false, isVisible = true, onLoaded }: RobotProps) => 
             // Notify parent that robot is loaded
             onLoaded?.();
         }
-        return () => mixer.current?.stopAllAction();
+        return () => {
+            mixer.current?.stopAllAction();
+        };
     }, [robot, onLoaded]);
 
-    useFrame((state, delta) => {
+    useFrame((_, delta) => {
         if (isVisible) {
             mixer.current?.update(delta);
         }

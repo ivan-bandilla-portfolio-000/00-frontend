@@ -8,35 +8,15 @@ import { getRequestStatusById, type RequestStatus } from '@/constants/requestSta
 import { Filter } from "bad-words";
 import { NonceManager } from '@/features/nonce/client/services/NonceManager';
 import { FormService } from '@/services/FormService';
-import { toast } from 'sonner';
 import { useContactFormValidation } from './hooks/useContactFormValidation'
-import { useContactFormSubmission } from './hooks/useContactFormSubmission'
-
-
-type MessageInputs = {
-    email: string,
-    emailContent: string,
-};
-
-const validationSchema = {
-    email: {
-        required: "Email is required",
-        pattern: {
-            value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-            message: "Invalid email address"
-        },
-        maxLength: {
-            value: 255,
-            message: "Email cannot exceed 255 characters"
-        }
-    }
-}
+import { useContactFormSubmission, type MessageInputs } from './hooks/useContactFormSubmission'
+import { emailRule } from "@/features/validations/constants/emailRule";
 
 const CHARACTER_LIMIT = 1000;
 const MIN_LENGTH = 5;
 
 type ContactFormProps = {
-    formRef?: React.RefObject<HTMLFormElement>;
+    formRef: React.RefObject<HTMLFormElement>;
     callbacks?: {
         onSubmitting?: () => void;
         onStop?: () => void;
@@ -83,7 +63,7 @@ const ContactForm = ({
         <form ref={formRef} id='contact-form' className='space-y-8' onSubmit={async (e) => {
             // @ts-ignore // the error is set manually in onValid function
             clearErrors("emailContent");
-            handleSubmit((data) => onValid(data, nonce))(e);
+            handleSubmit((data) => onValid(data as MessageInputs, nonce))(e);
             setStatus(getRequestStatusById("ready")!);
         }}>
             <div className='space-y-1'>
@@ -95,7 +75,7 @@ const ContactForm = ({
                     autoCapitalize='off'
                     autoFocus={true}
                     placeholder="Email"
-                    {...register("email", validationSchema.email)}
+                    {...register("email", emailRule)}
                     disabled={status.id !== getRequestStatusById("ready")!.id}
                 />
                 <span className='text-red-500'>{formErrors.email && <span>{formErrors.email.message}</span>}</span>

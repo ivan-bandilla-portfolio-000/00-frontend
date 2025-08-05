@@ -1,14 +1,24 @@
 import { motion } from "motion/react";
 
-import { styles } from "@/styles/js/styles";
 import { github } from "@/assets";
 import projects from "@/constants/projects";
-import { fadeIn, textVariant } from "@/utils/motion";
+import { fadeIn } from "@/utils/motion";
 import {
     CarouselItem,
 } from "@/components/ui/carousel"
+type Project = {
+    name: string;
+    description: string;
+    tags: { name: string; color: string }[];
+    image: string;
+    source_code_link: string;
+};
 
-const ProjectCard = ({ index, name, source_code_link }) => {
+interface ProjectCardProps extends Project {
+    index: number;
+}
+
+const ProjectCard = ({ index, source_code_link }: ProjectCardProps) => {
     return (
 
         <motion.div
@@ -27,7 +37,6 @@ const ProjectCard = ({ index, name, source_code_link }) => {
                         <img src={github} alt="github" className="w-1/2 h-1/2 object-contain" />
                     </div>
                 </div>
-                {/* <h3 className="text-xl font-bold">{name}</h3> */}
             </div>
         </motion.div>
 

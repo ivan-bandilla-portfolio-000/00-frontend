@@ -36,7 +36,7 @@ export const useLLMBubble = () => {
 
         const fetchLLM = async (attempt = 0) => {
             if (isFetching.current) return;
-            if (!llm || !llm.initialized || !llm.engine) return;
+            if (!llm || !llm.initialized || !llm.getEngine()) return;
             isFetching.current = true;
             try {
                 llm.setSystemPrompt(choosePortfolioContextInstruction);
@@ -59,7 +59,7 @@ export const useLLMBubble = () => {
         };
         fetchLLM();
         return () => { cancelled = true; };
-    }, [llm, llm?.initialized, llm?.engine]);
+    }, [llm, llm?.initialized, llm?.getEngine?.()]);
 
     return { bubbleText, showButtons };
 };

@@ -9,9 +9,7 @@ import Hyperspeed from '@/components/blocks/backgrounds/Hyperspeed/Hyperspeed';
 import { useTheme } from "@/features/theming/components/theme-provider";
 import {
     Card,
-    CardAction,
     CardContent,
-    CardDescription,
     CardFooter,
     CardHeader,
     CardTitle,
@@ -20,19 +18,19 @@ import { Button } from "@/components/ui/button";
 import CopiableLink from "@/components/ui/custom/CopiableLink";
 import ContactItem from "@/components/contact/ContactItem";
 import { MoveLeft } from "lucide-react";
-import { set } from "react-hook-form";
 import { FormService } from "@/services/FormService";
 import { NonceManager } from "@/features/nonce/client/services/NonceManager";
+import Loader from "@/components/Loader";
 
 const hyperspeedRef = React.createRef<any>();
 
-const HyperSpeedCanvas = forwardRef((props, ref) => {
+const HyperSpeedCanvas = forwardRef<any, {}>((_, ref) => {
     const { theme } = useTheme();
 
     const isDark =
         theme === "dark" ||
         (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
-    console.log("HyperSpeedCanvas isDark:", isDark);
+
     const hyperspeedOptions = {
         onSpeedUp: () => { },
         onSlowDown: () => { },
@@ -50,15 +48,15 @@ const HyperSpeedCanvas = forwardRef((props, ref) => {
         shoulderLinesWidthPercentage: 0.05,
         brokenLinesWidthPercentage: 0.1,
         brokenLinesLengthPercentage: 0.5,
-        lightStickWidth: [0.12, 0.5],
-        lightStickHeight: [1.3, 1.7],
-        movingAwaySpeed: [15, 20],
-        movingCloserSpeed: [-30, -40],
-        carLightsLength: [400 * 0.03, 400 * 0.2],
-        carLightsRadius: [0.05, 0.14],
-        carWidthPercentage: [0.3, 0.5],
-        carShiftX: [-0.8, 0.8],
-        carFloorSeparation: [0, 5],
+        lightStickWidth: [0.12, 0.5] as [number, number],
+        lightStickHeight: [1.3, 1.7] as [number, number],
+        movingAwaySpeed: [15, 20] as [number, number],
+        movingCloserSpeed: [-30, -40] as [number, number],
+        carLightsLength: [400 * 0.03, 400 * 0.2] as [number, number],
+        carLightsRadius: [0.05, 0.14] as [number, number],
+        carWidthPercentage: [0.3, 0.5] as [number, number],
+        carShiftX: [-0.8, 0.8] as [number, number],
+        carFloorSeparation: [0, 5] as [number, number],
         colors: {
             roadColor: !isDark ? 0xFFFFFF : 0x080808,
             islandColor: !isDark ? 0xFFFFFF : 0x0a0a0a,
@@ -71,13 +69,17 @@ const HyperSpeedCanvas = forwardRef((props, ref) => {
         }
     }
     return (
-        <Hyperspeed ref={ref} effectOptions={hyperspeedOptions} />
+        <Suspense fallback={<Loader />}>
+            <Hyperspeed ref={ref} effectOptions={hyperspeedOptions} />
+        </Suspense>
     );
 });
 
 
-const Contact = ({ llmReady, hyperspeedRef }: { llmReady: boolean, hyperspeedRef: React.Ref<any> }) => {
+const Contact = () => {
     const [status, setStatus] = useState(getRequestStatusById("ready")!);
+    const hyperspeedRef = useRef<any>(null);
+    const formRef = useRef<HTMLFormElement>(null);
 
     const handleSpeedUp = () => {
         hyperspeedRef.current?.speedUp();
@@ -89,13 +91,11 @@ const Contact = ({ llmReady, hyperspeedRef }: { llmReady: boolean, hyperspeedRef
         hyperspeedRef.current?.slowDown();
     };
 
-    const formRef = useRef<HTMLFormElement>(null);
-
     const handleExternalSubmit = () => {
         if (formRef.current) {
             setStatus(getRequestStatusById("validating")!);
             setTimeout(() => {
-                formRef.current.requestSubmit();
+                formRef.current?.requestSubmit();
             }, 300);
         }
     };
@@ -147,6 +147,7 @@ const Contact = ({ llmReady, hyperspeedRef }: { llmReady: boolean, hyperspeedRef
                     </CardHeader>
                     <CardContent className="px-8 opacity-100">
                         <ContactForm
+                            // @ts-ignore
                             formRef={formRef}
                             callbacks={{
                                 onSubmitting: handleSpeedUp,

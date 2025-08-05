@@ -1,7 +1,6 @@
 import { Filter } from "bad-words";
 import filipinoBadwords from "filipino-badwords-list";
 import { checkProfanity } from '@/features/validations/services/profanityService';
-import { verifyEmail } from '@/features/validations/services/emailValidationService';
 import { NonceManager } from '@/features/nonce/client/services/NonceManager';
 import { toast } from 'sonner';
 import type { ToastPositions } from '@/constants/toastPositions';
@@ -35,5 +34,4 @@ export const FormService = {
             return { censored: html, isProfane: false };
         }
     },
-    // Add more methods as needed
 };

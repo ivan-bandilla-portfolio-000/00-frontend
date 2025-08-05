@@ -1,11 +1,21 @@
 import { motion } from 'motion/react';
-
+import type { ComponentType } from 'react';
 import { styles } from '@/styles/js/styles';
 import { staggerContainer } from '@/utils/motion';
 
-const SectionWrapper = (Component, idName, options = {}) => {
-    function HOC() {
-        const { className = '', background = null, ...rest } = options;
+interface SectionWrapperOptions {
+    className?: string;
+    background?: React.ReactNode | ((props: any) => React.ReactNode);
+    [key: string]: any;
+}
+
+const SectionWrapper = (
+    Component: ComponentType<any>,
+    idName: string,
+    options: SectionWrapperOptions = {}
+) => {
+    function HOC(props: any) {
+        const { className = '', background = null } = options;
 
         return (
             <section className={className}>
@@ -20,7 +30,7 @@ const SectionWrapper = (Component, idName, options = {}) => {
                     <span className='hash-span' id={idName}>
                         &nbsp;
                     </span>
-                    <Component />
+                    <Component {...props} />
                 </motion.div>
             </section>
         )
@@ -28,4 +38,4 @@ const SectionWrapper = (Component, idName, options = {}) => {
     return HOC;
 }
 
-export default SectionWrapper
+export default SectionWrapper;

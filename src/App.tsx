@@ -2,7 +2,7 @@ import TopBar from '@/components/TopBar';
 import { Toaster } from "@/components/ui/sonner"
 
 import { LLMService, LLMContext } from '@/features/webllm/services/LLMService';
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState } from 'react';
 import Home from './pages/Home';
 import { Routes, Route, useLocation } from 'react-router';
 import Contact from './pages/Contact';
@@ -41,7 +41,7 @@ function App() {
           <Route path="/" element={<main><Home llmReady={llmReady} /></main>} />
           {/* <Route path="/projects" element={<main><Projects llmReady={llmReady} /></main>} /> */}
           {/* <Route path="/about" element={<main><About llmReady={llmReady} /></main>} /> */}
-          <Route path="/contact" element={<main><Contact llmReady={llmReady} /></main>} />
+          <Route path="/contact" element={<main><Contact /></main>} />
         </Routes>
       </LLMContext.Provider>
     </ThemeProvider >

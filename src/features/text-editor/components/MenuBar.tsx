@@ -1,6 +1,5 @@
-import React from 'react'
 import type { Editor } from '@tiptap/react'
-import { EditorContent, useEditor, useEditorState } from '@tiptap/react'
+import { useEditorState } from '@tiptap/react'
 import { Toggle } from '@/components/ui/toggle';
 import {
   AlignCenter,
@@ -16,13 +15,13 @@ import {
   List,
   ListOrdered,
   Redo2,
-  Strikethrough,
+  // Strikethrough,
   Undo2,
-  Youtube,
+  // Youtube,
 } from "lucide-react";
 
 
-function DefaultToolbar({ children }) {
+function DefaultToolbar({ children }: { children: React.ReactNode }) {
   return (
     <div className="border border-b-0 rounded-sm p-1 mb-1 space-x-2 z-50 ">
       {children}
@@ -38,25 +37,25 @@ function DefaultToolbar({ children }) {
 //   );
 // }
 
-function MenuBar({ editor, floating = false }: { editor: Editor, floating?: boolean }) {
+function MenuBar({ editor, /* floating = false */ }: { editor: Editor, floating?: boolean }) {
   if (!editor) {
     return null;
   }
 
-  const [height, setHeight] = React.useState(480)
-  const [width, setWidth] = React.useState(640)
+  // const [height, setHeight] = React.useState(480)
+  // const [width, setWidth] = React.useState(640)
 
-  const addYoutubeVideo = () => {
-    const url = prompt('Enter YouTube URL')
+  // const addYoutubeVideo = () => {
+  //   const url = prompt('Enter YouTube URL')
 
-    if (url) {
-      editor.commands.setYoutubeVideo({
-        src: url,
-        width: Math.max(320, parseInt(width, 10)) || 640,
-        height: Math.max(180, parseInt(height, 10)) || 480,
-      })
-    }
-  }
+  //   if (url) {
+  //     editor.commands.setYoutubeVideo({
+  //       src: url,
+  //       width: Math.max(320, parseInt(width, 10)) || 640,
+  //       height: Math.max(180, parseInt(height, 10)) || 480,
+  //     })
+  //   }
+  // }
 
   const editorState = useEditorState({
     editor,
