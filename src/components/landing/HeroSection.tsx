@@ -35,20 +35,22 @@ const HeroSection = () => {
     >
       <div className='absolute inset-0 z-10 flex items-center justify-center'>
         <div>
-          <h1 className='text-3xl font-bold text-gray-700 dark:text-gray-100 text-center '>
+          <h1 className=' text-sm md:text-base lg:text-3xl 2xl:text-4xl font-bold text-gray-700 dark:text-gray-100 text-center '>
             Aspiring Junior Backend Developer
           </h1>
-          <div className="text-balance font-black text-5xl max-w-3xl mx-auto my-4 text-center text-gray-900 dark:text-white">
-            Crafting Code That Scales, Building Solutions That Last
+          <div className="text-balance font-black text-base md:text-2xl lg:text-4xl 2xl:text-6xl mx-auto my-4 text-center text-gray-900 dark:text-white">
+            Crafting Code That Scales,
+            <br />
+            Building Solutions That Last
           </div>
           <p
-            className="text-center text-lg text-gray-500 dark:text-gray-400 font-medium mt-4"
+            className="text-center text-xs md:text-sm lg:text-lg 2xl:text-xl text-gray-500 dark:text-gray-400 font-medium mt-4"
           >
             This is Ivan Bandilla
           </p>
         </div>
       </div>
-    </motion.section>
+    </motion.section >
   )
 }
 
