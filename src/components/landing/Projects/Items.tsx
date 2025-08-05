@@ -22,21 +22,22 @@ const ProjectCard = ({ index, source_code_link }: ProjectCardProps) => {
     return (
 
         <motion.div
-            className="bg-primary p-5 rounded-2xl sm:w-[480px] w-full shadow"
+            className="bg-primary p-5 rounded-2xl lg:w-[480px] w-full h-[20svh] lg:h-auto shadow"
             variants={fadeIn('up', 'spring', Math.log(index + 1) * 0.5, 0.75)}
-
         >
             <div className="relative w-full h-[12dvw]">
                 {/* <img src={image} alt={name} className="object-cover w-full h-full rounded-2xl" /> */}
                 <div className="object-cover w-full h-full rounded-2xl" />
-                <div className="absolute inset-0 flex justify-end m-3 card-img_hover">
+                {source_code_link ? (<div className="absolute inset-0 flex justify-end m-3 card-img_hover">
                     <div
                         onClick={() => window.open(source_code_link, "_blank")}
                         className="black-gradient w-10 h-10 rounded-full flex justify-center items-center cursor-pointer"
                     >
                         <img src={github} alt="github" className="w-1/2 h-1/2 object-contain" />
                     </div>
-                </div>
+                </div>) : (
+                    ""
+                )}
             </div>
         </motion.div>
 

@@ -1,8 +1,14 @@
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
+import { useIsMobile } from "../../hooks/useIsMobile"; // adjust path if needed
 
 const HeroSection = () => {
-  const [height, setHeight] = useState("100vh");
+  const isMobile = useIsMobile();
+  const [height, setHeight] = useState(isMobile ? "50dvh" : "110dvh");
+
+  useEffect(() => {
+    setHeight(isMobile ? "50dvh" : "110dvh");
+  }, [isMobile]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -11,19 +17,21 @@ const HeroSection = () => {
       const scrollY = window.scrollY;
 
       if (scrollY < minScroll) {
-        setHeight("100vh");
+        setHeight(isMobile ? "50dvh" : "110dvh");
       } else if (scrollY > maxScroll) {
-        setHeight("70vh");
+        setHeight(isMobile ? "35dvh" : "70dvh");
       } else {
         const progress = (scrollY - minScroll) / (maxScroll - minScroll);
-        const newHeight = 100 - 30 * progress;
-        setHeight(`${newHeight}vh`);
+        const start = isMobile ? 50 : 100;
+        const end = isMobile ? 35 : 70;
+        const newHeight = start - (start - end) * progress;
+        setHeight(`${newHeight}dvh`);
       }
     };
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [isMobile]);
 
   return (
     <motion.section
@@ -38,7 +46,7 @@ const HeroSection = () => {
           <h1 className=' text-sm md:text-base lg:text-3xl 2xl:text-4xl font-bold text-gray-700 dark:text-gray-100 text-center '>
             Aspiring Junior Backend Developer
           </h1>
-          <div className="text-balance font-black text-base md:text-2xl lg:text-4xl 2xl:text-6xl mx-auto my-4 text-center text-gray-900 dark:text-white">
+          <div className="text-balance font-black text-base md:text-2xl lg:text-5xl 3xl:text-6xl mx-auto my-4 text-center text-gray-900 dark:text-white">
             Crafting Code That Scales,
             <br />
             Building Solutions That Last

@@ -9,6 +9,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
+    /* Font sizes */
     --text-xs: clamp(0.5rem, 0.75rem + 0.01dvw + 0.01dvh, 100dvw);
     --text-sm: clamp(0.625rem, 0.875rem + 0.03dvw + 0.03dvh, 100dvw);
     --text-base: clamp(0.75rem, 1rem + 0.05dvw + 0.05dvh, 100dvw);
@@ -22,6 +23,10 @@
     --text-7xl: clamp(3.5rem, 4.5rem + 1.5dvw + 1dvh, 100dvw);
     --text-8xl: clamp(6rem, 6.75rem + 2dvw + 1.5dvh, 100dvw);
     --text-9xl: clamp(7rem, 8rem + 2.5dvw + 2dvh, 100dvw);
+
+    /* Media breakpoints */
+    --breakpoint-3xl: 112rem;
+    --breakpoint-3xl: 128rem;
 }
 
 @theme inline {
