@@ -112,18 +112,10 @@ export function useContactFormSubmission({
 
                 setStatus(getRequestStatusById("processing")!);
 
-                // TODO: Insert the REST API call here
-
                 const contactFormReq = new ContactFormService()
 
                 const response = await contactFormReq.sendEmail(formObj);
                 const resData = response.data as { message: string };
-                console.log("Response from server:", response);
-
-                // const response = {
-                //     // TODO: replace with message from server
-                //     message: "Your message was sent successfully!"
-                // }
 
                 setStatus(getRequestStatusById("ready")!);
 
