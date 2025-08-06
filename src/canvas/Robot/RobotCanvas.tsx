@@ -1,18 +1,13 @@
 import { Suspense, useState, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { motion } from "framer-motion"
 import { OrbitControls, Preload } from '@react-three/drei';
 import { useInView } from 'react-intersection-observer';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import CanvasLoader from '@/components/Loader';
 import Robot from './Robot';
-// import SpeechBubbleOverlay from './SpeechBubbleOverlay'; // Remove direct import
 
-type RobotCanvasProps = {
-    translateY?: number;
-};
 
-const RobotCanvas = ({ translateY = 0 }: RobotCanvasProps) => {
+const RobotCanvas = () => {
     const isMobile = useIsMobile();
     const { ref, inView } = useInView({ threshold: 0.1 });
     const [robotLoaded, setRobotLoaded] = useState(false);
@@ -28,14 +23,8 @@ const RobotCanvas = ({ translateY = 0 }: RobotCanvasProps) => {
     }, []);
 
     return (
-        <motion.div ref={ref}
-            className=''
-            animate={{ y: translateY }}
-            style={{
-                position: "relative",
-                width: "100vw",
-                height: "100cqh",
-            }}
+        <div ref={ref}
+            className='relative w-full h-[100cqh]'
         >
             {robotLoaded && SpeechBubbleOverlay && <SpeechBubbleOverlay />}
 
@@ -56,7 +45,7 @@ const RobotCanvas = ({ translateY = 0 }: RobotCanvasProps) => {
                 </Suspense>
                 <Preload all />
             </Canvas>
-        </motion.div>
+        </div>
     );
 };
 

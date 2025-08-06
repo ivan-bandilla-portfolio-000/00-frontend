@@ -41,7 +41,7 @@ const HeroSection = () => {
       transition={{ type: "spring", stiffness: 100, damping: 20 }}
       style={{ height }}
     >
-      <div className='absolute inset-0 z-10 flex items-center justify-center'>
+      <div className='absolute inset-0 -top-12 z-10 flex items-center justify-center'>
         <div>
           <h1 className=' text-sm md:text-base lg:text-3xl 2xl:text-4xl font-bold text-gray-700 dark:text-gray-100 text-center '>
             Aspiring Junior Backend Developer

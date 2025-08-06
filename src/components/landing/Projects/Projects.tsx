@@ -5,7 +5,6 @@ import { SectionWrapper } from "@/hoc";
 import type { CarouselApi } from "@/components/ui/carousel";
 import { AnimatePresence, motion } from "motion/react";
 import { textVariant } from "@/utils/motion";
-import { styles } from "@/styles/js/styles";
 import {
     Carousel,
     CarouselContent,
@@ -22,27 +21,7 @@ const Projects = () => {
     const [count, setCount] = useState(0)
     const itemsLeft = count - (current + 1);
 
-    const [translateY, setTranslateY] = useState(0);
     const sectionRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        const ref = sectionRef.current;
-        if (!ref) return;
-
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                if (entry.intersectionRatio < 0.10) {
-                    setTranslateY(-10);
-                } else {
-                    setTranslateY(0);
-                }
-            },
-            { threshold: [0.10] }
-        );
-
-        observer.observe(ref);
-        return () => observer.disconnect();
-    }, []);
 
     useEffect(() => {
         if (!api) {
@@ -63,8 +42,6 @@ const Projects = () => {
             <motion.div
                 ref={sectionRef}
                 variants={textVariant(0)}
-                animate={{ y: translateY }}
-                transition={{ duration: 0.3 }}
                 className="flex flex-col h-dvh justify-center pointer-events-auto"
             >
                 <div className='flex items-center gap-2'>
