@@ -104,12 +104,12 @@ const Contact = () => {
     return (
         <div className="relative z-50 container h-full pointer-events-none">
             <div className="flex lg:h-[80svh] gap-16 pointer-events-none">
-                <Card className="flex-[0.90] opacity-[95%] gap-12 py-10 px-6 pointer-events-auto">
+                <Card className="flex-[0.90] opacity-[95%] gap-10 py-10 px-6 pointer-events-auto">
                     <CardHeader>
-                        <CardTitle className="nunito-text text-5xl font-black">Other Contact</CardTitle>
+                        <CardTitle className="nunito-text text-4xl font-black">Other Contact</CardTitle>
                         {/* <CardDescription>Card Description</CardDescription> */}
                     </CardHeader>
-                    <CardContent className="px-8 text-base space-y-2">
+                    <CardContent className="px-8 text-sm space-y-2">
                         <address className="space-y-2">
                             <ContactItem type="email" label="Email:">
                                 <CopiableLink type="email" href="othercontact@example.com">
@@ -140,9 +140,9 @@ const Contact = () => {
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="flex-[1.1] opacity-[98%] gap-12 py-10 px-6 pointer-events-auto" >
-                    <CardHeader className="select-none opacity-100">
-                        <CardTitle className="nunito-text text-5xl font-black">Direct Message</CardTitle>
+                <Card className="flex-[1.1] opacity-[98%] gap-10 py-10 px-6 overflow-y-auto pointer-events-auto" >
+                    <CardHeader className="select-none opacity-100 ">
+                        <CardTitle className="nunito-text text-4xl font-black">Direct Message</CardTitle>
                         {/* <CardDescription>Card Description</CardDescription> */}
                     </CardHeader>
                     <CardContent className="px-8 opacity-100">
@@ -159,7 +159,7 @@ const Contact = () => {
                             nonceManager={NonceManager}
                         />
                     </CardContent>
-                    <CardFooter className="select-none ">
+                    <CardFooter className="select-none -mt-4 ">
                         <Button variant="link" className="flex-1 text-left justify-start group">
                             <MoveLeft className="group-hover:-translate-x-1 transition-transform" />
                             <a href="/">Back to Home</a>

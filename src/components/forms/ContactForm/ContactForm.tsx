@@ -87,7 +87,7 @@ const ContactForm = ({
                     content: "",
                     // @ts-ignore // the error is set manually in onValid function
                     error: formErrors.emailContent,
-                    classNames: "min-h-[16rem] max-h-[30cqh] 2xl:max-h-dvh",
+                    classNames: "min-h-[14rem] max-h-[30cqh] 2xl:max-h-dvh",
                 }}
             />
         </form>

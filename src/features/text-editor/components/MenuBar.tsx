@@ -23,7 +23,7 @@ import {
 
 function DefaultToolbar({ children }: { children: React.ReactNode }) {
   return (
-    <div className="border border-b-0 rounded-sm p-1 mb-1 space-x-2 z-50 ">
+    <div className="border border-b-0 rounded-sm p-1 mb-1 space-x-1 z-50 ">
       {children}
     </div>
   );

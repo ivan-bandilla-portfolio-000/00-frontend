@@ -25,7 +25,7 @@ const SectionWrapper = (
                     initial="hidden"
                     whileInView="show"
                     viewport={{ once: true, amount: 0.25 }}
-                    className={`${styles.padding} container mx-auto relative z-0 pointer-events-none`}
+                    className={`${styles.padding} container lg:max-w-[80svw] mx-auto relative z-0 pointer-events-none`}
                 >
                     <span className='hash-span' id={idName}>
                         &nbsp;

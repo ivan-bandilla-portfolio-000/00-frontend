@@ -16,7 +16,7 @@ const SpeechBubble = ({
     onNo,
     onDismiss,
 }: SpeechBubbleProps) => (
-    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-full z-20 bg-background dark:bg-zinc-500 rounded-2xl ps-7 pe-8 py-4 shadow-lg text-base text-foreground text-pretty min-w-[220px] max-w-[320px] border-2 border-border">
+    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-full z-20 bg-background dark:bg-zinc-500 rounded-2xl ps-7 pe-8 py-4 shadow-lg text-sm md:text-base text-foreground text-pretty min-w-[220px] max-w-[320px] border-2 border-border">
         {onDismiss && (
             <button
                 onClick={onDismiss}
