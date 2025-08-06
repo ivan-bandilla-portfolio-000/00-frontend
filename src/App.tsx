@@ -7,11 +7,12 @@ import Home from './pages/Home';
 import { Routes, Route, useLocation } from 'react-router';
 import Contact from './pages/Contact';
 import { ThemeProvider } from "@/features/theming/components/theme-provider"
-
+import { ClientDBProvider } from './clientDB/context';
 const llm = new LLMService("You are a helpful assistant.");
 
 function App() {
   const [llmReady, setLlmReady] = useState(false);
+
 
   useEffect(() => {
     (async () => {
@@ -33,18 +34,20 @@ function App() {
   }, [location]);
 
   return (
-    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-      <LLMContext.Provider value={llm}>
-        <Toaster richColors closeButton />
-        <TopBar />
-        <Routes>
-          <Route path="/" element={<main><Home llmReady={llmReady} /></main>} />
-          {/* <Route path="/projects" element={<main><Projects llmReady={llmReady} /></main>} /> */}
-          {/* <Route path="/about" element={<main><About llmReady={llmReady} /></main>} /> */}
-          <Route path="/contact" element={<main><Contact /></main>} />
-        </Routes>
-      </LLMContext.Provider>
-    </ThemeProvider >
+    <ClientDBProvider>
+      <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+        <LLMContext.Provider value={llm}>
+          <Toaster richColors closeButton />
+          <TopBar />
+          <Routes>
+            <Route path="/" element={<main><Home llmReady={llmReady} /></main>} />
+            {/* <Route path="/projects" element={<main><Projects llmReady={llmReady} /></main>} /> */}
+            {/* <Route path="/about" element={<main><About llmReady={llmReady} /></main>} /> */}
+            <Route path="/contact" element={<main><Contact /></main>} />
+          </Routes>
+        </LLMContext.Provider>
+      </ThemeProvider >
+    </ClientDBProvider>
   )
 }
 
