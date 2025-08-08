@@ -2,7 +2,7 @@
 
 body {
 
-    .text-primary {
+    .text-primary-dark {
         color: #2e7d32;
         color: oklch(0.5234 0.1347 144.17);
     }

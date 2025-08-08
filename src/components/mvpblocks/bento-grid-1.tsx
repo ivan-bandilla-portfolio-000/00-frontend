@@ -77,7 +77,7 @@ const BentoGridItem = ({
               url={cta.url}
               isStatic={true}
               imageSrc={cta.urlPreview.imageSrc!}
-              className={cn(`${cta.urlPreview.className} text-primary mt-4 flex items-center text-sm`)}
+              className={cn(`${cta.urlPreview.className} text-primary-dark mt-4 flex items-center text-sm`)}
             >
               {cta.urlPreview.children ?? (
                 <span className="mr-1">{cta.urlText}</span>
@@ -87,7 +87,7 @@ const BentoGridItem = ({
           ) : (
             <LinkPreview
               url={cta.url}
-              className={cn(`${cta.urlPreview.className} text-primary mt-4 flex items-center text-sm`)}
+              className={cn(`${cta.urlPreview.className} text-primary-dark mt-4 flex items-center text-sm`)}
               // Spread only allowed dynamic props here if needed
               width={cta.urlPreview.width}
               height={cta.urlPreview.height}
@@ -102,7 +102,7 @@ const BentoGridItem = ({
           )
         ) : cta ? (
           <a href={cta.url} className='contents'>
-            <div className="text-primary mt-4 flex items-center text-sm">
+            <div className="text-primary-dark mt-4 flex items-center text-sm">
               <span className="mr-1">{cta.urlText}</span>
               {cta.icon && <cta.icon className="size-4 transition-all duration-500 group-hover:translate-x-2" />}
             </div>

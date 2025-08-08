@@ -127,7 +127,7 @@ const TopBar = () => {
         w-svw flex justify-between items-center fixed top-0 z-20
         feather-shadow bg-clip-padding backdrop-filter backdrop-blur-sm
         dark:bg-background
-        text-primary
+        text-primary-dark
     `}
             animate={{ height: shrink ? shrunkHeight : defaultHeight }}
             transition={{ duration: shrinkDuration }}

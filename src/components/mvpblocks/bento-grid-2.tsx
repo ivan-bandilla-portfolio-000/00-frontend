@@ -21,8 +21,8 @@ interface BentoActionProps {
 }
 
 interface BentoItem {
-  title: string;
-  description: string;
+  title: React.ReactNode;
+  description: React.ReactNode;
   icon: React.ReactNode;
   status?: string;
   tags?: string[];
@@ -55,7 +55,7 @@ const renderCTA = (cta: BentoActionProps | undefined) => {
         isStatic={true}
         imageSrc={cta.urlPreview.imageSrc!}
         className={cn(
-          "text-primary text-[calc(0.65em+0.2cqw)] font-medium opacity-75 transition-opacity group-hover:opacity-100 flex items-center",
+          "text-primary-dark text-[calc(0.25em+0.6cqw)] font-medium opacity-75 transition-opacity group-hover:opacity-100 flex items-center",
           cta.urlPreview.className
         )}
       >
@@ -75,7 +75,7 @@ const renderCTA = (cta: BentoActionProps | undefined) => {
       <LinkPreview
         url={cta.url}
         className={cn(
-          "text-primary text-[calc(0.65em+0.2cqw)] font-medium opacity-75 transition-opacity group-hover:opacity-100 flex items-center",
+          "text-primary-dark text-[calc(0.25em+0.6cqw)] font-medium opacity-75 transition-opacity group-hover:opacity-100 flex items-center",
           cta.urlPreview.className
         )}
         width={cta.urlPreview.width}
@@ -104,7 +104,7 @@ const renderCTA = (cta: BentoActionProps | undefined) => {
       <a
         href={cta.url}
         onClick={handleClick}
-        className="text-primary text-sm font-medium opacity-75 transition-opacity group-hover:opacity-100 flex items-center ease-in-out delay-50 group-hover:translate-x-2"
+        className="text-primary-dark text-sm font-medium opacity-75 transition-opacity group-hover:opacity-100 flex items-center ease-in-out delay-50 group-hover:translate-x-2"
       >
         <span className="mr-1">{cta.urlText || 'Explore'}</span>
         {cta.icon && <cta.icon className="size-3" />}
@@ -117,7 +117,7 @@ const renderCTA = (cta: BentoActionProps | undefined) => {
     return (
       <button
         onClick={handleClick}
-        className="text-primary text-sm font-medium opacity-75 transition-opacity group-hover:opacity-100 flex items-center"
+        className="text-primary-dark text-sm font-medium opacity-75 transition-opacity group-hover:opacity-100 flex items-center"
       >
         <span className="mr-1">{cta.urlText || 'Explore'}</span>
         {cta.icon && <cta.icon className="size-3 transition ease-in-out delay-50 group-hover:translate-x-2" />}
@@ -128,12 +128,17 @@ const renderCTA = (cta: BentoActionProps | undefined) => {
   return null;
 };
 
+function RichText({ content, className }: { content: React.ReactNode; className?: string }) {
+  if (typeof content === 'string' && /<\/?[a-z][\s\S]*>/i.test(content)) {
+    return <span className={className} dangerouslySetInnerHTML={{ __html: content }} />;
+  }
+  return <span className={className}>{content}</span>;
+}
+
 export default function BentoGrid({ items }: BentoGridProps) {
+
   return (
     <section className="relative overflow-clip py-12 pointer-events-auto" style={{ overflowClipMargin: "3rem" }}>
-      {/* Decorative elements */}
-      <div className="bg-primary/5 absolute top-20 -left-20 h-64 w-64 rounded-full blur-3xl" />
-      <div className="bg-primary/5 absolute -right-20 bottom-20 h-64 w-64 rounded-full blur-3xl" />
 
       <div className="relative mx-auto grid max-w-6xl grid-cols-1 gap-4 p-4 md:grid-cols-3">
         {items.map((item, index) => (
@@ -184,7 +189,7 @@ export default function BentoGrid({ items }: BentoGridProps) {
 
               <CardContent className="relative space-y-2 p-4 pt-0">
                 <h3 className="text-foreground ttext-lg md:text-xl font-medium tracking-tight text-pretty">
-                  {item.title}
+                  <RichText content={item.title} />
                   {item.meta && (
                     <span className="text-muted-foreground ml-2 text-xs font-normal">
                       {item.meta}
@@ -192,13 +197,13 @@ export default function BentoGrid({ items }: BentoGridProps) {
                   )}
                 </h3>
                 <p className="text-muted-foreground text-sm leading-relaxed text-pretty">
-                  {item.description}
+                  <RichText content={item.description} />
                 </p>
               </CardContent>
 
               <CardFooter className="relative p-4 mt-auto">
                 <div className="flex w-full items-end-safe justify-between gap-3">
-                  <div className="text-muted-foreground flex flex-wrap gap-2 text-xs">
+                  <div className="text-muted-foreground flex flex-wrap gap-1 lg:gap-2 text-[calc(0.25rem+0.5cqw)]">
                     {item.tags?.map((tag) => (
                       <span
                         key={`${item.title}-${tag}`}

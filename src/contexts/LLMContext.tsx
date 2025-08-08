@@ -26,7 +26,6 @@ export const LLMProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (loadingRef.current) return loadingRef.current;
 
     const load = async () => {
-      console.log("LLM load started");
       try {
         setStatus('loading');
         const { LLMService } = await import('@/features/webllm/services/LLMService');

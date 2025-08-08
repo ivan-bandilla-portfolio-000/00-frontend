@@ -4,7 +4,7 @@ import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip
 const items = [
     {
         title: `${new Date().getFullYear() - 2023}+ years of personal experience`,
-        meta: '100+ components',
+        // meta: '100+ components',
         description: 'Developer of web application client-centered projects since 2nd year college.',
         icon: <Code className="size-6" />,
         size: 'small' as const,
@@ -18,11 +18,11 @@ const items = [
         // status: 'Popular',
         tags: ['PHP', 'Laravel', 'Bootstrap', 'BSIT'],
         colSpan: 1,
-        hasPersistentHover: true,
+        // hasPersistentHover: true,
     },
     {
         title: 'Capstone Excellence Award',
-        description: 'Developed frontend and backend for award-winning HRMS application.',
+        description: 'Developed frontend and backend for award-winning HRMS featuring Google Cloud OCR with <strong>90.4% resume parsing accuracy</strong>, intelligent job ranking algorithm, and Gemini AI-powered performance improvement recommendations.',
         icon: <Award className="size-6" />,
         size: 'small' as const,
         cta: {
@@ -35,7 +35,7 @@ const items = [
     },
     {
         title: 'Research Innovation Award',
-        description: 'Built comprehensive web portal DMS solution for SGLGB.',
+        description: 'Built a centralized DMS portal for city barangay assessment with document tracking and validation, real-time chat, and automated pass/fail assessment reports.',
         icon: <Award className="size-6" />,
         size: 'small' as const,
         cta: {
