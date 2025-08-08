@@ -20,7 +20,8 @@ import ContactItem from "@/components/contact/ContactItem";
 import { MoveLeft } from "lucide-react";
 import { FormService } from "@/services/FormService";
 import { NonceManager } from "@/features/nonce/client/services/NonceManager";
-import Loader from "@/components/Loader";
+import CanvasLoader from "@/components/CanvasLoader";
+import SectionLoader from "@/components/SectionLoader";
 
 const hyperspeedRef = React.createRef<any>();
 
@@ -69,7 +70,7 @@ const HyperSpeedCanvas = forwardRef<any, {}>((_, ref) => {
         }
     }
     return (
-        <Suspense fallback={<Loader />}>
+        <Suspense fallback={<CanvasLoader />}>
             <Hyperspeed ref={ref} effectOptions={hyperspeedOptions} />
         </Suspense>
     );
@@ -145,36 +146,38 @@ const Contact = () => {
                         <CardTitle className="nunito-text text-4xl font-black">Direct Message</CardTitle>
                         {/* <CardDescription>Card Description</CardDescription> */}
                     </CardHeader>
-                    <CardContent className="px-8 opacity-100">
-                        <ContactForm
-                            // @ts-ignore
-                            formRef={formRef}
-                            callbacks={{
-                                onSubmitting: handleSpeedUp,
-                                onStop: handleSlowDown
-                            }}
-                            status={status}
-                            setStatus={setStatus}
-                            formService={FormService}
-                            nonceManager={NonceManager}
-                        />
-                    </CardContent>
-                    <CardFooter className="select-none -mt-4 ">
-                        <Button variant="link" className="flex-1 text-left justify-start group">
-                            <MoveLeft className="group-hover:-translate-x-1 transition-transform" />
-                            <a href="/">Back to Home</a>
-                        </Button>
-                        <Button
-                            type="button"
-                            onClick={handleExternalSubmit}
-                            className="flex-2 py-6"
-                            disabled={status.id !== "ready"}
-                        >
-                            {status.id !== "ready"
-                                ? `${status.label}...`
-                                : "Submit"}
-                        </Button>
-                    </CardFooter>
+                    <Suspense fallback={<SectionLoader />}>
+                        <CardContent className="px-8 opacity-100">
+                            <ContactForm
+                                // @ts-ignore
+                                formRef={formRef}
+                                callbacks={{
+                                    onSubmitting: handleSpeedUp,
+                                    onStop: handleSlowDown
+                                }}
+                                status={status}
+                                setStatus={setStatus}
+                                formService={FormService}
+                                nonceManager={NonceManager}
+                            />
+                        </CardContent>
+                        <CardFooter className="select-none -mt-4 ">
+                            <Button variant="link" className="flex-1 text-left justify-start group">
+                                <MoveLeft className="group-hover:-translate-x-1 transition-transform" />
+                                <a href="/">Back to Home</a>
+                            </Button>
+                            <Button
+                                type="button"
+                                onClick={handleExternalSubmit}
+                                className="flex-2 py-6"
+                                disabled={status.id !== "ready"}
+                            >
+                                {status.id !== "ready"
+                                    ? `${status.label}...`
+                                    : "Submit"}
+                            </Button>
+                        </CardFooter>
+                    </Suspense>
                 </Card>
             </div>
         </div>

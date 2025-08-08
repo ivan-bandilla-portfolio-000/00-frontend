@@ -1,25 +1,18 @@
+import { lazy, Suspense, useEffect } from 'react';
 import TopBar from '@/components/TopBar';
-import { Toaster } from "@/components/ui/sonner"
 
-import { LLMService, LLMContext } from '@/features/webllm/services/LLMService';
-import { useEffect, useState } from 'react';
-import Home from './pages/Home';
+const Toaster = lazy(() => import('@/components/ui/sonner').then(mod => ({ default: mod.Toaster })));
+const Home = lazy(() => import('@/pages/Home'));
 import { Routes, Route, useLocation } from 'react-router';
-import Contact from './pages/Contact';
+const Contact = lazy(() => import('@/pages/Contact'));
 import { ThemeProvider } from "@/features/theming/components/theme-provider"
-import { ClientDBProvider } from './clientDB/context';
-const llm = new LLMService("You are a helpful assistant.");
+import { ClientDBProvider } from '@/clientDB/context';
+import ErrorBoundary from '@/components/errors/ErrorBoundary';
+import { LLMProvider } from '@/contexts/LLMContext';
+import SimpleLoader from './components/SimpleLoader';
+
 
 function App() {
-  const [llmReady, setLlmReady] = useState(false);
-
-
-  useEffect(() => {
-    (async () => {
-      await llm.init();
-      setLlmReady(llm.requirementsMet && llm.initialized);
-    })();
-  }, []);
 
   const location = useLocation();
 
@@ -36,16 +29,26 @@ function App() {
   return (
     <ClientDBProvider>
       <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-        <LLMContext.Provider value={llm}>
-          <Toaster richColors closeButton />
+        <LLMProvider>
+          <Suspense fallback={null}>
+            <Toaster richColors closeButton />
+          </Suspense>
           <TopBar />
           <Routes>
-            <Route path="/" element={<main><Home llmReady={llmReady} /></main>} />
-            {/* <Route path="/projects" element={<main><Projects llmReady={llmReady} /></main>} /> */}
-            {/* <Route path="/about" element={<main><About llmReady={llmReady} /></main>} /> */}
-            <Route path="/contact" element={<main><Contact /></main>} />
+            <Route path="/" element={
+              <ErrorBoundary>
+                <Suspense fallback={<SimpleLoader />}>
+                  <main><Home /></main>
+                </Suspense>
+              </ErrorBoundary>
+            } />
+            <Route path="/contact" element={
+              <Suspense fallback={null}>
+                <main><Contact /></main>
+              </Suspense>
+            } />
           </Routes>
-        </LLMContext.Provider>
+        </LLMProvider>
       </ThemeProvider >
     </ClientDBProvider>
   )

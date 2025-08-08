@@ -37,10 +37,14 @@ function DefaultToolbar({ children }: { children: React.ReactNode }) {
 //   );
 // }
 
-function MenuBar({ editor, /* floating = false */ }: { editor: Editor, floating?: boolean }) {
-  if (!editor) {
-    return null;
-  }
+interface MenuBarProps {
+  editor: Editor;
+  disabled?: boolean;
+  // floating?: boolean; // left commented if you re-enable later
+}
+
+function MenuBar({ editor, disabled = false /*, floating = false */ }: MenuBarProps) {
+  if (!editor) return null;
 
   // const [height, setHeight] = React.useState(480)
   // const [width, setWidth] = React.useState(640)
@@ -91,7 +95,7 @@ function MenuBar({ editor, /* floating = false */ }: { editor: Editor, floating?
     },
   })
 
-  const Options = [
+  const options = [
     {
       icon: <Heading1 className="size-4" />,
       onClick: () => editor.chain().focus().toggleHeading({ level: 1 }).run(),
@@ -191,17 +195,24 @@ function MenuBar({ editor, /* floating = false */ }: { editor: Editor, floating?
   ];
 
 
-  const toolbarContent = Options.map((option, index) => (
-    <Toggle
-      key={index}
-      pressed={option.pressed ?? false}
-      onPressedChange={option.onClick}
-      disabled={!option.enabled}
-      title={option.shortcut ? `Shortcut: ${option.shortcut}` : undefined}
-    >
-      {option.icon}
-    </Toggle>
-  ));
+  const toolbarContent = options.map((option, i) => {
+    const isDisabled = disabled || !option.enabled;
+    return (
+      <Toggle
+        key={i}
+        pressed={option.pressed ?? false}
+        onPressedChange={() => {
+          if (isDisabled) return;
+          option.onClick();
+        }}
+        disabled={isDisabled}
+        title={option.shortcut ? `Shortcut: ${option.shortcut}` : undefined}
+        aria-disabled={isDisabled}
+      >
+        {option.icon}
+      </Toggle>
+    );
+  });
 
   return (
     // floating ? (

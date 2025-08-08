@@ -1,12 +1,15 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
-import RobotCanvas from "@/canvas/Robot/";
-import { useIsMobile } from "@/hooks/useIsMobile"; // <-- import the hook
+import { useIsMobile } from "@/hooks/useIsMobile";
+import ThreeErrorBoundary from "../errors/ThreeErrorBoundary";
+import SimpleLoader from "../SimpleLoader";
+
+const RobotCanvas = lazy(() => import("@/canvas/Robot/"));
 
 const MiscRobot = () => {
     const [sectionHeight, setSectionHeight] = useState("110dvh");
     const sectionRef = useRef<HTMLDivElement>(null);
-    const isMobile = useIsMobile(); // <-- use the hook
+    const isMobile = useIsMobile();
 
     // Set initial height on mount and when isMobile changes
     useEffect(() => {
@@ -24,7 +27,11 @@ const MiscRobot = () => {
             }}
         >
             <div className='absolute inset-0 z-10 flex items-center justify-center'>
-                <RobotCanvas />
+                <ThreeErrorBoundary>
+                    <Suspense fallback={<SimpleLoader />}>
+                        <RobotCanvas />
+                    </Suspense>
+                </ThreeErrorBoundary>
             </div>
         </motion.section>
     );

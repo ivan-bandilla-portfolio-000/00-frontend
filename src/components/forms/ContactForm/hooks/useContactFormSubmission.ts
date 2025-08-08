@@ -41,6 +41,10 @@ interface UseContactFormSubmissionProps {
     clearErrors: (name: keyof MessageInputs) => void;
     CHARACTER_LIMIT: number;
     MIN_LENGTH: number;
+    // Add these new props
+    isEditorReady: boolean;
+    fallbackContent: string;
+    setFallbackContent: (content: string) => void;
 }
 
 export function useContactFormSubmission({
@@ -55,26 +59,34 @@ export function useContactFormSubmission({
     clearErrors,
     CHARACTER_LIMIT,
     MIN_LENGTH,
+    isEditorReady,
+    fallbackContent,
+    setFallbackContent,
 }: UseContactFormSubmissionProps) {
     return useCallback(async (data: MessageInputs, nonce: string | null) => {
         try {
             await RateLimiter.throwIfLimited('contact-form', 3, 60000);
-            const editor = editorRef.current;
-            const content = editor?.getText?.() || "";
+
+            // Get content from either editor or fallback textarea
+            const getMessageContent = () => {
+                console.log('is ready ', isEditorReady)
+                console.log('content', editorRef?.current?.getText?.())
+                if (isEditorReady && editorRef.current?.getText) {
+                    return editorRef.current.getText();
+                }
+                // Use fallback content if editor isn't ready
+                return fallbackContent;
+            };
+
+            const content = getMessageContent() || "";
 
             if (formService.isProfane(data.email)) {
                 setError("email", { type: "manual", message: "Profanity detected in your email address." });
                 return;
             }
 
-            // const isValidEmail = await verifyEmail(data.email);
-            // if (!isValidEmail) {
-            //     setError("email", { type: "manual", message: "Invalid or disposable email address." });
-            //     return;
-            // }
-
             if (!content || content.trim().length < MIN_LENGTH) {
-                setError("emailContent", { type: "manual", message: "Message is empty or too short" });
+                setError("emailContent", { type: "manual", message: `Message must be at least ${MIN_LENGTH} characters long.` });
                 return;
             }
 
@@ -84,15 +96,27 @@ export function useContactFormSubmission({
             }
 
             clearErrors("emailContent");
+            callbacks?.onSubmitting?.();
 
             setStatus(getRequestStatusById("filtering_profanity")!);
-            let originalContent = editor?.getHTML?.() ?? "";
+
+            // Get HTML content for submission
+            let originalContent: string;
+            if (isEditorReady && editorRef.current?.getHTML) {
+                originalContent = editorRef.current.getHTML();
+            } else {
+                // Convert plain text to basic HTML for fallback
+                originalContent = `<p>${fallbackContent.replace(/\n/g, '</p><p>')}</p>`;
+            }
+
             let censoredContent = formService.cleanProfanity(originalContent);
 
-            // const { censored: checkedContent } = await formService.checkProfanityAsync(censoredContent);
-            // censoredContent = checkedContent;
-
-            editor?.commands?.clearContent?.();
+            // Clear the appropriate input
+            if (isEditorReady) {
+                editorRef.current?.commands?.clearContent?.();
+            } else {
+                setFallbackContent("");
+            }
 
             let formObj: any = {
                 from: data.email,
@@ -113,21 +137,22 @@ export function useContactFormSubmission({
                 setStatus(getRequestStatusById("processing")!);
 
                 const contactFormReq = new ContactFormService()
-
                 const response = await contactFormReq.sendEmail(formObj);
                 const resData = response.data as { message: string };
 
                 setStatus(getRequestStatusById("ready")!);
-
                 callbacks?.onStop?.();
 
                 sessionStorage.setItem("contactFormEmail", data.email);
-
                 formService.showSuccessMessage(resData.message);
-
                 formService.clearForm(formRef?.current as HTMLFormElement);
 
-                editor?.commands?.clearContent?.();
+                // Clear content appropriately
+                if (isEditorReady) {
+                    editorRef.current?.commands?.clearContent?.();
+                } else {
+                    setFallbackContent("");
+                }
 
                 nonceManager.create().then(setNonce);
                 console.log("Form submitted successfully:", response);
@@ -138,5 +163,20 @@ export function useContactFormSubmission({
             setStatus(getRequestStatusById("ready")!);
             callbacks?.onStop?.();
         }
-    }, [formService, nonceManager, setNonce, setStatus, callbacks, formRef, editorRef, setError, clearErrors, CHARACTER_LIMIT, MIN_LENGTH]);
+    }, [
+        formService,
+        nonceManager,
+        setNonce,
+        setStatus,
+        callbacks,
+        formRef,
+        editorRef,
+        setError,
+        clearErrors,
+        CHARACTER_LIMIT,
+        MIN_LENGTH,
+        isEditorReady,
+        fallbackContent,
+        setFallbackContent
+    ]);
 }

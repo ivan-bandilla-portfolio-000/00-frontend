@@ -1,0 +1,58 @@
+import { Code, Award, ArrowRight } from "lucide-react";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+
+const items = [
+    {
+        title: `${new Date().getFullYear() - 2023}+ years of personal experience`,
+        meta: '100+ components',
+        description: 'Developer of web application client-centered projects since 2nd year college.',
+        icon: <Code className="size-6" />,
+        size: 'small' as const,
+        cta: {
+            url: `${window.location.origin}/about`,
+            urlPreview: {
+                children: 'View My Journey',
+            },
+            icon: ArrowRight,
+        },
+        // status: 'Popular',
+        tags: ['PHP', 'Laravel', 'Bootstrap', 'BSIT'],
+        colSpan: 1,
+        hasPersistentHover: true,
+    },
+    {
+        title: 'Capstone Excellence Award',
+        description: 'Developed frontend and backend for award-winning HRMS application.',
+        icon: <Award className="size-6" />,
+        size: 'small' as const,
+        cta: {
+            url: 'https://www.facebook.com/share/p/1CZLTWo3vu/',
+            urlPreview: {
+                children: 'See the Achievement',
+            },
+            icon: ArrowRight,
+        }
+    },
+    {
+        title: 'Research Innovation Award',
+        description: 'Built comprehensive web portal DMS solution for SGLGB.',
+        icon: <Award className="size-6" />,
+        size: 'small' as const,
+        cta: {
+            url: 'https://zenodo.org/records/11188828',
+            urlPreview: {
+                children: (
+                    <Tooltip>
+                        <TooltipTrigger>Read the Research</TooltipTrigger>
+                        <TooltipContent side="bottom">
+                            <p className='text-pretty max-w-32'>Estimated Reading Time: 16 min</p>
+                        </TooltipContent>
+                    </Tooltip>
+                ),
+            },
+            icon: ArrowRight,
+        }
+    },
+];
+
+export default items;

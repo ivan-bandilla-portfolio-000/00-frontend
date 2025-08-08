@@ -3,7 +3,6 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
@@ -11,4 +10,23 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Keep React ecosystem together - include all React-related packages
+          'vendor-react': ['react', 'react-dom', 'react/jsx-runtime', 'react-router', 'react-router-dom'],
+
+          // Large libraries that depend on React should reference it correctly
+          'vendor-animation': ['framer-motion'],
+          'vendor-editor': ['@tiptap/react', '@tiptap/core', '@tiptap/starter-kit', '@tiptap/extension-highlight'],
+          'vendor-three': ['three', '@react-three/fiber', '@react-three/drei'],
+          'vendor-ui': ['@radix-ui/react-dropdown-menu', '@radix-ui/react-hover-card', '@radix-ui/react-label'],
+          'vendor-webllm': ['@mlc-ai/web-llm'],
+          'vendor-misc': ['bad-words', 'lovefield']
+        }
+      }
+    },
+    chunkSizeWarningLimit: 1000
+  }
 })

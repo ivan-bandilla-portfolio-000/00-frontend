@@ -85,11 +85,20 @@ function setSeededCookie() {
     document.cookie = `dbSeeded=true; path=/; max-age=${oneDay}`;
 }
 
+let dbInstance: lf.Database | null = null;
+let dbPromise: Promise<lf.Database> | null = null;
+
 // check if already seeded through cookies
 export async function maybeSeed() {
-    const db = await schemaBuilder.connect();
-    if (!hasSeeded()) {
-        await seedAll(db);
-    }
-    return db;
+    if (dbInstance) return dbInstance;
+    if (dbPromise) return dbPromise;
+    dbPromise = (async () => {
+        const db = await schemaBuilder.connect();
+        dbInstance = db;
+        if (!hasSeeded()) {
+            await seedAll(db);
+        }
+        return db;
+    })();
+    return dbPromise;
 }

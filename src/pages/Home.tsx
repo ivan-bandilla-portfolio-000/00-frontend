@@ -1,9 +1,12 @@
-import { HeroSection, MiscRobot, Projects, AboutMeChatLLM } from '@/components/landing';
-import { Suspense, useEffect } from 'react';
+import { HeroSection } from '@/components/landing';
+import { useEffect } from 'react';
 import { useClientDB } from '@/clientDB/context';
+import { lf } from '@/clientDB/schema';
+import SimpleLoader from '@/components/SimpleLoader';
+import LazyVisible from '@/components/LazyVisible';
 
 
-const Home = ({ llmReady }: { llmReady: boolean }) => {
+const Home = () => {
 
     const db = useClientDB();
 
@@ -23,8 +26,10 @@ const Home = ({ llmReady }: { llmReady: boolean }) => {
         db.select()
             .from(tags, projectTags)
             .where(
-                projectTags.projectId.eq(1),
-                projectTags.tagId.eq(tags.id)
+                lf.op.and(
+                    projectTags.projectId.eq(1),
+                    projectTags.tagId.eq(tags.id)
+                )
             )
             .groupBy(tags.id) // Group by tag id to avoid duplicates
             .exec()
@@ -35,22 +40,42 @@ const Home = ({ llmReady }: { llmReady: boolean }) => {
         // Example: Get projects with a specific tag (e.g., tagId = 2)
         db.select(projects.name, projects.description)
             .from(projects, projectTags)
-            .where(projectTags.tagId.eq(2), projectTags.projectId.eq(projects.id))
+            .where(
+                lf.op.and(
+                    projectTags.tagId.eq(2),
+                    projectTags.projectId.eq(projects.id)
+                )
+            )
             .exec()
             .then((rows: any[]) => {
                 console.log('Projects with tagId=2:', rows);
             });
     }, [db]);
 
+
+
     return (
         <>
             <HeroSection />
-            <MiscRobot />
-            <Projects />
-            <Suspense>
-                {/* <div>{llmReady ? "LLM is ready" : "LLM is not ready"}</div> */}
-                {llmReady && <AboutMeChatLLM />}
-            </Suspense>
+            <LazyVisible
+                loader={() => import('@/components/landing/featured-info')}
+                fallback={<SimpleLoader />}
+            />
+            <LazyVisible
+                loader={() => import('@/components/landing/MiscRobot')}
+                fallback={null}
+                rootMargin="300px"
+            />
+            <LazyVisible
+                loader={() => import('@/components/landing/Projects/Projects')}
+                fallback={<SimpleLoader />}
+                rootMargin="400px"
+            />
+            <LazyVisible
+                loader={() => import('@/components/landing/Chat')}
+                fallback={null}
+                componentProps={{ /* pass llmReady through after load if desired */ }}
+            />
         </>
     )
 }

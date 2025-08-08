@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { schemaBuilder, lf } from '@/clientDB/schema';
+import { lf } from '@/clientDB/schema';
 import { maybeSeed } from '@/clientDB/seeders';
 
 type DBContextType = lf.Database | null;
