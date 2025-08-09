@@ -99,13 +99,13 @@ const HeroSection = () => {
 
           {showText ? (
             <TextGenerateEffect
-              className="text-center md:text-[0.4em] text-[0.5em] text-gray-500 dark:text-gray-400 font-medium "
+              className="text-center md:text-[0.5em] text-[0.5em] text-gray-500 dark:text-gray-400 font-medium "
               words={"This is Ivan Bandilla"}
             />
           ) : (
-            <div className="text-center md:text-[0.4em] text-[0.5em] text-gray-500 dark:text-gray-400 font-medium lg:mt-7" aria-hidden="true">
+            <div className="text-center md:text-[0.5em] text-[0.5em] text-gray-500 dark:text-gray-400 font-medium lg:mt-4" aria-hidden="true">
               <div className="mt-1 lg:mt-4">
-                <div className=" leading-snug tracking-wide opacity-0" >
+                <div className="leading-snug tracking-wide opacity-0" >
                   This is Ivan Bandilla
                 </div>
               </div>

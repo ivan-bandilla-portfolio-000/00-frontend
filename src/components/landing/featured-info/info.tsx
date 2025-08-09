@@ -16,13 +16,13 @@ const items = [
             icon: ArrowRight,
         },
         // status: 'Popular',
-        tags: ['PHP', 'Laravel', 'Bootstrap', 'BSIT'],
+        tags: ['PHP', 'Laravel', 'BSIT'],
         colSpan: 1,
         // hasPersistentHover: true,
     },
     {
         title: 'Capstone Excellence Award',
-        description: 'Developed frontend and backend for award-winning HRMS featuring Google Cloud OCR with <strong>90.4% resume parsing accuracy</strong>, intelligent job ranking algorithm, and Gemini AI-powered performance improvement recommendations.',
+        description: 'Developed frontend and backend for award-winning HRMS featuring Google Cloud OCR with <strong class="font-black">90.4% resume parsing accuracy</strong>, intelligent job ranking algorithm, and Gemini AI-powered performance improvement recommendations.',
         icon: <Award className="size-6" />,
         size: 'small' as const,
         cta: {

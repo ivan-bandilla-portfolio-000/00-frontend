@@ -3,6 +3,9 @@ import { useEffect, useRef, useState, lazy, Suspense } from 'react'
 import BentoGrid2 from '@/components/mvpblocks/bento-grid-2'
 import items from "./info"
 import { SectionWrapper } from '@/hoc'
+import WrapButton from '@/components/ui/wrap-button'
+import { Globe } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 const Threads = lazy(() => import('@/components/blocks/backgrounds/Threads/Threads'))
 
 const background = () => {
@@ -145,9 +148,22 @@ const FeaturedInfo = () => {
 
   return (
     <>
-      <BentoGrid2 items={items} />
+      <div className='-mt-12'>
+        <BentoGrid2 items={items} />
+      </div>
       {/* <BentoGrid1 items={items} />
       <BentoGrid2 items={items} /> */}
+      <div className='pointer-events-auto mt-4 mb-12'>
+        <div className="w-full flex justify-center-safe gap-4">
+          <Button asChild variant={'outline'} className='h-[64px] flex items-center p-[11px] hover:!bg-primary cursor-pointer px-6 rounded-full'>
+            <a href="#projects">See My Work</a>
+          </Button>
+          <WrapButton className="mr-2 hover:mr-0 ease-in-out transition-all" href="/contact" arrowRotation="up">
+            <Globe className="animate-spin " />
+            Contact Me
+          </WrapButton>
+        </div>
+      </div>
 
     </>
   )
