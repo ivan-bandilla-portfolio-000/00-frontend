@@ -123,4 +123,7 @@ const Projects = () => {
     )
 }
 
-export default SectionWrapper(Projects, "projects", { className: "bg-gray-50 dark:bg-gray-950" })
+export default SectionWrapper(Projects, "projects", {
+    className: "bg-gray-50 dark:bg-gray-950",
+    renderAnchor: false,
+})

@@ -57,24 +57,30 @@ const Home = () => {
     return (
         <>
             <HeroSection />
+
             <LazyVisible
                 loader={() => import('@/components/landing/featured-info')}
                 fallback={<SimpleLoader />}
             />
+
             <LazyVisible
                 loader={() => import('@/components/landing/MiscRobot')}
                 fallback={null}
-                rootMargin="300px"
+                rootMargin="1000px"
             />
+
+
+            <span id="projects" className="block scroll-mb-[4rem]" aria-hidden="true" />
             <LazyVisible
                 loader={() => import('@/components/landing/Projects/Projects')}
                 fallback={<SimpleLoader />}
-                rootMargin="400px"
+                rootMargin="500px"
             />
+
             <LazyVisible
                 loader={() => import('@/components/landing/Chat')}
                 fallback={null}
-                componentProps={{ /* pass llmReady through after load if desired */ }}
+                componentProps={{}}
             />
         </>
     )

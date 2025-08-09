@@ -6,6 +6,8 @@ import { staggerContainer } from '@/utils/motion';
 interface SectionWrapperOptions {
     className?: string;
     background?: React.ReactNode | ((props: any) => React.ReactNode);
+    renderAnchor?: boolean; // new
+    anchorOffsetClass?: string; // new
     [key: string]: any;
 }
 
@@ -15,7 +17,12 @@ const SectionWrapper = (
     options: SectionWrapperOptions = {}
 ) => {
     function HOC(props: any) {
-        const { className = '', background = null } = options;
+        const {
+            className = '',
+            background = null,
+            renderAnchor = true,
+            anchorOffsetClass = 'scroll-mt-[64px]', // adjust to TopBar height
+        } = options;
 
         return (
             <section className={className}>
@@ -27,9 +34,11 @@ const SectionWrapper = (
                     viewport={{ once: true, amount: 0.25 }}
                     className={`${styles.padding} container lg:max-w-[80svw] mx-auto relative z-0 pointer-events-none`}
                 >
-                    <span className='hash-span' id={idName}>
-                        &nbsp;
-                    </span>
+                    {renderAnchor && (
+                        <span className={`hash-span ${anchorOffsetClass}`} id={idName} aria-hidden="true">
+                            &nbsp;
+                        </span>
+                    )}
                     <Component {...props} />
                 </motion.div>
             </section>
