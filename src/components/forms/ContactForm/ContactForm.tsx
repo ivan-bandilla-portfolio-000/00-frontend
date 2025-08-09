@@ -42,7 +42,9 @@ const EditorSwitch: React.FC<EditorSwitchProps> = ({
     setFallbackContent,
     editorRef,
 }) => (
-    <div className="flex items-center justify-between gap-3 text-xs rounded border border-border/60 px-3 py-2 mb-2 bg-muted/30">
+    <div className="flex items-center justify-between gap-3 text-xs rounded border border-border/60 px-3 py-2 mb-2 bg-muted/30"
+        onMouseEnter={() => { import('@/features/text-editor/components'); }}
+    >
         <div className="flex flex-col">
             <span className="font-medium">Rich Text Editor</span>
             <span className="text-[10px] opacity-70">

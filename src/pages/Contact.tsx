@@ -1,11 +1,10 @@
-import React, { forwardRef, useRef, useState } from "react";
+import { forwardRef, useRef, useState, useEffect, lazy, createRef } from "react";
 import { getRequestStatusById } from "@/constants/requestStatuses";
 import personalInfo from "@/constants/personalInfo";
 import ContactForm from '@/components/forms/ContactForm/';
 
 import { SectionWrapper } from '@/hoc';
 import { Suspense } from 'react';
-import Hyperspeed from '@/components/blocks/backgrounds/Hyperspeed/Hyperspeed';
 import { useTheme } from "@/features/theming/components/theme-provider";
 import {
     Card,
@@ -20,10 +19,10 @@ import ContactItem from "@/components/contact/ContactItem";
 import { MoveLeft } from "lucide-react";
 import { FormService } from "@/services/FormService";
 import { NonceManager } from "@/features/nonce/client/services/NonceManager";
-import CanvasLoader from "@/components/CanvasLoader";
 import SectionLoader from "@/components/SectionLoader";
+const Hyperspeed = lazy(() => import('@/components/blocks/backgrounds/Hyperspeed/Hyperspeed'));
 
-const hyperspeedRef = React.createRef<any>();
+const hyperspeedRef = createRef<any>();
 
 const HyperSpeedCanvas = forwardRef<any, {}>((_, ref) => {
     const { theme } = useTheme();
@@ -70,11 +69,26 @@ const HyperSpeedCanvas = forwardRef<any, {}>((_, ref) => {
         }
     }
     return (
-        <Suspense fallback={<CanvasLoader />}>
+        <Suspense fallback={null}>
             <Hyperspeed ref={ref} effectOptions={hyperspeedOptions} />
         </Suspense>
     );
 });
+
+const DeferredBackground: React.FC = () => {
+    const [ready, setReady] = useState(false);
+    useEffect(() => {
+        const idle = (window as any).requestIdleCallback ?? ((fn: any) => setTimeout(fn, 300));
+        const id = idle(() => setReady(true));
+        return () => {
+            const cancel = (window as any).cancelIdleCallback ?? clearTimeout;
+            cancel(id);
+        };
+    }, []);
+    if (!ready) return null;
+    return <HyperSpeedCanvas ref={hyperspeedRef} />;
+};
+
 
 
 const Contact = () => {
@@ -191,6 +205,6 @@ export default SectionWrapper(
     "contact",
     {
         className: "h-dvh bg-gray-50 dark:bg-gray-950",
-        background: <HyperSpeedCanvas ref={hyperspeedRef} />
+        background: <DeferredBackground />
     }
 );

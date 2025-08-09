@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback, lazy, Suspense, memo } from 'react'
 import { useLocation } from 'react-router';
 import { styles } from '@/styles/js/styles'
 import { motion } from 'motion/react'
@@ -17,7 +17,7 @@ import {
     // NavigationMenuViewport,
 } from "@/components/ui/navigation-menu";
 import { useIdInViewport } from '@/hooks/useIdInViewport'
-import IconLink from './ui/custom/IconLink'
+const IconLink = lazy(() => import('./ui/custom/IconLink'))
 import { ModeToggle } from '@/features/theming/components/mode-toggle';
 
 const shrinkDuration: number = 0.3; // seconds
@@ -30,11 +30,11 @@ interface NavAreaProps {
     isHeroVisible: boolean;
 }
 
-const NavArea: React.FC<NavAreaProps> = ({ active, setActive, shrink, className, isHeroVisible }) => {
+const NavArea: React.FC<NavAreaProps> = memo(({ active, setActive, shrink, className, isHeroVisible }) => {
     const location = useLocation();
     const currentPath = location.pathname;
 
-    const getHref = (link: NavLink) => {
+    const getHref = useCallback((link: NavLink) => {
         if (link.type === 'anchor') {
             // If already on the correct page, just use #id
             if (link.baseUrl === currentPath) {
@@ -44,7 +44,7 @@ const NavArea: React.FC<NavAreaProps> = ({ active, setActive, shrink, className,
             return `${link.baseUrl}#${link.id}`;
         }
         return link.url ?? "#";
-    };
+    }, [currentPath]);
 
     const isAnchorToCurrentPage = (link: NavLink) => {
         // Internal if anchor and baseUrl matches current path
@@ -53,21 +53,24 @@ const NavArea: React.FC<NavAreaProps> = ({ active, setActive, shrink, className,
             : link.type;
     };
 
+    const links = useMemo(
+        () => navLinks.filter(link => !(link.id === 'hero' && isHeroVisible)),
+        [isHeroVisible]
+    );
+
     return (
         <NavigationMenu className={className ?? ""}>
             <NavigationMenuList className="gap-8">
-                {navLinks
-                    .filter(link => !(link.id === 'hero' && isHeroVisible))
-                    .map((link: NavLink, idx: number) => (
-                        <NavigationMenuItem key={link.id ?? idx}>
-                            <motion.div
-                                animate={{ scale: shrink ? 0.85 : 1 }}
-                                transition={{ duration: shrinkDuration }}
-                                style={{ display: 'inline-block' }}
-                            >
-                                <NavigationMenuLink
-                                    active={active === link.id}
-                                    className={`
+                {links.map((link: NavLink, idx: number) => (
+                    <NavigationMenuItem key={link.id ?? idx}>
+                        <motion.div
+                            animate={{ scale: shrink ? 0.85 : 1 }}
+                            transition={{ duration: shrinkDuration }}
+                            style={{ display: 'inline-block' }}
+                        >
+                            <NavigationMenuLink
+                                active={active === link.id}
+                                className={`
     text-md hover:underline font-medium ps-6 pe-5 group/link-icon
     relative
     dark:text-green-400
@@ -83,19 +86,21 @@ const NavArea: React.FC<NavAreaProps> = ({ active, setActive, shrink, className,
     dark:hover:before:opacity-100
     transition-all
 `}
-                                    href={getHref(link)}
-                                    onClick={() => setActive(link.id ?? "")}
-                                >
-                                    <span className='-translate-x-2'>{link.title}</span>
+                                href={getHref(link)}
+                                onClick={() => setActive(link.id ?? "")}
+                            >
+                                <span className='-translate-x-2'>{link.title}</span>
+                                <Suspense fallback={null}>
                                     <IconLink type={isAnchorToCurrentPage(link)} />
-                                </NavigationMenuLink>
-                            </motion.div>
-                        </NavigationMenuItem>
-                    ))}
+                                </Suspense>
+                            </NavigationMenuLink>
+                        </motion.div>
+                    </NavigationMenuItem>
+                ))}
             </NavigationMenuList>
         </NavigationMenu>
     )
-}
+})
 
 const TopBar = () => {
     const [shrink, setShrink] = useState(false)

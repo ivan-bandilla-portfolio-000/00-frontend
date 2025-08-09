@@ -5,7 +5,12 @@ import Highlight from '@tiptap/extension-highlight'
 import Typography from '@tiptap/extension-typography'
 import TextAlign from '@tiptap/extension-text-align'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
-import { all, createLowlight } from 'lowlight'
+import { createLowlight } from 'lowlight'
+import javascript from 'highlight.js/lib/languages/javascript'
+import json from 'highlight.js/lib/languages/json'
+import css from 'highlight.js/lib/languages/css'
+import bash from 'highlight.js/lib/languages/bash'
+import php from 'highlight.js/lib/languages/php'
 import Emoji, { gitHubEmojis } from '@tiptap/extension-emoji'
 import Youtube from '@tiptap/extension-youtube'
 import { Placeholder, CharacterCount } from '@tiptap/extensions'
@@ -15,7 +20,12 @@ import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils';
 import { environment } from '@/app/helpers/config';
 
-const lowlight = createLowlight(all)
+const lowlight = createLowlight()
+lowlight.register('javascript', javascript); lowlight.register('js', javascript);
+lowlight.register('php', php);
+lowlight.register('json', json);
+lowlight.register('css', css);
+lowlight.register('bash', bash); lowlight.register('sh', bash);
 
 const CHARACTER_LIMIT = 1000;
 

@@ -34,8 +34,8 @@ const items = [
         }
     },
     {
-        title: 'Research Innovation Award',
-        description: 'Built a centralized DMS portal for city barangay assessment with document tracking and validation, real-time chat, and automated pass/fail assessment reports.',
+        title: 'Research Excellence Award',
+        description: 'Built a centralized DMS portal for city barangay assessment with document tracking and validation, real-time chat, and pass/fail assessment reports.',
         icon: <Award className="size-6" />,
         size: 'small' as const,
         cta: {

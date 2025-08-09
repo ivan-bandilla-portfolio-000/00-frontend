@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const Captcha = (siteKey) => {
+const Captcha = (siteKey: string) => {
     const [isRecaptchaReady, setIsRecaptchaReady] = useState(false);
 
     useEffect(() => {
@@ -15,7 +15,7 @@ const Captcha = (siteKey) => {
         }
     }, [siteKey]);
 
-    const executeRecaptcha = useCallback(async (action) => {
+    const executeRecaptcha = useCallback(async (action: string) => {
         if (isRecaptchaReady && window.grecaptcha) {
             return await window.grecaptcha.execute(siteKey, { action });
         }

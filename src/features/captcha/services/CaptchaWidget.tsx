@@ -1,7 +1,12 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-const CaptchaWidget = ({ siteKey, callback }) => {
-    const recaptchaRef = useRef(null);
+interface CaptchaWidgetProps {
+    siteKey: string;
+    callback: (token: string) => void;
+}
+
+const CaptchaWidget = ({ siteKey, callback }: CaptchaWidgetProps) => {
+    const recaptchaRef = useRef<HTMLDivElement>(null);
     const [isRecaptchaLoaded, setIsRecaptchaLoaded] = useState(false);
 
     // Define the component function to be called when reCAPTCHA loads
@@ -20,6 +25,7 @@ const CaptchaWidget = ({ siteKey, callback }) => {
             script.async = true;
             script.defer = true;
             document.head.appendChild(script);
+            // @ts-ignore
         } else if (window.grecaptcha && window.grecaptcha.render) {
             // If reCAPTCHA is already loaded, call the function directly
             onRecaptchaLoad();
@@ -27,22 +33,22 @@ const CaptchaWidget = ({ siteKey, callback }) => {
 
         // Clean up the global callback on component unmount
         return () => {
-            window.onRecaptchaLoad = null;
+            window.onRecaptchaLoad = undefined;
         };
     }, []);
 
     useEffect(() => {
-        if (isRecaptchaLoaded) {
+        if (isRecaptchaLoaded && window.grecaptcha && window.grecaptcha.render) {
             window.grecaptcha.render(recaptchaRef.current, {
-                'sitekey': siteKey,
-                'callback': callback // Callback function to handle the token
+                sitekey: siteKey,
+                callback: callback
             });
         }
-    }, [isRecaptchaLoaded]);
+    }, [isRecaptchaLoaded, siteKey, callback]);
 
     return (
         <div ref={recaptchaRef}></div>
     );
 }
 
-export default CaptchaWidget
+export default CaptchaWidget;
