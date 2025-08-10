@@ -105,9 +105,11 @@ const NavArea: React.FC<NavAreaProps> = memo(({ active, setActive, shrink, class
 const TopBar = () => {
     const [shrink, setShrink] = useState(false)
     const [active, setActive] = useState(navLinks[0].id)
+    const [heroHasLoaded, setHeroHasLoaded] = useState(false);
 
     const isMobile: boolean | undefined = useIsMobile();
     const isHeroVisible = useIdInViewport('hero');
+    console.log('isHeroVisible:', isHeroVisible);
 
     const defaultHeight: number | undefined = isMobile === undefined ? 64 : (isMobile ? 48 : 64)
     const shrunkHeight: number | undefined = isMobile === undefined ? 48 : (isMobile ? 40 : 48)
@@ -125,6 +127,12 @@ const TopBar = () => {
         return () => window.removeEventListener('scroll', handleScroll)
     }, [])
 
+    useEffect(() => {
+        if (isHeroVisible && !heroHasLoaded) {
+            setHeroHasLoaded(true);
+        }
+    }, [isHeroVisible, heroHasLoaded]);
+
     return (
         <motion.div
             className={`
@@ -132,7 +140,7 @@ const TopBar = () => {
         w-svw flex justify-between items-center fixed top-0 z-20
         feather-shadow bg-clip-padding backdrop-filter backdrop-blur-sm
         dark:bg-background
-        text-primary-dark
+        text-primary-dark  dark:text-primary
     `}
             animate={{ height: shrink ? shrunkHeight : defaultHeight }}
             transition={{ duration: shrinkDuration }}
@@ -159,7 +167,11 @@ const TopBar = () => {
                     style={{ fontWeight: 'bold', fontSize: fontSize ?? defaultFontSize }}
                     className="relative"
                 >
-                    <span className='nunito-text font-black'>{!isHeroVisible && personalInfo.name}</span>
+                    <span
+                        className={`nunito-text font-black transition-opacity duration-500 ${heroHasLoaded && !isHeroVisible ? 'opacity-100' : 'opacity-0'}`}
+                    >
+                        {heroHasLoaded && !isHeroVisible && personalInfo.name}
+                    </span>
                 </motion.div>
             </div>
 

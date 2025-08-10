@@ -96,8 +96,9 @@ const background = () => {
       <div
         ref={ref}
         aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+        className="pointer-events-none absolute inset-0 -z-10 overflow-clip"
       >
+
         {/* Base gradient (light / dark) */}
         <div className="
           absolute inset-0
@@ -155,10 +156,10 @@ const FeaturedInfo = () => {
       <BentoGrid2 items={items} /> */}
       <div className='pointer-events-auto mt-4 mb-12'>
         <div className="w-full flex justify-center-safe gap-4">
-          <Button asChild variant={'outline'} className='h-[64px] flex items-center p-[11px] hover:!bg-primary cursor-pointer px-6 rounded-full'>
+          <Button asChild variant={'outline'} className='h-[64px] flex items-center p-[11px] hover:!bg-primary cursor-pointer px-6 rounded-lg'>
             <a href="#projects">See My Work</a>
           </Button>
-          <WrapButton className="mr-2 hover:mr-0 ease-in-out transition-all" href="/contact" arrowRotation="up">
+          <WrapButton className="mr-2 hover:mr-0 ease-in-out transition-all " href="/contact" arrowRotation="up">
             <Globe className="animate-spin " />
             Contact Me
           </WrapButton>

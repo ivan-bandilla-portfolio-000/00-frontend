@@ -3,9 +3,9 @@ import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip
 
 const items = [
     {
-        title: `${new Date().getFullYear() - 2023}+ years of personal experience`,
+        title: `<span class="select-none">${new Date().getFullYear() - 2023}+ years of personal experience</span>`,
         // meta: '100+ components',
-        description: 'Developer of web application client-centered projects since 2nd year college.',
+        description: '<span class="select-none">Developer of web application client-centered projects since 2nd year college.</span>',
         icon: <Code className="size-6" />,
         size: 'small' as const,
         cta: {
@@ -21,8 +21,8 @@ const items = [
         // hasPersistentHover: true,
     },
     {
-        title: 'Capstone Excellence Award',
-        description: 'Developed frontend and backend for award-winning HRMS featuring Google Cloud OCR with <strong class="font-black">90.4% resume parsing accuracy</strong>, intelligent job ranking algorithm, and Gemini AI-powered performance improvement recommendations.',
+        title: '<span class="select-none">Capstone Excellence Award</span>',
+        description: '<span class="select-none">Developed frontend and backend for award-winning HRMS featuring Google Cloud OCR with <strong class="font-black">90.4% resume parsing accuracy</strong>, intelligent job ranking algorithm, and Gemini AI-powered performance improvement recommendations.</span>',
         icon: <Award className="size-6" />,
         size: 'small' as const,
         cta: {
@@ -34,8 +34,8 @@ const items = [
         }
     },
     {
-        title: 'Research Excellence Award',
-        description: 'Built a centralized DMS portal for city barangay assessment with document tracking and validation, real-time chat, and pass/fail assessment reports.',
+        title: '<span class="select-none">Research Excellence Award</span>',
+        description: '<span class="select-none">Built a centralized DMS portal for city barangay assessment with document tracking and validation, real-time chat, and pass/fail assessment reports.</span>',
         icon: <Award className="size-6" />,
         size: 'small' as const,
         cta: {

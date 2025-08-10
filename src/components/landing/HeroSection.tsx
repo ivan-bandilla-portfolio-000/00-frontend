@@ -27,6 +27,69 @@ const Background = () => {
   )
 }
 
+const FeaturedTechStack = () => {
+  const [techStack, setTechStack] = useState<
+    { name: string; icon: string; alt: string }[]
+  >([]);
+
+  const [imagesLoaded, setImagesLoaded] = useState(0);
+
+  useEffect(() => {
+    setTimeout(() => {
+      setTechStack([
+        {
+          name: "Laravel",
+          icon: "https://pbs.twimg.com/profile_images/1894434601403101184/tLZjRRT8_200x200.jpg",
+          alt: "Laravel Icon",
+        },
+        {
+          name: "PHP",
+          icon: "https://www.php.net/favicon-32x32.png?v=2",
+          alt: "PHP Icon",
+        },
+      ]);
+    }, 800);
+  }, []);
+
+  const handleImageLoad = () => {
+    setImagesLoaded((count) => count + 1);
+  };
+
+  if (techStack.length === 0) {
+    return null;
+  }
+
+  const isHidden = imagesLoaded < techStack.length ? "opacity-0 pointer-events-none aria-hidden" : "";
+
+  return (
+    <div className={`absolute bottom-28 w-full flex justify-end-safe items-center-safe text-xs z-20 transition-opacity duration-300 ${isHidden} `}>
+      <hgroup className="px-28 min-w-sm text-center space-x-2">
+        <span className="inline-block translate-y-[2px]">
+          <i>Proficient in</i>
+        </span>
+        <div className="contents">
+          {techStack.map((tech) => (
+            <span key={tech.name} className="px-1 py-1 space-x-0.5">
+              <img
+                className="inline-block rounded-md"
+                loading="lazy"
+                decoding="async"
+                src={tech.icon}
+                draggable="false"
+                width={28}
+                height={28}
+                alt={tech.alt}
+                onLoad={handleImageLoad}
+              />
+              {/* <span>{tech.name}</span> */}
+            </span>
+          ))}
+        </div>
+      </hgroup>
+    </div>
+  );
+};
+
 const HeroSection = () => {
   const isMobile = useIsMobile();
   const [height, setHeight] = useState(isMobile ? "50dvh" : "110dvh");
@@ -73,7 +136,7 @@ const HeroSection = () => {
 
   return (
     <motion.section
-      className='relative w-full overflow-hidden mx-auto bg-gray-100 dark:bg-gray-800 transition-colors'
+      className='relative w-full overflow-hidden mx-auto bg-gray-100 dark:bg-gray-800 transition-colors select-none'
       id='hero'
       animate={{ height }}
       transition={{ type: "spring", stiffness: 100, damping: 20 }}
@@ -113,6 +176,7 @@ const HeroSection = () => {
           )}
         </div>
       </div>
+      <FeaturedTechStack />
     </motion.section >
   )
 }

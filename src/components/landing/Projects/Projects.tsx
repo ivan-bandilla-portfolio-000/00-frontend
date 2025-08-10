@@ -53,7 +53,7 @@ const Projects = () => {
                         icon={<ArrowUpRight className='w-4' />}
                     />
                 </div>
-                <div className="flex flex-wrap lg:flex-nowrap justify-center-safe lg:justify-start gap-18 mt-16">
+                <div className="flex flex-wrap lg:flex-nowrap justify-center-safe lg:justify-start gap-18 mt-16 ">
                     <div className="flex flex-col order-2 lg:order-1 gap-8">
                         <hgroup>
                             <AnimatePresence mode="wait">
@@ -63,7 +63,7 @@ const Projects = () => {
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -10 }}
                                     transition={{ duration: 0.3 }}
-                                    className='text-xl lg:text-3xl font-bold'
+                                    className='text-xl lg:text-3xl font-bold select-none'
                                 >
                                     {projects[current]?.name}
                                 </motion.h3>
@@ -75,7 +75,7 @@ const Projects = () => {
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -10 }}
                                     transition={{ duration: 0.3, delay: 0.05 }}
-                                    className='mt-2 text-base lg:text-lg text-pretty text-gray-600 dark:text-gray-300'
+                                    className='mt-2 text-base lg:text-lg text-pretty text-gray-600 dark:text-gray-300 select-none'
                                 >
                                     {projects[current]?.description}
                                 </motion.p>
@@ -93,7 +93,7 @@ const Projects = () => {
                             >
                                 {projects[current]?.tags?.map((tag, index) => (
                                     <Badge className='bg-black dark:bg-white' key={index}>
-                                        <span className="text-sm lg:text-base text-white dark:text-black">{tag.name}</span>
+                                        <span className="text-sm lg:text-base text-white dark:text-black select-none">{tag.name}</span>
                                     </Badge>
                                 ))}
                             </motion.div>
