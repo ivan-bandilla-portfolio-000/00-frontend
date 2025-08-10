@@ -90,6 +90,64 @@ const DeferredBackground: React.FC = () => {
 };
 
 
+const ContactInfoSection = () => {
+    const [loading, setLoading] = useState(true);
+    const [info, setInfo] = useState<typeof personalInfo | null>(null);
+
+    useEffect(() => {
+        setLoading(true);
+        // Simulate server fetch
+        const timer = setTimeout(() => {
+            setInfo(personalInfo);
+            setLoading(false);
+        }, 1200); // 1.2s delay
+
+        return () => clearTimeout(timer);
+    }, []);
+
+    if (loading) {
+        return (
+            <SectionLoader />
+        );
+    }
+
+    if (!info) return null;
+
+    return (
+        <>
+            <address className="space-y-2">
+                <ContactItem type="email" label="Email:">
+                    <CopiableLink type="email" href="othercontact@example.com">
+                        {info.email}
+                    </CopiableLink>
+                </ContactItem>
+
+                <ContactItem type="phone" label="Phone:">
+                    <CopiableLink type="tel" href="+1234567890">
+                        {info.phone}
+                    </CopiableLink>
+                </ContactItem>
+            </address>
+            <br />
+            <br />
+            <div className="space-y-2">
+                <ContactItem type="linkedin" label="LinkedIn:">
+                    <CopiableLink href={info.linkedin.url}>
+                        {info.linkedin.username}
+                    </CopiableLink>
+                </ContactItem>
+
+                <ContactItem type="github" label="Github:">
+                    <CopiableLink href={info.github.url}>
+                        {info.github.username}
+                    </CopiableLink>
+                </ContactItem>
+            </div>
+        </>
+    );
+}
+
+
 
 const Contact = () => {
     const [status, setStatus] = useState(getRequestStatusById("ready")!);
@@ -125,34 +183,7 @@ const Contact = () => {
                         {/* <CardDescription>Card Description</CardDescription> */}
                     </CardHeader>
                     <CardContent className="px-8 text-sm space-y-2">
-                        <address className="space-y-2">
-                            <ContactItem type="email" label="Email:">
-                                <CopiableLink type="email" href="othercontact@example.com">
-                                    {personalInfo.email}
-                                </CopiableLink>
-                            </ContactItem>
-
-                            <ContactItem type="phone" label="Phone:">
-                                <CopiableLink type="tel" href="+1234567890">
-                                    {personalInfo.phone}
-                                </CopiableLink>
-                            </ContactItem>
-                        </address>
-                        <br />
-                        <br />
-                        <div className="space-y-2">
-                            <ContactItem type="linkedin" label="LinkedIn:">
-                                <CopiableLink href={personalInfo.linkedin.url}>
-                                    {personalInfo.linkedin.username}
-                                </CopiableLink>
-                            </ContactItem>
-
-                            <ContactItem type="github" label="Github:">
-                                <CopiableLink href={personalInfo.github.url}>
-                                    {personalInfo.github.username}
-                                </CopiableLink>
-                            </ContactItem>
-                        </div>
+                        <ContactInfoSection />
                     </CardContent>
                 </Card>
                 <Card className="flex-[1.1] opacity-[98%] gap-10 py-10 px-6 overflow-y-auto pointer-events-auto" >

@@ -1,10 +1,10 @@
 import { HeroSection } from '@/components/landing';
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { useClientDB } from '@/clientDB/context';
 import { lf } from '@/clientDB/schema';
 import SimpleLoader from '@/components/SimpleLoader';
 import LazyVisible from '@/components/LazyVisible';
-import { SparklesCore } from '@/components/ui/sparkles';
+const Sparkles = lazy(() => import('@/components/ui/sparkles').then(mod => ({ default: mod.SparklesCore })));
 
 
 const Home = () => {
@@ -59,15 +59,17 @@ const Home = () => {
         <>
             <HeroSection />
             <div className='fixed contain-paint will-change-scroll inset-0 h-lvh'>
-                <SparklesCore
-                    id="tsparticles"
-                    background="transparent"
-                    minSize={0.6}
-                    maxSize={1.4}
-                    particleDensity={500}
-                    className="absolute -bottom-5 h-8 w-full z-50"
-                    particleColor="#e60a64"
-                />
+                <Suspense fallback={null}>
+                    <Sparkles
+                        id="tsparticles"
+                        background="transparent"
+                        minSize={0.6}
+                        maxSize={1.4}
+                        particleDensity={500}
+                        className="absolute -bottom-5 h-8 w-full z-50"
+                        particleColor="#e60a64"
+                    />
+                </Suspense>
             </div>
 
             <LazyVisible

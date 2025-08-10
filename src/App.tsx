@@ -43,7 +43,7 @@ function App() {
               </ErrorBoundary>
             } />
             <Route path="/contact" element={
-              <Suspense fallback={null}>
+              <Suspense fallback={<SimpleLoader />}>
                 <main><Contact /></main>
               </Suspense>
             } />

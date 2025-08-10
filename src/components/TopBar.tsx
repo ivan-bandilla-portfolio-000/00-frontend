@@ -18,7 +18,9 @@ import {
 } from "@/components/ui/navigation-menu";
 import { useIdInViewport } from '@/hooks/useIdInViewport'
 const IconLink = lazy(() => import('./ui/custom/IconLink'))
-import { ModeToggle } from '@/features/theming/components/mode-toggle';
+const LazyModeToggle = lazy(() =>
+    import('@/features/theming/components/mode-toggle').then(m => ({ default: m.ModeToggle }))
+)
 
 const shrinkDuration: number = 0.3; // seconds
 
@@ -109,7 +111,6 @@ const TopBar = () => {
 
     const isMobile: boolean | undefined = useIsMobile();
     const isHeroVisible = useIdInViewport('hero');
-    console.log('isHeroVisible:', isHeroVisible);
 
     const defaultHeight: number | undefined = isMobile === undefined ? 64 : (isMobile ? 48 : 64)
     const shrunkHeight: number | undefined = isMobile === undefined ? 48 : (isMobile ? 40 : 48)
@@ -177,8 +178,20 @@ const TopBar = () => {
 
             <NavArea active={active} setActive={setActive} shrink={shrink} isHeroVisible={isHeroVisible} />
 
-            <div className=' w-2'>
-                <ModeToggle />
+            <div
+                className="w-auto"
+                onMouseEnter={() => { import('@/features/theming/components/mode-toggle') }}
+            >
+                <Suspense
+                    fallback={
+                        <div
+                            aria-hidden
+                            className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-border bg-muted/30 animate-pulse"
+                        />
+                    }
+                >
+                    <LazyModeToggle />
+                </Suspense>
             </div>
         </motion.div>
 
