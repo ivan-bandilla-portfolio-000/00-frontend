@@ -1,5 +1,14 @@
-import * as lf from 'lovefield';
+import { schemaBuilder, lf } from './schemaBuilder';
 
-const schemaBuilder = lf.schema.create('PortfolioDB', 1);
+import './0SchemaRegistration';
+
+let dbPromise: Promise<lf.Database> | null = null;
+
+export function connectClientDB(): Promise<lf.Database> {
+    if (!dbPromise) {
+        dbPromise = schemaBuilder.connect();
+    }
+    return dbPromise;
+}
 
 export { schemaBuilder, lf };

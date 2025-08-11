@@ -1,7 +1,7 @@
 export interface Tag {
-    id: number;
+    id?: number;
     name: string;
     color?: string;
     icon?: string;
-    typeId?: number;
+    type_id?: number;
 }

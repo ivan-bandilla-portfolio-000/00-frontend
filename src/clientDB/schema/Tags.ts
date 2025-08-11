@@ -1,15 +1,15 @@
-import { schemaBuilder, lf } from '@/clientDB/schema';
+import { schemaBuilder, lf } from './schemaBuilder';
 
-schemaBuilder.createTable('Tags')
+schemaBuilder.createTable('tags')
     .addColumn('id', lf.Type.INTEGER)
     .addColumn('name', lf.Type.STRING)
     .addColumn('color', lf.Type.STRING).addNullable(['color'])
     .addColumn('icon', lf.Type.STRING).addNullable(['icon'])
-    .addColumn('typeId', lf.Type.INTEGER).addNullable(['typeId'])
+    .addColumn('type_id', lf.Type.INTEGER).addNullable(['type_id'])
     .addPrimaryKey(['id'], true)
     .addUnique('uq_tag_name', ['name'])
     .addForeignKey('fk_tag_type', {
-        local: 'typeId',
-        ref: 'TagType.id',
+        local: 'type_id',
+        ref: 'tag_types.id',
         action: lf.ConstraintAction.RESTRICT
     });

@@ -2,7 +2,7 @@ export interface TagSeed {
     name: string;
     color?: string;
     icon?: string;
-    typeId?: number;
+    type_id?: number;
 }
 
 export interface ProjectSeed {
@@ -10,8 +10,8 @@ export interface ProjectSeed {
     description?: string;
     image?: string;
     avp?: string;
-    sourceCodeLink?: string;
-    tags: string[];
+    source_code_link?: string;
+    tags: number[];
 }
 
 export const projects: ProjectSeed[] = [
@@ -19,8 +19,15 @@ export const projects: ProjectSeed[] = [
         name: 'Car Rent',
         description: 'Web-based platform for car rentals.',
         image: 'carrent',
-        sourceCodeLink: 'https://github.com/',
-        tags: ['react', 'mongodb', 'tailwind'],
+        source_code_link: 'https://github.com/',
+        tags: [1, 2, 3],
+    },
+    {
+        name: 'Car Rental',
+        description: 'Web-based platform for car rentals.',
+        image: 'carrent',
+        source_code_link: 'https://github.com/',
+        tags: [1, 2, 3],
     },
 ];
 

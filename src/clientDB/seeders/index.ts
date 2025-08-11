@@ -5,16 +5,16 @@ import { APP_ENV } from '@/app/config/app';
 
 
 async function clearTables(db: lf.Database) {
-    const projectsTable = db.getSchema().table('Projects');
-    const tagsTable = db.getSchema().table('Tags');
-    const projectTagsTable = db.getSchema().table('ProjectTags');
+    const projectsTable = db.getSchema().table('projects');
+    const tagsTable = db.getSchema().table('tags');
+    const projectTagsTable = db.getSchema().table('project_tags');
     await db.delete().from(projectTagsTable).exec();
     await db.delete().from(tagsTable).exec();
     await db.delete().from(projectsTable).exec();
 }
 
 async function seedTags(db: lf.Database) {
-    const tagsTable = db.getSchema().table('Tags');
+    const tagsTable = db.getSchema().table('tags');
     await Promise.all(
         tags.map(tag =>
             db.insertOrReplace().into(tagsTable).values([
@@ -22,7 +22,7 @@ async function seedTags(db: lf.Database) {
                     name: tag.name,
                     color: tag.color ?? null,
                     icon: tag.icon ?? null,
-                    typeId: tag.typeId ?? null,
+                    type_id: tag.type_id ?? null,
 
                 }),
             ]).exec()
@@ -32,7 +32,7 @@ async function seedTags(db: lf.Database) {
 }
 
 async function seedProjects(db: lf.Database) {
-    const projectsTable = db.getSchema().table('Projects');
+    const projectsTable = db.getSchema().table('projects');
     for (const project of projects) {
         await db.insertOrReplace().into(projectsTable).values([
             projectsTable.createRow({
@@ -40,7 +40,7 @@ async function seedProjects(db: lf.Database) {
                 description: project.description ?? null,
                 image: project.image ?? null,
                 avp: project.avp ?? null,
-                sourceCodeLink: project.sourceCodeLink ?? null,
+                source_code_link: project.source_code_link ?? null,
             }),
         ]).exec();
     }
@@ -48,7 +48,7 @@ async function seedProjects(db: lf.Database) {
 }
 
 async function seedProjectTags(db: lf.Database, allTags: any[], allProjects: any[]) {
-    const projectTagsTable = db.getSchema().table('ProjectTags');
+    const projectTagsTable = db.getSchema().table('project_tags');
     for (const project of projects) {
         const dbProject = allProjects.find(p => p.name === project.name);
         if (!dbProject) continue;
@@ -57,8 +57,8 @@ async function seedProjectTags(db: lf.Database, allTags: any[], allProjects: any
             if (dbTag) {
                 await db.insertOrReplace().into(projectTagsTable).values([
                     projectTagsTable.createRow({
-                        projectId: dbProject.id,
-                        tagId: dbTag.id,
+                        project_id: dbProject.id,
+                        tag_id: dbTag.id,
                     }),
                 ]).exec();
             }

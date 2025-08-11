@@ -1,4 +1,4 @@
 export interface ProjectTag {
-    projectId: number;
-    tagId: number;
+    project_id: number;
+    tag_id: number;
 }

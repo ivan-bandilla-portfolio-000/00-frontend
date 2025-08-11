@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import Items from './Items'
-import projects from "@/constants/projects";
+// import projects from "@/constants/projects";
 import { SectionWrapper } from "@/hoc";
 import type { CarouselApi } from "@/components/ui/carousel";
 import { AnimatePresence, motion } from "motion/react";
@@ -14,27 +14,42 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { ArrowUpRight } from 'lucide-react';
 import LinkWithIcon from '@/components/ui/custom/LinkWithIcon';
+import { ProjectService } from "@/services/ProjectService";
+import type { Project } from "@/clientDB/@types/Project";
+import { useClientDB } from '@/clientDB/context';
+import type { Tag } from "@/clientDB/@types/Tag";
 
 const Projects = () => {
-    const [api, setApi] = useState<CarouselApi>()
+    const [carouselAPi, setCarouselAPi] = useState<CarouselApi>()
     const [current, setCurrent] = useState(0)
     const [count, setCount] = useState(0)
+    const [projects, setProjects] = useState<Project[]>([]);
     const itemsLeft = count - (current + 1);
 
     const sectionRef = useRef<HTMLDivElement>(null);
+    const clientDb = useClientDB();
 
     useEffect(() => {
-        if (!api) {
+        if (!clientDb) return;
+        let cancelled = false;
+        ProjectService.ensureAndGetProjects(clientDb)
+            .then((data) => { if (!cancelled) setProjects(data); })
+            .catch(console.error);
+        return () => { cancelled = true; };
+    }, [clientDb]);
+
+    useEffect(() => {
+        if (!carouselAPi) {
             return
         }
 
-        setCount(api.scrollSnapList().length)
-        setCurrent(api.selectedScrollSnap())
+        setCount(carouselAPi.scrollSnapList().length)
+        setCurrent(carouselAPi.selectedScrollSnap())
 
-        api.on("select", () => {
-            setCurrent(api.selectedScrollSnap())
+        carouselAPi.on("select", () => {
+            setCurrent(carouselAPi.selectedScrollSnap())
         })
-    }, [api])
+    }, [carouselAPi])
 
 
     return (
@@ -54,7 +69,7 @@ const Projects = () => {
                     />
                 </div>
                 <div className="flex flex-wrap lg:flex-nowrap justify-center-safe lg:justify-start gap-18 mt-16 ">
-                    <div className="flex flex-col order-2 lg:order-1 gap-8">
+                    <div className="flex flex-col order-2 lg:order-1 flex-1 gap-8">
                         <hgroup>
                             <AnimatePresence mode="wait">
                                 <motion.h3
@@ -91,20 +106,24 @@ const Projects = () => {
                                 transition={{ duration: 0.5, delay: 0.1 }}
                                 className="flex justify-self-end w-full gap-2"
                             >
-                                {projects[current]?.tags?.map((tag, index) => (
-                                    <Badge className='bg-black dark:bg-white' key={index}>
-                                        <span className="text-sm lg:text-base text-white dark:text-black select-none">{tag.name}</span>
-                                    </Badge>
-                                ))}
+                                {projects[current]?.tags
+                                    ?.filter((t): t is Tag => typeof t !== 'number')
+                                    .map((tag, index) => (
+                                        <Badge className='bg-black dark:bg-white' key={index}>
+                                            <span className="text-sm lg:text-base text-white dark:text-black select-none">
+                                                {tag.name}
+                                            </span>
+                                        </Badge>
+                                    ))}
                             </motion.div>
                         </AnimatePresence>
                     </div>
                     <Carousel
-                        setApi={setApi}
+                        setApi={setCarouselAPi}
                         className='order-1 lg:order-2 max-w-[60svw] md:max-w-[25svw]'
                     >
                         <CarouselContent className="">
-                            <Items />
+                            <Items projects={projects} />
                         </CarouselContent>
                         <CarouselPrevious className="enabled:scale-105 lg:enabled:scale-125 disabled:pointer-events-none transition-transform touch-manipulation" />
                         <CarouselNext className="enabled:scale-105 lg:enabled:scale-125 disabled:pointer-events-none transition-transform touch-manipulation" />

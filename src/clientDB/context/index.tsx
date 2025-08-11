@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { lf } from '@/clientDB/schema';
-import { maybeSeed } from '@/clientDB/seeders';
+import type { lf } from '@/clientDB/schema';
+import { connectClientDB } from '@/clientDB/schema';
 
 type DBContextType = lf.Database | null;
 
@@ -14,10 +14,11 @@ export function ClientDBProvider({ children }: { children: React.ReactNode }) {
     const [db, setDb] = useState<lf.Database | null>(null);
 
     useEffect(() => {
-        // maybeSeed should return the db instance after seeding
-        maybeSeed().then((dbInstance) => {
-            setDb(dbInstance);
+        let mounted = true;
+        connectClientDB().then((dbInstance) => {
+            if (mounted) setDb(dbInstance);
         });
+        return () => { mounted = false; };
     }, []);
 
     return <DBContext.Provider value={db}>{children}</DBContext.Provider>;

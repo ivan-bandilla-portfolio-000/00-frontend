@@ -1,6 +1,6 @@
-import { schemaBuilder, lf } from '@/clientDB/schema';
+import { schemaBuilder, lf } from './schemaBuilder';
 
-schemaBuilder.createTable('ProjectTags')
-    .addColumn('projectId', lf.Type.INTEGER)
-    .addColumn('tagId', lf.Type.INTEGER)
-    .addPrimaryKey(['projectId', 'tagId']);
+schemaBuilder.createTable('project_tags')
+    .addColumn('project_id', lf.Type.INTEGER)
+    .addColumn('tag_id', lf.Type.INTEGER)
+    .addPrimaryKey(['project_id', 'tag_id']);

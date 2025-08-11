@@ -1,8 +1,11 @@
+import type { Tag } from "./Tag";
+
 export interface Project {
-    id: number;
+    id?: number;
     name: string;
     description?: string;
     image?: string;
     avp?: string;
-    sourceCodeLink?: string;
+    source_code_link?: string;
+    tags?: Tag[] | number[];
 }
