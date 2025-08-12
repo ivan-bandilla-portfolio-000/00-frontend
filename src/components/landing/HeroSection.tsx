@@ -29,7 +29,7 @@ const Background = () => {
 
 const FeaturedTechStack = () => {
   const [techStack, setTechStack] = useState<
-    { name: string; icon: string; alt: string }[]
+    { name: string; icon: string; alt: string; width?: number; height?: number, className?: string }[]
   >([]);
 
   const [imagesLoaded, setImagesLoaded] = useState(0);
@@ -39,13 +39,14 @@ const FeaturedTechStack = () => {
       setTechStack([
         {
           name: "Laravel",
-          icon: "https://pbs.twimg.com/profile_images/1894434601403101184/tLZjRRT8_200x200.jpg",
+          icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/laravel/laravel-original.svg",
           alt: "Laravel Icon",
         },
         {
           name: "PHP",
-          icon: "https://www.php.net/favicon-32x32.png?v=2",
+          icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/php/php-original.svg",
           alt: "PHP Icon",
+          className: "ml-2 scale-150"
         },
       ]);
     }, 800);
@@ -62,8 +63,8 @@ const FeaturedTechStack = () => {
   const isHidden = imagesLoaded < techStack.length ? "opacity-0 pointer-events-none aria-hidden" : "";
 
   return (
-    <div className={`absolute bottom-28 w-full flex justify-end-safe items-center-safe text-xs z-20 transition-opacity duration-300 ${isHidden} `}>
-      <hgroup className="px-28 min-w-sm text-center space-x-2">
+    <div className={`absolute [bottom:calc(var(--spacing)*27+4dvh)] w-full flex justify-end-safe items-center-safe text-xs z-20 transition-opacity duration-300 ${isHidden} `}>
+      <hgroup className="px-28 min-w-sm text-center space-x-2 ">
         <span className="inline-block translate-y-[2px]">
           <i>Proficient in</i>
         </span>
@@ -71,13 +72,13 @@ const FeaturedTechStack = () => {
           {techStack.map((tech) => (
             <span key={tech.name} className="px-1 py-1 space-x-0.5">
               <img
-                className="inline-block rounded-md"
+                className={`inline-block ${tech.className ?? ""} transition-transform duration-300 hover:scale-110`}
                 loading="lazy"
                 decoding="async"
                 src={tech.icon}
                 draggable="false"
-                width={28}
-                height={28}
+                width={tech.width ?? 28}
+                height={tech.height ?? 28}
                 alt={tech.alt}
                 onLoad={handleImageLoad}
               />

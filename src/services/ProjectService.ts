@@ -35,7 +35,7 @@ function isDupKeyError(e: unknown): boolean {
 }
 
 export class ProjectService extends BaseService {
-
+    static BASE_API = import.meta.env.VITE_DATA_SOURCE_URL;
 
     static async ensureAndGetProjects(db: lf.Database): Promise<Project[]> {
         const projectsTable = db.getSchema().table('projects');
@@ -98,31 +98,71 @@ export class ProjectService extends BaseService {
         }
     }
 
+    static async getProjectsFromGraphQL(): Promise<{ tags: TagRow[]; projects: any[] }> {
+        const query = `
+        query {
+            tags {
+                id
+                name
+                color
+                icon
+                type_id
+            }
+            projects {
+                name
+                description
+                image
+                avp
+                source_code_link
+                tags
+            }
+        }
+    `;
+        const response = await this.axiosInst.post(
+            `${ProjectService.BASE_API}/graphql`,
+            { query }
+        );
+        const data = response.data.data;
+        return {
+            tags: data.tags,
+            projects: data.projects,
+        };
+    }
+
     // Always fetch from API (mocked here), then save to IndexedDB
     static async fetchProjects(db: lf.Database): Promise<void> {
-        // Remove artificial delay to reduce StrictMode race
-        const projects = mockProjects as Project[];
+        let tags: TagRow[] = [];
+        let projects: any[] = [];
 
-        const tagsTable = db.getSchema().table('tags');
-        const projectsTable = db.getSchema().table('projects');
-        const projectTagsTable = db.getSchema().table('project_tags');
-
-        const norm = (s: string | undefined | null) => String(s ?? '').trim().toLowerCase();
+        // Try GraphQL first
+        try {
+            const gqlRes = await this.getProjectsFromGraphQL();
+            tags = gqlRes.tags;
+            projects = gqlRes.projects;
+        } catch (e) {
+            console.warn('GraphQL fetch failed, falling back to REST API:', e);
+            const tagsRes = await this.get<{ data: TagRow[] }>(`${ProjectService.BASE_API}/tags`);
+            const projectsRes = await this.get<{ data: any[] }>(`${ProjectService.BASE_API}/projects`);
+            tags = tagsRes.data.data;
+            projects = projectsRes.data.data;
+        }
 
         await ProjectService.dedupeTags(db);
+        await ProjectService.saveTags(db, tags);
+        await ProjectService.saveProjects(db, projects);
+        await ProjectService.saveProjectTags(db, tags, projects);
+    }
+
+    static async saveTags(db: lf.Database, tags: TagRow[]): Promise<void> {
+        const tagsTable = db.getSchema().table('tags');
+        const norm = (s: string | undefined | null) => String(s ?? '').trim().toLowerCase();
 
         const existingTags = await db.select().from(tagsTable).exec() as TagRow[];
         const tagByLowerName = new Map<string, TagRow>(
             existingTags.map((t) => [norm(t.name), t])
         );
 
-        const existingProjects = await db.select().from(projectsTable).exec() as ProjectRow[];
-        const projectByName = new Map<string, ProjectRow>(
-            existingProjects.map((p) => [String(p.name), p])
-        );
-
-        // Upsert tags
-        for (const tag of mockTags) {
+        for (const tag of tags) {
             const lower = norm(tag.name);
             const existing = tagByLowerName.get(lower);
 
@@ -151,8 +191,15 @@ export class ProjectService extends BaseService {
                 tagByLowerName.set(lower, row);
             }
         }
+    }
 
-        // Upsert projects
+    static async saveProjects(db: lf.Database, projects: any[]): Promise<void> {
+        const projectsTable = db.getSchema().table('projects');
+        const existingProjects = await db.select().from(projectsTable).exec() as ProjectRow[];
+        const projectByName = new Map<string, ProjectRow>(
+            existingProjects.map((p) => [String(p.name), p])
+        );
+
         for (const project of projects) {
             const existing = projectByName.get(project.name);
             if (existing) {
@@ -180,15 +227,21 @@ export class ProjectService extends BaseService {
                     .exec();
             }
         }
+    }
 
-        // Rebuild project_tags safely (idempotent)
+    static async saveProjectTags(db: lf.Database, tags: TagRow[], projects: any[]): Promise<void> {
+        const tagsTable = db.getSchema().table('tags');
+        const projectsTable = db.getSchema().table('projects');
+        const projectTagsTable = db.getSchema().table('project_tags');
+        const norm = (s: string | undefined | null) => String(s ?? '').trim().toLowerCase();
+
         await db.delete().from(projectTagsTable).exec();
 
         const dbTags = await db.select().from(tagsTable).exec() as TagRow[];
         const dbProjects = await db.select().from(projectsTable).exec() as ProjectRow[];
 
         const idxToLowerName = new Map<number, string>(
-            mockTags.map((t, i) => [i + 1, norm(t.name)])
+            tags.map((t, i) => [i + 1, norm(t.name)])
         );
 
         const assocRows: any[] = [];
@@ -196,7 +249,7 @@ export class ProjectService extends BaseService {
             const dbProject = dbProjects.find((p) => p.name === project.name);
             if (!dbProject) continue;
 
-            for (const tagIdx of (project as any).tags ?? []) {
+            for (const tagIdx of project.tags ?? []) {
                 const lower = idxToLowerName.get(tagIdx);
                 if (!lower) continue;
 
@@ -211,15 +264,12 @@ export class ProjectService extends BaseService {
         }
 
         if (assocRows.length) {
-            // insertOrReplace avoids duplicate-key errors if another seed overlaps
             await db
                 .insertOrReplace()
                 .into(projectTagsTable)
                 .values(assocRows)
                 .exec();
         }
-
-        // return projects;
     }
 
     // Only query IndexedDB for projects (with tags)
