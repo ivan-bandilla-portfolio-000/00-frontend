@@ -10,6 +10,7 @@ import { ClientDBProvider } from '@/clientDB/context';
 import ErrorBoundary from '@/components/errors/ErrorBoundary';
 import { LLMProvider } from '@/contexts/LLMContext';
 import SimpleLoader from './components/SimpleLoader';
+import About from './pages/About';
 
 
 function App() {
@@ -45,6 +46,11 @@ function App() {
             <Route path="/contact" element={
               <Suspense fallback={<SimpleLoader />}>
                 <main><Contact /></main>
+              </Suspense>
+            } />
+            <Route path="/about" element={
+              <Suspense fallback={<SimpleLoader />}>
+                <main><About /></main>
               </Suspense>
             } />
           </Routes>
