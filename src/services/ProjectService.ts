@@ -26,14 +26,34 @@ type ProjectTagRow = {
     tag_id: number;
 };
 
+let seedInFlight: Promise<void> | null = null;
+
+function isDupKeyError(e: unknown): boolean {
+    const msg = (e as any)?.message ?? '';
+    const code = (e as any)?.code;
+    return code === 201 || /Duplicate keys are not allowed/i.test(String(msg));
+}
+
 export class ProjectService extends BaseService {
+
 
     static async ensureAndGetProjects(db: lf.Database): Promise<Project[]> {
         const projectsTable = db.getSchema().table('projects');
         const existing = await db.select().from(projectsTable).limit(1).exec();
+
         if (existing.length === 0) {
-            await ProjectService.fetchProjects(db);
+            if (!seedInFlight) {
+                seedInFlight = ProjectService.fetchProjects(db)
+                    .catch((e) => {
+                        // Ignore dup errors caused by StrictMode double-seed
+                        if (!isDupKeyError(e)) throw e;
+                        console.warn('Seeding duplicate avoided:', e);
+                    })
+                    .finally(() => { seedInFlight = null; });
+            }
+            await seedInFlight;
         }
+
         return ProjectService.getProjects(db);
     }
 
@@ -79,11 +99,9 @@ export class ProjectService extends BaseService {
     }
 
     // Always fetch from API (mocked here), then save to IndexedDB
-    static async fetchProjects(db: lf.Database): Promise<Project[]> {
-        // Simulate API call
-        const projects = await new Promise<Project[]>((resolve) => {
-            setTimeout(() => resolve(mockProjects as Project[]), 500);
-        });
+    static async fetchProjects(db: lf.Database): Promise<void> {
+        // Remove artificial delay to reduce StrictMode race
+        const projects = mockProjects as Project[];
 
         const tagsTable = db.getSchema().table('tags');
         const projectsTable = db.getSchema().table('projects');
@@ -91,10 +109,8 @@ export class ProjectService extends BaseService {
 
         const norm = (s: string | undefined | null) => String(s ?? '').trim().toLowerCase();
 
-        // 1) Clean up any pre-existing duplicates that differ by case
         await ProjectService.dedupeTags(db);
 
-        // 2) Load current rows
         const existingTags = await db.select().from(tagsTable).exec() as TagRow[];
         const tagByLowerName = new Map<string, TagRow>(
             existingTags.map((t) => [norm(t.name), t])
@@ -105,7 +121,7 @@ export class ProjectService extends BaseService {
             existingProjects.map((p) => [String(p.name), p])
         );
 
-        // 3) Upsert tags by name (do NOT change name casing to avoid collisions)
+        // Upsert tags
         for (const tag of mockTags) {
             const lower = norm(tag.name);
             const existing = tagByLowerName.get(lower);
@@ -113,7 +129,6 @@ export class ProjectService extends BaseService {
             if (existing) {
                 await db
                     .update(tagsTable)
-                    // keep existing.name as-is to avoid unique index conflicts
                     .set(tagsTable['color'], tag.color ?? null)
                     .set(tagsTable['icon'], tag.icon ?? null)
                     .set(tagsTable['type_id'], tag.type_id ?? null)
@@ -125,23 +140,21 @@ export class ProjectService extends BaseService {
                     .into(tagsTable)
                     .values([
                         tagsTable.createRow({
-                            name: tag.name, // store as provided
+                            name: tag.name,
                             color: tag.color ?? null,
                             icon: tag.icon ?? null,
                             type_id: tag.type_id ?? null,
                         }),
                     ])
                     .exec();
-
                 const row = (Array.isArray(inserted) ? inserted[0] : inserted) as TagRow;
                 tagByLowerName.set(lower, row);
             }
         }
 
-        // 4) Upsert projects by unique name
+        // Upsert projects
         for (const project of projects) {
             const existing = projectByName.get(project.name);
-
             if (existing) {
                 await db
                     .update(projectsTable)
@@ -168,18 +181,17 @@ export class ProjectService extends BaseService {
             }
         }
 
-        // 5) Rebuild project_tags
+        // Rebuild project_tags safely (idempotent)
         await db.delete().from(projectTagsTable).exec();
 
-        // Resolve DB rows for associations
         const dbTags = await db.select().from(tagsTable).exec() as TagRow[];
         const dbProjects = await db.select().from(projectsTable).exec() as ProjectRow[];
 
-        // Map numeric tag indexes (1-based in mock) -> tag lower-name
         const idxToLowerName = new Map<number, string>(
             mockTags.map((t, i) => [i + 1, norm(t.name)])
         );
 
+        const assocRows: any[] = [];
         for (const project of projects) {
             const dbProject = dbProjects.find((p) => p.name === project.name);
             if (!dbProject) continue;
@@ -191,20 +203,23 @@ export class ProjectService extends BaseService {
                 const dbTag = dbTags.find((t) => norm(t.name) === lower);
                 if (!dbTag) continue;
 
-                await db
-                    .insert()
-                    .into(projectTagsTable)
-                    .values([
-                        projectTagsTable.createRow({
-                            project_id: dbProject.id,
-                            tag_id: dbTag.id,
-                        }),
-                    ])
-                    .exec();
+                assocRows.push(projectTagsTable.createRow({
+                    project_id: dbProject.id,
+                    tag_id: dbTag.id,
+                }));
             }
         }
 
-        return projects;
+        if (assocRows.length) {
+            // insertOrReplace avoids duplicate-key errors if another seed overlaps
+            await db
+                .insertOrReplace()
+                .into(projectTagsTable)
+                .values(assocRows)
+                .exec();
+        }
+
+        // return projects;
     }
 
     // Only query IndexedDB for projects (with tags)
