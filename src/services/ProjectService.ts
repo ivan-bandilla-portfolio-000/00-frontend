@@ -1,6 +1,5 @@
 import { BaseService } from '@/services/BaseService';
 import type { Project } from "@/clientDB/@types/Project";
-import { projects as mockProjects, tags as mockTags } from "@/clientDB/seeders/projects";
 import type { lf } from '@/clientDB/schema';
 
 // Add concrete row types to avoid "object" property errors
@@ -19,11 +18,29 @@ type ProjectRow = {
     image: string | null;
     avp: string | null;
     source_code_link: string | null;
+    status_id?: number | null;
+    project_category_ids?: number[];
 };
 
 type ProjectTagRow = {
     project_id: number;
     tag_id: number;
+};
+
+type StatusRow = {
+    id: number;
+    name: string;
+};
+
+type ProjectCategoryRow = {
+    id: number;
+    name: string;
+};
+
+// @ts-ignore
+type TagTypeRow = {
+    id: number;
+    name: string;
 };
 
 let seedInFlight: Promise<void> | null = null;
@@ -45,7 +62,6 @@ export class ProjectService extends BaseService {
             if (!seedInFlight) {
                 seedInFlight = ProjectService.fetchProjects(db)
                     .catch((e) => {
-                        // Ignore dup errors caused by StrictMode double-seed
                         if (!isDupKeyError(e)) throw e;
                         console.warn('Seeding duplicate avoided:', e);
                     })
@@ -57,7 +73,6 @@ export class ProjectService extends BaseService {
         return ProjectService.getProjects(db);
     }
 
-    // Always fetch from API (mocked here), then save to IndexedDB
     private static async dedupeTags(db: lf.Database): Promise<void> {
         const tagsTable = db.getSchema().table('tags');
         const projectTagsTable = db.getSchema().table('project_tags');
@@ -74,7 +89,6 @@ export class ProjectService extends BaseService {
         for (const [, group] of groups) {
             if (group.length <= 1) continue;
 
-            // Keep the oldest (smallest id) as canonical
             group.sort((a, b) => a.id - b.id);
             const keep = group[0];
             const dupes = group.slice(1);
@@ -82,14 +96,12 @@ export class ProjectService extends BaseService {
 
             if (dupeIds.length === 0) continue;
 
-            // Repoint associations
             await db
                 .update(projectTagsTable)
                 .set(projectTagsTable['tag_id'], keep.id)
                 .where(projectTagsTable['tag_id'].in(dupeIds))
                 .exec();
 
-            // Remove duplicate tag rows
             await db
                 .delete()
                 .from(tagsTable)
@@ -98,15 +110,25 @@ export class ProjectService extends BaseService {
         }
     }
 
-    static async getProjectsFromGraphQL(): Promise<{ tags: TagRow[]; projects: any[] }> {
+    static async getProjectsFromGraphQL(): Promise<{
+        tags: TagRow[];
+        statuses: StatusRow[];
+        categories: ProjectCategoryRow[];
+        projects: any[];
+    }> {
         const query = `
         query {
             tags {
-                id
                 name
                 color
                 icon
                 type_id
+            }
+            project_statuses {
+                name
+            }
+            project_categories {
+                name
             }
             projects {
                 name
@@ -114,6 +136,8 @@ export class ProjectService extends BaseService {
                 image
                 avp
                 source_code_link
+                status_id
+                project_category_id
                 tags
             }
         }
@@ -124,38 +148,77 @@ export class ProjectService extends BaseService {
         );
         const data = response.data.data;
         return {
-            tags: data.tags,
-            projects: data.projects,
+            tags: data.tags ?? [],
+            statuses: data.project_statuses ?? [],
+            categories: data.project_categories ?? [],
+            projects: data.projects ?? [],
         };
     }
 
-    // Always fetch from API (mocked here), then save to IndexedDB
     static async fetchProjects(db: lf.Database): Promise<void> {
         let tags: TagRow[] = [];
         let projects: any[] = [];
+        let statuses: StatusRow[] = [];
+        let categories: ProjectCategoryRow[] = [];
 
-        // Try GraphQL first
+        // try {
+        //     const gqlRes = await this.getProjectsFromGraphQL();
+        //     tags = gqlRes.tags;
+        //     projects = gqlRes.projects;
+        //     statuses = gqlRes.statuses;
+        //     categories = gqlRes.categories;
+        // } catch (e) {
+        // console.warn('GraphQL fetch failed, falling back to REST API:', e);
+        const [tagsRes, projectsRes] = await Promise.all([
+            this.get<{ data: TagRow[] }>(`${ProjectService.BASE_API}/tags`),
+            this.get<{ data: any[] }>(`${ProjectService.BASE_API}/projects`),
+        ]);
+        tags = tagsRes.data.data;
+        projects = projectsRes.data.data;
+
         try {
-            const gqlRes = await this.getProjectsFromGraphQL();
-            tags = gqlRes.tags;
-            projects = gqlRes.projects;
-        } catch (e) {
-            console.warn('GraphQL fetch failed, falling back to REST API:', e);
-            const tagsRes = await this.get<{ data: TagRow[] }>(`${ProjectService.BASE_API}/tags`);
-            const projectsRes = await this.get<{ data: any[] }>(`${ProjectService.BASE_API}/projects`);
-            tags = tagsRes.data.data;
-            projects = projectsRes.data.data;
-        }
+            const statusesRes = await this.get<{ data: StatusRow[] }>(`${ProjectService.BASE_API}/project-statuses`);
+            statuses = statusesRes.data.data ?? [];
+        } catch { statuses = []; }
+        try {
+            const categoriesRes = await this.get<{ data: ProjectCategoryRow[] }>(`${ProjectService.BASE_API}/project-categories`);
+            categories = categoriesRes.data.data ?? [];
+        } catch { categories = []; }
+        // }
 
         await ProjectService.dedupeTags(db);
-        await ProjectService.saveTags(db, tags);
-        await ProjectService.saveProjects(db, projects);
-        await ProjectService.saveProjectTags(db, tags, projects);
+
+        await Promise.all([
+            ProjectService.saveTags(db, tags),
+            ProjectService.saveStatuses(db, statuses),
+            ProjectService.saveCategories(db, categories),
+            ProjectService.saveProjects(db, projects),
+        ]);
+
+        await Promise.all([
+            ProjectService.saveProjectTags(db, tags, projects),
+            ProjectService.saveProjectCategories(db, categories, projects),
+        ]);
     }
 
     static async saveTags(db: lf.Database, tags: TagRow[]): Promise<void> {
         const tagsTable = db.getSchema().table('tags');
         const norm = (s: string | undefined | null) => String(s ?? '').trim().toLowerCase();
+
+        // Resolve valid tag_type ids to satisfy FK constraint
+        let existingTypeIds = new Set<number>();
+        try {
+            const tagTypesTable = db.getSchema().table('tag_types'); // adjust name if different
+            const typeRows = await db.select(tagTypesTable['id'])
+                .from(tagTypesTable)
+                .exec() as { id: number }[];
+            existingTypeIds = new Set(typeRows.map(r => r.id));
+        } catch {
+            // If tag_types table is not available, force null to avoid FK violation
+            existingTypeIds = new Set<number>();
+        }
+        const resolveTypeId = (id: number | null | undefined) =>
+            (id != null && existingTypeIds.has(id)) ? id : null;
 
         const existingTags = await db.select().from(tagsTable).exec() as TagRow[];
         const tagByLowerName = new Map<string, TagRow>(
@@ -165,13 +228,14 @@ export class ProjectService extends BaseService {
         for (const tag of tags) {
             const lower = norm(tag.name);
             const existing = tagByLowerName.get(lower);
+            const safeTypeId = resolveTypeId(tag.type_id ?? null);
 
             if (existing) {
                 await db
                     .update(tagsTable)
                     .set(tagsTable['color'], tag.color ?? null)
                     .set(tagsTable['icon'], tag.icon ?? null)
-                    .set(tagsTable['type_id'], tag.type_id ?? null)
+                    .set(tagsTable['type_id'], safeTypeId)
                     .where(tagsTable['id'].eq(existing.id))
                     .exec();
             } else {
@@ -183,13 +247,45 @@ export class ProjectService extends BaseService {
                             name: tag.name,
                             color: tag.color ?? null,
                             icon: tag.icon ?? null,
-                            type_id: tag.type_id ?? null,
+                            type_id: safeTypeId,
                         }),
                     ])
                     .exec();
                 const row = (Array.isArray(inserted) ? inserted[0] : inserted) as TagRow;
                 tagByLowerName.set(lower, row);
             }
+        }
+    }
+
+    private static async saveStatuses(db: lf.Database, statuses: StatusRow[]): Promise<void> {
+        const table = db.getSchema().table('project_statuses');
+        if (!statuses?.length) return;
+
+        const existing = await db.select().from(table).exec() as StatusRow[];
+        const byName = new Map(existing.map(s => [s.name.toLowerCase(), s]));
+        for (const s of statuses) {
+            const key = s.name.toLowerCase();
+            const has = byName.get(key);
+            if (has) continue;
+            await db.insert().into(table).values([
+                table.createRow({ name: s.name })
+            ]).exec();
+        }
+    }
+
+    private static async saveCategories(db: lf.Database, categories: ProjectCategoryRow[]): Promise<void> {
+        const table = db.getSchema().table('project_categories');
+        if (!categories?.length) return;
+
+        const existing = await db.select().from(table).exec() as ProjectCategoryRow[];
+        const byName = new Map(existing.map(c => [c.name.toLowerCase(), c]));
+        for (const c of categories) {
+            const key = c.name.toLowerCase();
+            const has = byName.get(key);
+            if (has) continue;
+            await db.insert().into(table).values([
+                table.createRow({ name: c.name })
+            ]).exec();
         }
     }
 
@@ -272,39 +368,102 @@ export class ProjectService extends BaseService {
         }
     }
 
+    private static async saveProjectCategories(db: lf.Database, _: ProjectCategoryRow[], projects: any[]): Promise<void> {
+        const projectsTable = db.getSchema().table('projects');
+        const categoriesTable = db.getSchema().table('project_categories');
+        const joinTable = db.getSchema().table('project_project_categories');
+
+        // Rebuild associations
+        await db.delete().from(joinTable).exec();
+
+        const dbProjects = await db.select().from(projectsTable).exec() as { id: number; name: string }[];
+        const dbCategories = await db.select().from(categoriesTable).exec() as ProjectCategoryRow[];
+        const catById = new Map(dbCategories.map(c => [c.id, c]));
+        const catByName = new Map(dbCategories.map(c => [c.name.toLowerCase(), c]));
+
+        const assocRows: any[] = [];
+        for (const p of projects) {
+            const dbProject = dbProjects.find(dp => dp.name === p.name);
+            if (!dbProject) continue;
+
+            const idSet = new Set<number>();
+
+            // Prefer explicit ids if present
+            if (Array.isArray(p.project_category_ids)) {
+                for (const id of p.project_category_ids) if (catById.has(id)) idSet.add(id);
+            }
+
+            // Accept categories as strings or objects
+            if (Array.isArray(p.categories)) {
+                for (const c of p.categories) {
+                    if (typeof c === 'number' && catById.has(c)) {
+                        idSet.add(c);
+                    } else if (typeof c === 'string') {
+                        const hit = catByName.get(c.toLowerCase());
+                        if (hit) idSet.add(hit.id);
+                    } else if (c && typeof c === 'object' && 'id' in c && typeof c.id === 'number') {
+                        if (catById.has(c.id)) idSet.add(c.id);
+                    }
+                }
+            }
+
+            for (const cid of idSet) {
+                assocRows.push(joinTable.createRow({
+                    project_id: dbProject.id,
+                    category_id: cid,
+                }));
+            }
+        }
+
+        if (assocRows.length) {
+            await db.insertOrReplace().into(joinTable).values(assocRows).exec();
+        }
+    }
+
     // Only query IndexedDB for projects (with tags)
     static async getProjects(db: lf.Database): Promise<Project[]> {
         const projectsTable = db.getSchema().table('projects');
         const tagsTable = db.getSchema().table('tags');
         const projectTagsTable = db.getSchema().table('project_tags');
+        const statusesTable = db.getSchema().table('project_statuses');
+        const categoriesTable = db.getSchema().table('project_categories');
+        const projCatsTable = db.getSchema().table('project_project_categories');
 
-        const projects = await db.select().from(projectsTable).exec() as ProjectRow[];
+        const [projects, allStatuses, allCategories] = await Promise.all([
+            db.select().from(projectsTable).exec() as Promise<ProjectRow[]>,
+            db.select().from(statusesTable).exec() as Promise<StatusRow[]>,
+            db.select().from(categoriesTable).exec() as Promise<ProjectCategoryRow[]>,
+        ]);
+        const statusById = new Map(allStatuses.map(s => [s.id, s]));
+        const categoryById = new Map(allCategories.map(c => [c.id, c]));
 
         const result: Project[] = [];
         for (const project of projects) {
-            // Get tag_ids for this project
-            const projectTagRows = await db
-                .select()
-                .from(projectTagsTable)
+            const projectTagRows = await db.select().from(projectTagsTable)
                 .where(projectTagsTable.project_id.eq(project.id))
                 .exec() as ProjectTagRow[];
+            const tagIds = projectTagRows.map(pt => pt.tag_id);
+            const tagObjs = tagIds.length
+                ? await db.select().from(tagsTable).where(tagsTable.id.in(tagIds)).exec() as TagRow[]
+                : [];
 
-            const tagIds = projectTagRows.map((pt) => pt.tag_id);
-            let tagObjs: TagRow[] = [];
-            if (tagIds.length > 0) {
-                tagObjs = await db
-                    .select()
-                    .from(tagsTable)
-                    .where(tagsTable.id.in(tagIds))
-                    .exec() as TagRow[];
-            }
+            const projCatRows = await db.select().from(projCatsTable)
+                .where(projCatsTable.project_id.eq(project.id))
+                .exec() as { category_id: number }[];
+            const catIds = projCatRows.map(pc => pc.category_id);
+            const cats = catIds.map(id => categoryById.get(id)).filter(Boolean) as ProjectCategoryRow[];
 
             result.push({
+                id: project.id,
                 name: project.name,
                 description: project.description ?? undefined,
                 image: project.image ?? undefined,
                 avp: project.avp ?? undefined,
                 source_code_link: project.source_code_link ?? undefined,
+                status_id: project.status_id ?? undefined,
+                project_category_ids: catIds,
+                categories: cats,
+                status: project.status_id != null ? statusById.get(project.status_id) : undefined,
                 tags: tagObjs.map(tag => ({
                     id: tag.id,
                     name: tag.name ?? '',

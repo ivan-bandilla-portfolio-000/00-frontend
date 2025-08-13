@@ -1,6 +1,6 @@
 import { forwardRef, useRef, useState, useEffect, lazy, createRef } from "react";
 import { getRequestStatusById } from "@/constants/requestStatuses";
-import personalInfo from "@/constants/personalInfo";
+import { ContactInfoService, type ContactInfo } from "@/services/ContactInfoService";
 import ContactForm from '@/components/forms/ContactForm/';
 
 import { SectionWrapper } from '@/hoc';
@@ -20,6 +20,7 @@ import { MoveLeft } from "lucide-react";
 import { FormService } from "@/services/FormService";
 import { NonceManager } from "@/features/nonce/client/services/NonceManager";
 import SectionLoader from "@/components/SectionLoader";
+import { useClientDB } from "@/clientDB/context";
 const Hyperspeed = lazy(() => import('@/components/blocks/backgrounds/Hyperspeed/Hyperspeed'));
 
 const hyperspeedRef = createRef<any>();
@@ -92,18 +93,22 @@ const DeferredBackground: React.FC = () => {
 
 const ContactInfoSection = () => {
     const [loading, setLoading] = useState(true);
-    const [info, setInfo] = useState<typeof personalInfo | null>(null);
+    const [info, setInfo] = useState<ContactInfo | null>(null);
+    const db = useClientDB(); // get DB at top-level
 
     useEffect(() => {
-        setLoading(true);
-        // Simulate server fetch
-        const timer = setTimeout(() => {
-            setInfo(personalInfo);
-            setLoading(false);
-        }, 1200); // 1.2s delay
-
-        return () => clearTimeout(timer);
-    }, []);
+        let alive = true;
+        (async () => {
+            if (!db) return; // wait until DB is available
+            try {
+                const data = await ContactInfoService.ensureAndGet(db);
+                if (alive) setInfo(data ?? null);
+            } finally {
+                if (alive) setLoading(false);
+            }
+        })();
+        return () => { alive = false; };
+    }, [db]);
 
     if (loading) {
         return (
@@ -117,36 +122,51 @@ const ContactInfoSection = () => {
         <>
             <address className="space-y-2">
                 <ContactItem type="email" label="Email:">
-                    <CopiableLink type="email" href="othercontact@example.com">
-                        {info.email}
-                    </CopiableLink>
+                    {info.email ? (
+                        <CopiableLink type="email" href={`mailto:${info.email}`}>
+                            {info.email}
+                        </CopiableLink>
+                    ) : (
+                        <span>-</span>
+                    )}
                 </ContactItem>
 
                 <ContactItem type="phone" label="Phone:">
-                    <CopiableLink type="tel" href="+1234567890">
-                        {info.phone}
-                    </CopiableLink>
+                    {info.phone ? (
+                        <CopiableLink type="tel" href={`tel:${info.phone}`}>
+                            {info.phone}
+                        </CopiableLink>
+                    ) : (
+                        <span>-</span>
+                    )}
                 </ContactItem>
             </address>
             <br />
             <br />
             <div className="space-y-2">
                 <ContactItem type="linkedin" label="LinkedIn:">
-                    <CopiableLink href={info.linkedin.url}>
-                        {info.linkedin.username}
-                    </CopiableLink>
+                    {info.linkedin?.url ? (
+                        <CopiableLink href={info.linkedin.url}>
+                            {info.linkedin?.username ?? info.linkedin.url}
+                        </CopiableLink>
+                    ) : (
+                        <span>{info.linkedin?.username ?? '-'}</span>
+                    )}
                 </ContactItem>
 
                 <ContactItem type="github" label="Github:">
-                    <CopiableLink href={info.github.url}>
-                        {info.github.username}
-                    </CopiableLink>
+                    {info.github?.url ? (
+                        <CopiableLink href={info.github.url}>
+                            {info.github?.username ?? info.github.url}
+                        </CopiableLink>
+                    ) : (
+                        <span>{info.github?.username ?? '-'}</span>
+                    )}
                 </ContactItem>
             </div>
         </>
     );
 }
-
 
 
 const Contact = () => {

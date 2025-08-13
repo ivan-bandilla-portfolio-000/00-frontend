@@ -7,11 +7,21 @@ import { Routes, Route, useLocation } from 'react-router';
 const Contact = lazy(() => import('@/pages/Contact'));
 import { ThemeProvider } from "@/features/theming/components/theme-provider"
 import { ClientDBProvider } from '@/clientDB/context';
+// import { useClientDB } from '@/clientDB/context';
 import ErrorBoundary from '@/components/errors/ErrorBoundary';
 import { LLMProvider } from '@/contexts/LLMContext';
 import SimpleLoader from './components/SimpleLoader';
 import About from './pages/About';
+// import { PortfolioDataService } from '@/services/PortfolioDataService';
 
+// function DataBootstrapper() {
+//   const db = useClientDB();
+//   useEffect(() => {
+//     if (!db) return;
+//     PortfolioDataService.ensureAndGetAll(db).catch(console.error);
+//   }, [db]);
+//   return null;
+// }
 
 function App() {
 
@@ -29,6 +39,7 @@ function App() {
 
   return (
     <ClientDBProvider>
+      {/* <DataBootstrapper /> */}
       <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
         <LLMProvider>
           <Suspense fallback={null}>

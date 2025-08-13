@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import { ChevronDown } from "lucide-react";
-import { motion, AnimatePresence, MotionProps } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import type { MotionProps } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -224,4 +225,4 @@ const ProductSwapCard = React.forwardRef<HTMLDivElement, ProductSwapCardProps>(
 
 ProductSwapCard.displayName = "ProductSwapCard";
 
-export ProductSwapCard;
+export default ProductSwapCard;

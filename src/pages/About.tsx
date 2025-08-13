@@ -1,11 +1,16 @@
+import type { TechStack } from "@/clientDB/@types/TechStack";
 import { useClientDB } from "@/clientDB/context";
 import CTA2 from "@/components/mvpblocks/cta-2";
 import ExperienceCard from "@/components/ui/custom/ExperienceCard";
-import ProjectsCard from "@/components/ui/custom/ProjectsCard";
+import ProjectsCard, { type ProjectCardProps } from "@/components/ui/custom/ProjectsCard";
 import { InfiniteMovingBadges } from "@/components/ui/infinite-moving-badge";
 import { SectionWrapper } from "@/hoc";
+import { ExperienceService } from "@/services/ExperienceService";
 import { ProjectService } from "@/services/ProjectService";
+import { TechStackService } from "@/services/TechStackService";
 import { useEffect, useState } from "react";
+import type { ExperienceRow } from "@/services/ExperienceService";
+import type { Project } from "@/clientDB/@types/Project";
 
 const Intro = () => {
     const description = () => {
@@ -32,116 +37,58 @@ const Intro = () => {
     )
 };
 
-const techStack = [
-    {
-        content: "PHP",
-        icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/php/php-original.svg" alt="PHP" className="w-4 h-4" />,
-    },
-    {
-        content: "Laravel",
-        icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/laravel/laravel-original.svg" alt="Laravel" className="w-4 h-4" />,
-    },
-    {
-        content: "Javascript",
-        icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg" alt="Javascript" className="w-4 h-4" />
-    },
-    {
-        content: "Vue.js",
-        icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vuejs/vuejs-original.svg" alt="Vue.js" className="w-4 h-4" />
-    },
-    {
-        content: "Bootstrap",
-        icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/bootstrap/bootstrap-original.svg" alt="Bootstrap" className="w-4 h-4" />
-    },
-    {
-        content: "Tailwind CSS",
-        icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/tailwindcss/tailwindcss-original.svg" alt="Tailwind CSS" className="w-4 h-4" />
-    },
-    {
-        content: "MySQL",
-        icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mysql/mysql-original.svg" alt="MySQL" className="w-4 h-4" />
-    },
-    {
-        content: "PostgreSQL",
-        icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg" alt="PostgreSQL" className="w-4 h-4" />
-    },
-    {
-        content: "Docker",
-        icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg" alt="Docker" className="w-4 h-4" />
-    },
-    {
-        content: "n8n",
-        icon: <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/N8n-logo-new.svg" alt="n8n" className="w-4 h-4" />
-    },
-    {
-        content: "Premiere Pro",
-        icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/premierepro/premierepro-original.svg" alt="Premiere Pro" className="w-4 h-4" />
-    },
-    {
-        content: "After Effects",
-        icon: <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/aftereffects/aftereffects-original.svg" alt="After Effects" className="w-4 h-4" />
-    },
-];
+const SkillsStack = () => {
+    const clientDb = useClientDB();
+    const [techStack, setTechStack] = useState<TechStack[]>([]);
 
-const SkillsStack = () => (
-    <div className="my-6 pointer-events-auto">
-        <h2 className="text-center">
-            Tech Stacks
-        </h2>
-        <InfiniteMovingBadges
-            items={techStack}
-            direction="left"
-            speed="normal"
-            badgeVariant="outline"
-            badgeClassName="rounded-full "
-        />
-    </div>
-);
+    useEffect(() => {
+        if (!clientDb) return;
+        let cancelled = false;
+        TechStackService.ensureAndGetTechStack(clientDb)
+            .then((rows) => {
+                if (!cancelled) setTechStack(rows);
+            })
+            .catch(console.error);
+        return () => { cancelled = true; };
+    }, [clientDb]);
 
-const experienceData = {
-    title: "Experience",
-    items: [
-        {
-            company: "Company A",
-            role: "Frontend Developer",
-            position: "Intern",
-            start: new Date("2020-01-01"),
-            end: new Date("2021-12-31"),
-            description: "Worked on various frontend projects using React and Tailwind CSS.",
-            tags: [1, 2],
-            type: "academic",
-            hidden: true
-        },
-        {
-            company: "Company B",
-            role: "Backend Developer",
-            position: "Intern",
-            start: new Date("2019-01-01"),
-            end: new Date("2019-12-31"),
-            description: "Developed RESTful APIs using Laravel and PHP.",
-            tags: [1, 2, 3],
-            type: "academic",
-            hidden: false
-        },
-        {
-            company: "Company C",
-            role: "Full Stack Developer",
-            position: "Intern",
-            start: new Date("2021-01-01"),
-            end: new Date("2021-12-31"),
-            description: "Worked on both frontend and backend development using MERN stack.",
-            tags: [1, 2, 3],
-            type: "academic",
-            hidden: false
-        }
-    ]
+    return (
+        <div className="my-6 pointer-events-auto">
+            <h2 className="text-center">
+                Tech Stacks
+            </h2>
+            <InfiniteMovingBadges
+                items={techStack.map(item => ({
+                    content: item.content,
+                    icon: <img src={item.icon} alt={item.content} className="w-4 h-4" />,
+                }))}
+                direction="left"
+                speed="normal"
+                badgeVariant="outline"
+                badgeClassName="rounded-full "
+            />
+        </div>
+    );
 }
 
 const Experience = () => {
-    const items = experienceData.items.filter((i) => !i.hidden);
+    const clientDb = useClientDB();
+    const [items, setItems] = useState<ExperienceRow[]>([]);
+
+    useEffect(() => {
+        if (!clientDb) return;
+        let cancelled = false;
+        ExperienceService.ensureAndGetExperiences(clientDb)
+            .then((rows) => {
+                if (!cancelled) setItems(rows.filter(i => !i.hidden));
+            })
+            .catch(console.error);
+        return () => { cancelled = true; };
+    }, [clientDb]);
+
     return (
         <>
-            <h2>{experienceData.title}</h2>
+            <h2>Experience</h2>
             <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pointer-events-auto">
                 {items.map((item, idx) => (
                     <ExperienceCard key={`${item.company}-${idx}`} item={item} />
@@ -152,7 +99,7 @@ const Experience = () => {
 };
 
 const Projects = () => {
-    const [projects, setProjects] = useState([]);
+    const [projects, setProjects] = useState<Project[]>([]);
     const clientDb = useClientDB();
 
     useEffect(() => {
@@ -168,9 +115,24 @@ const Projects = () => {
         <>
             <h2>Projects</h2>
             <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pointer-events-auto">
-                {projects.map((project, idx) => (
-                    <ProjectsCard key={project.name + idx} project={project} />
-                ))}
+                {projects.map((project, idx) => {
+                    const normalized: ProjectCardProps["project"] = {
+                        name: project.name,
+                        description: project.description,
+                        image: project.image,
+                        avp: project.avp,
+                        source_code_link: project.source_code_link,
+                        // Ensure Tags[] for the card; fallback to [] if numbers/undefined
+                        tags:
+                            Array.isArray(project.tags) &&
+                                (project.tags.length === 0 || typeof (project.tags[0] as any)?.id === "number")
+                                ? (project.tags as any)
+                                : [],
+                    };
+                    return (
+                        <ProjectsCard key={project.name + idx} project={normalized} />
+                    );
+                })}
             </div>
         </>
     );
