@@ -15,3 +15,4 @@ export class PortfolioDB extends Dexie {
 }
 
 export const db = new PortfolioDB();
+

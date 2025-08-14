@@ -1,12 +1,24 @@
 import { HeroSection } from '@/components/landing';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import SimpleLoader from '@/components/SimpleLoader';
 import LazyVisible from '@/components/LazyVisible';
+import { UserDataService } from '@/services/UserDataService';
 const Sparkles = lazy(() => import('@/components/ui/sparkles').then(mod => ({ default: mod.SparklesCore })));
 
 
 const Home = () => {
+    const [showMiscRobot, setShowMiscRobot] = useState<boolean>(false);
 
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            const existing = await UserDataService.getUserData();
+            if (cancelled) return;
+            // show only if not answered yet
+            setShowMiscRobot(!(existing && typeof existing.isITField === 'boolean'));
+        })();
+        return () => { cancelled = true; };
+    }, []);
 
 
     return (
@@ -31,11 +43,13 @@ const Home = () => {
                 fallback={<SimpleLoader />}
             />
 
-            <LazyVisible
-                loader={() => import('@/components/landing/MiscRobot')}
-                fallback={null}
-                rootMargin="1000px"
-            />
+            {showMiscRobot && (
+                <LazyVisible
+                    loader={() => import('@/components/landing/MiscRobot')}
+                    fallback={null}
+                    rootMargin="1000px"
+                />
+            )}
 
 
             <span id="projects" className="block scroll-mb-[4rem]" aria-hidden="true" />
@@ -43,12 +57,6 @@ const Home = () => {
                 loader={() => import('@/components/landing/Projects/Projects')}
                 fallback={<SimpleLoader />}
                 rootMargin="500px"
-            />
-
-            <LazyVisible
-                loader={() => import('@/components/landing/Chat')}
-                fallback={null}
-                componentProps={{}}
             />
         </>
     )
