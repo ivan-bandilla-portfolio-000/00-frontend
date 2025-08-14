@@ -27,6 +27,10 @@ function App() {
 
   const location = useLocation();
 
+  const ChatWidget = lazy(() =>
+    import('@/components/landing/Chat')
+  );
+
   useEffect(() => {
     if (location.hash) {
       const id = location.hash.replace('#', '');
@@ -46,6 +50,9 @@ function App() {
             <Toaster richColors closeButton />
           </Suspense>
           <TopBar />
+          <Suspense fallback={null}>
+            <ChatWidget llmReady={true} />
+          </Suspense>
           <Routes>
             <Route path="/" element={
               <ErrorBoundary>
