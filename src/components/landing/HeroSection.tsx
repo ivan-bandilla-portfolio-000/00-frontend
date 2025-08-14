@@ -63,7 +63,7 @@ const FeaturedTechStack = () => {
   const isHidden = imagesLoaded < techStack.length ? "opacity-0 pointer-events-none aria-hidden" : "";
 
   return (
-    <div className={`absolute [bottom:calc(var(--spacing)*27+4dvh)] w-full flex justify-end-safe items-center-safe text-xs z-20 transition-opacity duration-300 ${isHidden} `}>
+    <div className={`absolute [bottom:calc(var(--spacing)*27+4dvh)] w-full flex justify-end-safe items-center-safe text-xs md:text-sm z-20 transition-opacity duration-300 ${isHidden} `}>
       <hgroup className="px-28 min-w-sm text-center space-x-2 ">
         <span className="inline-block translate-y-[2px]">
           <i>Proficient in</i>
