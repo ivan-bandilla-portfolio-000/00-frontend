@@ -1,3 +1,4 @@
+import { RateLimiter } from '@/features/rate-limiting/client/services/RateLimiter';
 import axios, { type AxiosInstance, type AxiosResponse } from 'axios';
 
 export class BaseService {
@@ -18,6 +19,11 @@ export class BaseService {
 
   protected static async delete<T>(url: string): Promise<AxiosResponse<T>> {
     return await this.axiosInst.delete<T>(url);
+  }
+
+  protected static async rateLimited<T>(key: string, limit: number, windowMs: number, fn: () => Promise<T>): Promise<T> {
+    await RateLimiter.throwIfLimited(key, limit, windowMs);
+    return fn();
   }
 
   // Setup interceptors for auth, error handling, etc.

@@ -47,6 +47,21 @@ const formatRange = (start: Date | string, end?: Date | string) => {
     return `${s} — ${e}`;
 };
 
+const computeDuration = (start: Date | string, end?: Date | string) => {
+    const startDate = new Date(start);
+    const endDate = end ? new Date(end) : new Date();
+    let months =
+        (endDate.getFullYear() - startDate.getFullYear()) * 12 +
+        (endDate.getMonth() - startDate.getMonth());
+    if (months < 1) return "Less than 1 month";
+    if (months < 12) return `${months} month${months > 1 ? "s" : ""}`;
+    const years = Math.floor(months / 12);
+    const remMonths = months % 12;
+    return remMonths === 0
+        ? `${years} year${years > 1 ? "s" : ""}`
+        : `${years} year${years > 1 ? "s" : ""} ${remMonths} month${remMonths > 1 ? "s" : ""}`;
+};
+
 const ExperienceCard = React.forwardRef<HTMLDivElement, ExperienceCardProps>(
     (props, ref) => {
         const { item, className, ...rest } = props;
@@ -79,12 +94,13 @@ const ExperienceCard = React.forwardRef<HTMLDivElement, ExperienceCardProps>(
 
         const subtitle = [item.role, item.position].filter(Boolean).join(" • ");
         const dateRange = formatRange(item.start, item.end);
+        const duration = computeDuration(item.start, item.end);
 
         return (
             <motion.div
                 ref={ref}
                 className={cn(
-                    "w-full space-y-4 rounded-lg bg-sidebar p-4 border max-w-96 overflow-hidden",
+                    "w-full min-h-full space-y-4 rounded-lg bg-sidebar p-4 border max-w-96 overflow-hidden",
                     className
                 )}
                 initial={{ opacity: 0, y: 20 }}
@@ -133,15 +149,15 @@ const ExperienceCard = React.forwardRef<HTMLDivElement, ExperienceCardProps>(
                 </div>
 
                 <div className="space-y-3">
-                    <div className="space-y-1.5">
-                        <h2 className="line-clamp-1 font-medium">{item.company}</h2>
+                    <div className="">
+                        <h2 className="line-clamp-1 font-medium text-lg lg:text-xl">{item.company}</h2>
                         {subtitle && (
-                            <p className="text-sm text-muted-foreground line-clamp-1">
+                            <p className="text-base lg:text-base text-muted-foreground font-bold line-clamp-1">
                                 {subtitle}
                             </p>
                         )}
                         {item.description && (
-                            <p className="line-clamp-3 text-sm text-muted-foreground">
+                            <p className="line-clamp-6 @sm:line-clamp-4 text-base text-muted-foreground text-pretty mt-4">
                                 {item.description}
                             </p>
                         )}
@@ -163,13 +179,14 @@ const ExperienceCard = React.forwardRef<HTMLDivElement, ExperienceCardProps>(
                         </ScrollArea>
                     )}
 
-                    <div className="flex items-center justify-between gap-4 text-xs">
-                        <time className="text-muted-foreground">{dateRange}</time>
-                        {item.type && (
+                    <div className="flex items-center gap-1 text-xs lg:text-sm text-pretty">
+                        <time className="text-muted-foreground font-medium">{dateRange}</time>
+                        <i className="text-muted-foreground">({duration})</i>
+                        {/* {item.type && (
                             <span className="text-muted-foreground capitalize">
                                 {item.type}
                             </span>
-                        )}
+                        )} */}
                     </div>
                 </div>
             </motion.div>

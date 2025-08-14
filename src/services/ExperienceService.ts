@@ -17,7 +17,9 @@ export class ExperienceService extends BaseService {
     static BASE_API = import.meta.env.VITE_DATA_SOURCE_URL;
 
     static async fetchExperiencesFromApi(): Promise<any[]> {
-        const res = await this.get<any>(`${ExperienceService.BASE_API}/experiences`);
+        const res = await this.rateLimited('experiences-endpoint', 5, 60_000, () =>
+            this.get<any>(`${ExperienceService.BASE_API}/experiences`)
+        );
         return Array.isArray(res?.data?.data) ? res.data.data : [];
     }
 

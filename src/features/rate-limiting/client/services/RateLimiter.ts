@@ -43,12 +43,15 @@ export class RateLimiter {
     ): Promise<void> {
         const allowed = await this.isAllowed(key, limit, windowMs);
         if (!allowed) {
-            const error = new Error(RateLimiter.rateLimitedMessage) as Error & { httpStatus?: number };
+            setTimeout(() => {
+                toast.error(RateLimiter.rateLimitedMessage, {
+                    position: options?.toastPosition || 'bottom-right',
+                });
+            }, 300);
 
+            const error = new Error(RateLimiter.rateLimitedMessage) as Error & { httpStatus?: number };
             error.httpStatus = 429;
-            toast.error(RateLimiter.rateLimitedMessage, {
-                position: options?.toastPosition || 'bottom-right',
-            });
+
             throw error;
         }
     }

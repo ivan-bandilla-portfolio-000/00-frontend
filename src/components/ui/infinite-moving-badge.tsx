@@ -87,7 +87,7 @@ export const InfiniteMovingBadges = ({
                     <li key={idx} className="shrink-0">
                         <Badge
                             variant={item.variant ?? badgeVariant}
-                            className={cn("px-3 py-1 select-none cursor-text", badgeClassName)}
+                            className={cn("px-3 py-1 select-none cursor-text text-sm lg:text-base", badgeClassName)}
                         >
                             {item.icon ? <span className="ml-1 inline-flex">{item.icon}</span> : null}
                             {item.content}

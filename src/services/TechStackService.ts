@@ -13,7 +13,9 @@ export class TechStackService extends BaseService {
     static BASE_API = import.meta.env.VITE_DATA_SOURCE_URL;
 
     static async fetchTechStackFromApi(): Promise<Omit<TechStackRow, "id">[]> {
-        const res = await this.get<any>(`${TechStackService.BASE_API}/tech-stacks`);
+        const res = await this.rateLimited('tech-stacks-endpoint', 5, 60_000, () =>
+            this.get<any>(`${TechStackService.BASE_API}/tech-stacks`)
+        );
 
         const rawBody = res && typeof res === "object" && "data" in res ? (res as any).data : res;
 

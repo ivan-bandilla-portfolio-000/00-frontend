@@ -60,7 +60,7 @@ const Projects = () => {
                 className="flex flex-col h-dvh justify-center pointer-events-auto"
             >
                 <div className='flex items-center gap-2'>
-                    <h2 className="font-black text-2xl lg:text-5xl">Projects.</h2>
+                    <h2 className="font-black poppins-text text-2xl lg:text-5xl">Projects.</h2>
                     <LinkWithIcon
                         href="/projects"
                         content="View All"

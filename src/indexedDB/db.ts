@@ -6,7 +6,7 @@ export class PortfolioDB extends Dexie {
     actions!: EntityTable<RateLimitAction, 'id'>;
     nonces!: EntityTable<NonceEntry, 'id'>;
     constructor() {
-        super('rateLimiter_db');
+        super('rate_limiter_db');
         this.version(1).stores({
             actions: 'id',
             nonces: 'id, createdAt'

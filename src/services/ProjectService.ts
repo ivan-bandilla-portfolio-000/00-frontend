@@ -1,6 +1,7 @@
 import { BaseService } from '@/services/BaseService';
 import type { Project } from "@/clientDB/@types/Project";
 import type { lf } from '@/clientDB/schema';
+import { RateLimiter } from '@/features/rate-limiting/client/services/RateLimiter';
 
 // Add concrete row types to avoid "object" property errors
 type TagRow = {
@@ -53,6 +54,7 @@ function isDupKeyError(e: unknown): boolean {
 
 export class ProjectService extends BaseService {
     static BASE_API = import.meta.env.VITE_DATA_SOURCE_URL;
+    static PROJECTS_FETCH_RATE_KEY = 'projects-fetch';
 
     static async ensureAndGetProjects(db: lf.Database): Promise<Project[]> {
         const projectsTable = db.getSchema().table('projects');
@@ -156,6 +158,8 @@ export class ProjectService extends BaseService {
     }
 
     static async fetchProjects(db: lf.Database): Promise<void> {
+        await RateLimiter.throwIfLimited(ProjectService.PROJECTS_FETCH_RATE_KEY, 10, 60_000);
+
         let tags: TagRow[] = [];
         let projects: any[] = [];
         let statuses: StatusRow[] = [];
@@ -170,18 +174,26 @@ export class ProjectService extends BaseService {
         // } catch (e) {
         // console.warn('GraphQL fetch failed, falling back to REST API:', e);
         const [tagsRes, projectsRes] = await Promise.all([
-            this.get<{ data: TagRow[] }>(`${ProjectService.BASE_API}/tags`),
-            this.get<{ data: any[] }>(`${ProjectService.BASE_API}/projects`),
+            this.rateLimited('tags-endpoint', 5, 60_000, () =>
+                this.get<{ data: TagRow[] }>(`${ProjectService.BASE_API}/tags`)
+            ),
+            this.rateLimited('projects-endpoint', 5, 60_000, () =>
+                this.get<{ data: any[] }>(`${ProjectService.BASE_API}/projects`)
+            ),
         ]);
         tags = tagsRes.data.data;
         projects = projectsRes.data.data;
 
         try {
-            const statusesRes = await this.get<{ data: StatusRow[] }>(`${ProjectService.BASE_API}/project-statuses`);
+            const statusesRes = await this.rateLimited('statuses-endpoint', 7, 60_000, () =>
+                this.get<{ data: StatusRow[] }>(`${ProjectService.BASE_API}/project-statuses`)
+            );
             statuses = statusesRes.data.data ?? [];
         } catch { statuses = []; }
         try {
-            const categoriesRes = await this.get<{ data: ProjectCategoryRow[] }>(`${ProjectService.BASE_API}/project-categories`);
+            const categoriesRes = await this.rateLimited('categories-endpoint', 7, 60_000, () =>
+                this.get<{ data: ProjectCategoryRow[] }>(`${ProjectService.BASE_API}/project-categories`)
+            );
             categories = categoriesRes.data.data ?? [];
         } catch { categories = []; }
         // }
@@ -302,6 +314,7 @@ export class ProjectService extends BaseService {
                 await db
                     .update(projectsTable)
                     .set(projectsTable['description'], project.description ?? null)
+                    .set(projectsTable['status_id'], project.status_id ?? null)
                     .set(projectsTable['image'], project.image ?? null)
                     .set(projectsTable['avp'], project.avp ?? null)
                     .set(projectsTable['source_code_link'], project.source_code_link ?? null)
@@ -315,6 +328,7 @@ export class ProjectService extends BaseService {
                         projectsTable.createRow({
                             name: project.name,
                             description: project.description ?? null,
+                            status_id: project.status_id ?? null,
                             image: project.image ?? null,
                             avp: project.avp ?? null,
                             source_code_link: project.source_code_link ?? null,

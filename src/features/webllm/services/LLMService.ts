@@ -1,8 +1,6 @@
 import { CreateMLCEngine } from "@mlc-ai/web-llm";
 import { defaultModel } from "@/features/webllm/constants/webLLM"
 
-import { createContext } from "react";
-
 export class LLMService {
     protected static sharedEngine: any = null;
     protected engine: any = null;
@@ -54,7 +52,7 @@ export class LLMService {
     }
 
     checkRequirements() {
-        return false;
+        // return false;
         return this.checkAvailableMemory() && this.checkCpuAvailability();
     }
 
@@ -112,5 +110,3 @@ export class LLMService {
         }
     }
 }
-
-export const LLMContext = createContext<LLMService | null>(null);

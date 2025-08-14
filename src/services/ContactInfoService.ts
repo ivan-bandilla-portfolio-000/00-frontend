@@ -128,6 +128,7 @@ export class ContactInfoService extends BaseService {
     }
 
     static async fetchFromApi(): Promise<ContactInfo> {
+
         // try {
         //     const query = `query 
         //       contact_info {
@@ -153,8 +154,9 @@ export class ContactInfoService extends BaseService {
         // }
 
         // REST fallback
-        const res = await this.get<{ data?: RestContactInfo | null }>(`${this.BASE_API}/contact-info`);
-        console.log('Fetched contact info from REST:', res.data);
+        const res = await this.rateLimited('contact-info-endpoint', 5, 60_000, () =>
+            this.get<{ data?: RestContactInfo | null }>(`${this.BASE_API}/contact-info`)
+        );
         return this.normalize(res.data?.data ?? null);
     }
 

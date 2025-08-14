@@ -34,7 +34,7 @@ const ProjectsCard: React.FC<ProjectCardProps> = ({ project, className }) => {
     return (
         <motion.div
             className={cn(
-                "w-full max-w-96 rounded-lg bg-sidebar p-4 border space-y-4 overflow-hidden",
+                "w-full h-full rounded-lg bg-sidebar p-4 border space-y-4 overflow-hidden",
                 className
             )}
             initial={{ opacity: 0, y: 20 }}
@@ -51,18 +51,18 @@ const ProjectsCard: React.FC<ProjectCardProps> = ({ project, className }) => {
                 />
             </div>
             <div className="space-y-2">
-                <h2 className="font-medium line-clamp-1">{project.name}</h2>
+                <h2 className="line-clamp-1 font-medium text-lg lg:text-xl">{project.name}</h2>
                 {project.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-3">
+                    <p className="line-clamp-6 @sm:line-clamp-4 text-base text-muted-foreground text-pretty mt-3">
                         {project.description}
                     </p>
                 )}
                 {project.tags && project.tags.length > 0 && (
-                    <div className="flex gap-2 flex-wrap">
+                    <div className="flex gap-2 flex-wrap py-4">
                         {project.tags.map((tag) => (
                             <Badge
                                 key={tag.id}
-                                className="bg-muted-foreground hover:bg-muted-background"
+                                className="bg-muted-foreground hover:bg-muted-background text-background text-sm md:text-[0.85em]"
                             >
                                 {tag.name}
                             </Badge>
@@ -70,14 +70,16 @@ const ProjectsCard: React.FC<ProjectCardProps> = ({ project, className }) => {
                     </div>
                 )}
                 {project.source_code_link && (
-                    <a
-                        href={project.source_code_link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-block mt-2 text-xs text-primary underline"
-                    >
-                        Source Code
-                    </a>
+                    <div className="flex justify-end ">
+                        <a
+                            href={project.source_code_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-block px-2 py-4 pointer-coarse:py-5 text-sm text-primary underline"
+                        >
+                            Source Code
+                        </a>
+                    </div>
                 )}
             </div>
         </motion.div>
