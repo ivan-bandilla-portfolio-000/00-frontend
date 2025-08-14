@@ -227,9 +227,9 @@ const Contact = () => {
                             />
                         </CardContent>
                         <CardFooter className="select-none -mt-4 ">
-                            <Button variant="link" className="flex-1 text-left justify-start group">
+                            <Button variant="link" className="flex-1 h-full text-left justify-start items-center-safe group ">
                                 <MoveLeft className="group-hover:-translate-x-1 transition-transform" />
-                                <a href="/">Back to Home</a>
+                                <a href="/" className="pointer-coarse:py-4 py-3 px-2 grid place-content-center"><span>Back to Home</span></a>
                             </Button>
                             <Button
                                 type="button"

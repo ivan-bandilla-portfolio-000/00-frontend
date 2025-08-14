@@ -60,7 +60,7 @@ const SkillsStack = () => {
             <InfiniteMovingBadges
                 items={techStack.map(item => ({
                     content: item.content,
-                    icon: <img src={item.icon} alt={item.content} className="w-4 h-4" />,
+                    icon: <img src={item.icon} alt="" className="w-4 h-4" />,
                 }))}
                 direction="left"
                 speed="normal"

@@ -150,6 +150,7 @@ const FeaturedInfo = () => {
   return (
     <>
       <div className='-mt-12'>
+        <h2 className='hidden' aria-hidden='true'>Featured Information</h2>
         <BentoGrid2 items={items} />
       </div>
       {/* <BentoGrid1 items={items} />

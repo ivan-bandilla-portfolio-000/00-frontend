@@ -60,6 +60,7 @@ const EditorSwitch: React.FC<EditorSwitchProps> = ({
                 className=''
                 checked={enableRichEditor && !editorFailed}
                 disabled={status.id !== getRequestStatusById("ready")!.id}
+                aria-label="Toggle rich text editor between plain text input"
                 onCheckedChange={(checked) => {
                     if (checked) {
                         setEditorFailed(false);
