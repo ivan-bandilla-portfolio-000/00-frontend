@@ -3,6 +3,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import compression from 'vite-plugin-compression'
+import Sitemap from 'vite-plugin-sitemap'
 
 export default defineConfig({
   plugins: [
@@ -10,6 +11,10 @@ export default defineConfig({
     tailwindcss(),
     compression({ algorithm: 'brotliCompress', ext: '.br' }),
     compression({ algorithm: 'gzip', ext: '.gz' }),
+    Sitemap({
+      hostname: 'http://localhost',
+      dynamicRoutes: ['/', '/about', '/contact'],
+    }),
   ],
   resolve: {
     alias: {
