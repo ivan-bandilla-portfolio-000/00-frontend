@@ -7,7 +7,6 @@ import { useLLM } from "@/contexts/LLMContext";
 import { aboutMeInstruction } from "@/features/webllm/constants/webLLM";
 import personalInfo from "@/constants/personalInfo";
 import { Sparkles as SparklesIcon } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const LS_KEY = "chatWidgetBubbleState_v3";
 const HISTORY_KEY = 'chatWidgetHistory_v1';
@@ -296,18 +295,11 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
                                     setHasStartedLLM(true);
                                 }
                             }}
+                            title={buttonLabel}
                             className={` ${status === "unsupported" ? "opacity-0 cursor-not-allowed" : (!llmReady ? "opacity-70" : "")} chat-drag-anywhere w-14 h-14 rounded-full bg-gradient-to-br from-emerald-500 to-green-500 shadow-lg shadow-emerald-900/30 flex items-center justify-center text-white font-semibold text-sm active:scale-95 transition select-none cursor-grab`}
                         >
-                            <Tooltip>
-                                <TooltipTrigger className="p-4 cursor-[inherit]">
-                                    <SparklesIcon className="" />
-                                </TooltipTrigger>
-                                <TooltipContent className="text-sm lg:text-base">
-                                    {buttonLabel}
-                                </TooltipContent>
-                            </Tooltip>
+                            <SparklesIcon className="" />
                         </Button>
-
                     </PopoverTrigger>
                     <PopoverContent
                         side="top"
