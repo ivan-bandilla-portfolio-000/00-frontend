@@ -51,7 +51,7 @@ function App() {
           </Suspense>
           <TopBar />
           <Suspense fallback={null}>
-            <ChatWidget llmReady={true} />
+            <ChatWidget />
           </Suspense>
           <Routes>
             <Route path="/" element={

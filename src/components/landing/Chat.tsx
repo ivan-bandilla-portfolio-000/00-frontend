@@ -6,6 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useLLM } from "@/contexts/LLMContext";
 import { aboutMeInstruction } from "@/features/webllm/constants/webLLM";
 import personalInfo from "@/constants/personalInfo";
+import { Sparkles as SparklesIcon } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const LS_KEY = "chatWidgetBubbleState_v3";
 const HISTORY_KEY = 'chatWidgetHistory_v1';
@@ -58,14 +60,15 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
     const [open, setOpen] = useState(false);
     const [panelSize, setPanelSize] = useState({ w: chatWidth, h: chatHeight });
     const initRef = useRef(false);
+    const abortRef = useRef<(() => void) | null>(null);
 
     // Chat state
     const [input, setInput] = useState("");
-    const [response, setResponse] = useState("");
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const messagesEndRef = useRef<HTMLDivElement | null>(null);
     const [streaming, setStreaming] = useState(false);
     const [hasStartedLLM, setHasStartedLLM] = useState(false);
+    const modelBusy = llm?.isBusy() && !streaming;
 
     // Resize refs
     const resizeRef = useRef<{
@@ -214,38 +217,42 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
     const handleSend = async () => {
         if (streaming || !input.trim() || !llm) return;
         const userText = input.trim();
+        const fullPrompt = buildPrompt(userText);
         const uid = Date.now().toString(36) + Math.random().toString(36).slice(2);
         const aid = uid + '-a';
 
-        persistHistory(prev => [...prev, { id: uid, role: 'user', content: userText }, { id: aid, role: 'assistant', content: '' }]);
+        persistHistory(prev => [...prev,
+        { id: uid, role: 'user', content: userText },
+        { id: aid, role: 'assistant', content: '' }
+        ]);
         setInput("");
-        setResponse(""); // legacy
         try {
             llm.setSystemPrompt(aboutMeInstruction);
             setStreaming(true);
             let accum = "";
-            const prompt = buildPrompt(userText);
-            await llm.getResponse(
-                prompt,
+            const { promise, abort } = llm.getResponseAbortable(
+                fullPrompt,
                 true,
                 (chunk: string) => {
                     accum += chunk;
-                    setResponse(accum); // legacy
-                    setMessages(prev =>
-                        prev.map(m => m.id === aid ? { ...m, content: accum } : m)
-                    );
+                    setMessages(prev => prev.map(m => m.id === aid ? { ...m, content: accum } : m));
                 }
             );
-        } catch (e) {
+            abortRef.current = () => abort();
+
+            await promise;
+        } catch (e: any) {
             setMessages(prev =>
-                prev.map(m => m.id === aid ? { ...m, content: "Error getting response." } : m)
+                prev.map(m => m.id === aid ? {
+                    ...m,
+                    content: e?.name === 'AbortError' ? "(stopped)" : "Error getting response."
+                } : m)
             );
-            // eslint-disable-next-line no-console
             console.warn(e);
         } finally {
             setStreaming(false);
             scrollToBottom();
-            persistHistory(prev => prev); // re-save final
+            persistHistory(prev => prev); // flush
         }
     };
 
@@ -272,19 +279,35 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
                     open={open}
                     onOpenChange={(v) => {
                         setOpen(v);
-                        if (!v) {
-                            persist();
-                        }
+                        if (v) window.dispatchEvent(new Event('llm-chat-open'));
+                        if (!v) { persist(); }
                     }}
                 >
-                    <PopoverTrigger asChild>
-                        <button
+                    <PopoverTrigger>
+
+                        <Button
                             type="button"
                             aria-label="Open chat"
-                            className="chat-drag-anywhere w-14 h-14 rounded-full bg-gradient-to-br from-emerald-500 to-green-500 shadow-lg shadow-emerald-900/30 flex items-center justify-center text-white font-semibold text-sm active:scale-95 transition select-none cursor-grab"
+                            disabled={status === "unsupported"}
+                            onClick={() => {
+                                // If model hasn't started loading yet, kick it off on user interaction
+                                if (!llmReady && status !== "unsupported" && !hasStartedLLM) {
+                                    ensureLLM();
+                                    setHasStartedLLM(true);
+                                }
+                            }}
+                            className={` ${status === "unsupported" ? "opacity-0 cursor-not-allowed" : (!llmReady ? "opacity-70" : "")} chat-drag-anywhere w-14 h-14 rounded-full bg-gradient-to-br from-emerald-500 to-green-500 shadow-lg shadow-emerald-900/30 flex items-center justify-center text-white font-semibold text-sm active:scale-95 transition select-none cursor-grab`}
                         >
-                            {buttonLabel}
-                        </button>
+                            <Tooltip>
+                                <TooltipTrigger className="p-4 cursor-[inherit]">
+                                    <SparklesIcon className="" />
+                                </TooltipTrigger>
+                                <TooltipContent className="text-sm lg:text-base">
+                                    {buttonLabel}
+                                </TooltipContent>
+                            </Tooltip>
+                        </Button>
+
                     </PopoverTrigger>
                     <PopoverContent
                         side="top"
@@ -366,7 +389,7 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
                             <form
                                 onSubmit={(e) => {
                                     e.preventDefault();
-                                    if (!input.trim() || streaming || !llmReady) return;
+                                    if (!input.trim() || streaming || !llmReady || modelBusy) return;
                                     handleSend();
                                 }}
                                 className="flex gap-2 p-3 border-t border-border items-end"
@@ -385,7 +408,7 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
                                             }
                                         }
                                     }}
-                                    disabled={!llmReady || streaming}
+                                    disabled={!llmReady || streaming || modelBusy}
                                     placeholder="Ask me something about me... (Enter to send, Shift+Enter for newline)"
                                     className="flex-1 resize-none rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50"
                                 />
@@ -395,8 +418,7 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
                                             type="button"
                                             variant="outline"
                                             onClick={() => {
-                                                // Optional: implement abort logic if llm.getResponse returns a cancel/abort.
-                                                // abortRef.current?.();
+                                                abortRef.current?.();
                                             }}
                                             className="py-4 px-4"
                                         >
@@ -405,10 +427,10 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
                                     )}
                                     <Button
                                         type="submit"
-                                        disabled={!llmReady || streaming || !input.trim()}
+                                        disabled={!llmReady || streaming || !input.trim() || modelBusy}
                                         className="py-4 px-6"
                                     >
-                                        {streaming ? "..." : "Send"}
+                                        {streaming ? "..." : (modelBusy ? "Busy" : "Send")}
                                     </Button>
                                 </div>
                             </form>

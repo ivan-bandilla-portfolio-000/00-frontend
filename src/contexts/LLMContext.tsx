@@ -1,24 +1,28 @@
-import { createContext, useCallback, useContext, useRef, useState } from 'react';
+import { createContext, useCallback, useRef, useContext, useState } from 'react';
+import { LLMService } from '@/features/webllm/services/LLMService';
+import { defaultModel } from '@/features/webllm/constants/webLLM';
 
 export interface LLMContextValue {
-  llm: any | null;
+  llm: LLMService | null;
   llmReady: boolean;
   status: 'idle' | 'loading' | 'ready' | 'error' | 'unsupported';
+  progress: number;
   ensureLLM: () => Promise<void>;
+}
+
+export function useLLM() {
+  const ctx = useContext(LLMContext);
+  if (!ctx) throw new Error("useLLM must be used inside LLMProvider");
+  return ctx;
 }
 
 export const LLMContext = createContext<LLMContextValue | null>(null);
 
-export const useLLM = () => {
-  const ctx = useContext(LLMContext);
-  if (!ctx) throw new Error('useLLM must be used within LLMProvider');
-  return ctx;
-};
-
 export const LLMProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [llm, setLlm] = useState<any | null>(null);
+  const [llm, setLlm] = useState<LLMService | null>(null);
   const [llmReady, setLlmReady] = useState(false);
   const [status, setStatus] = useState<LLMContextValue['status']>('idle');
+  const [progress, setProgress] = useState(0);
   const loadingRef = useRef<Promise<void> | null>(null);
 
   const ensureLLM = useCallback(async () => {
@@ -28,30 +32,37 @@ export const LLMProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const load = async () => {
       try {
         setStatus('loading');
-        const { LLMService } = await import('@/features/webllm/services/LLMService');
-        const service = new LLMService("You are a helpful assistant.");
+        const service = new LLMService({
+          modelId: defaultModel.model_id,
+          smallModelId: defaultModel.model_id,
+          useWorker: true,
+          systemPrompt: 'You are a helpful assistant.'
+        });
+        service.onProgress(p => setProgress(p.progress));
         setLlm(service);
         if (!service.requirementsMet) {
           setStatus('unsupported');
           return;
         }
         await service.init();
-        setLlmReady(service.requirementsMet && service.initialized);
-        setStatus(service.initialized ? 'ready' : 'error');
-      } catch (e) {
-        console.warn('LLM load failed', e);
+        if (service.isReady()) {
+          setLlmReady(true);
+          setStatus('ready');
+        } else {
+          setStatus('error');
+        }
+      } catch {
         setStatus('error');
       } finally {
         loadingRef.current = null;
       }
     };
-
     loadingRef.current = load();
     return loadingRef.current;
   }, [llmReady, status]);
 
   return (
-    <LLMContext.Provider value={{ llm, llmReady, status, ensureLLM }}>
+    <LLMContext.Provider value={{ llm, llmReady, status, progress, ensureLLM }}>
       {children}
     </LLMContext.Provider>
   );

@@ -1,112 +1,250 @@
-import { CreateMLCEngine } from "@mlc-ai/web-llm";
-import { defaultModel } from "@/features/webllm/constants/webLLM"
+import {
+    CreateMLCEngine,
+    CreateWebWorkerMLCEngine,
+    type MLCEngineInterface,
+    type MLCEngineConfig,
+    // type AppConfig,
+    prebuiltAppConfig
+} from "@mlc-ai/web-llm";
+import { toast } from "sonner";
+
+type StreamCb = (chunk: string) => void;
+
+export interface GenerateOptions {
+    max_tokens?: number;
+    temperature?: number;
+    top_p?: number;
+    stop?: string[];
+}
+
+interface InternalTask {
+    id: string;
+    prompt: string;
+    stream: boolean;
+    onStream?: StreamCb;
+    resolve: (v: string) => void;
+    reject: (e: any) => void;
+    controller: AbortController;
+    opts?: GenerateOptions;
+}
+
+export interface LLMServiceOptions {
+    modelId: string;
+    smallModelId?: string;      // fallback lighter model
+    useWorker?: boolean;
+    systemPrompt?: string;
+}
+
+export interface ProgressEvent {
+    progress: number;   // 0..1
+    text?: string;
+}
 
 export class LLMService {
-    protected static sharedEngine: any = null;
-    protected engine: any = null;
-    protected systemPrompt: string;
-    private _initialized: boolean = false;
-    private singleton: boolean = true;
-    public requirementsMet: boolean;
+    private engine: MLCEngineInterface | null = null;
+    private queue: InternalTask[] = [];
+    private busy = false;
+    private systemPrompt: string;
+    private modelId: string;
+    private smallModelId?: string;
+    private useWorker: boolean;
+    private _initialized = false;
+    private failed = false;
+    private fallbackTried = false;
+    private smallTried = false;
+    private progressCbs = new Set<(p: ProgressEvent) => void>();
+    public readonly requirementsMet: boolean;
 
-    constructor(systemPrompt: string, singleton: boolean = true) {
-        this.systemPrompt = systemPrompt;
-        this.singleton = singleton;
-        this.requirementsMet = this.checkRequirements();
+    constructor(opts: LLMServiceOptions) {
+        this.modelId = opts.modelId;
+        this.smallModelId = opts.smallModelId;
+        this.useWorker = opts.useWorker ?? true;
+        this.systemPrompt = opts.systemPrompt || "You are a helpful assistant.";
+        this.requirementsMet = LLMService.checkRequirements();
     }
 
-    public get initialized(): boolean {
+    static checkRequirements(): boolean {
+        // WebGPU presence
+        const webgpu = 'gpu' in navigator;
+        if (!webgpu) return false;
+        // Heuristics (adjust thresholds if needed)
+        const mem = (navigator as any).deviceMemory;
+        if (mem && mem < 4) return false;
+        const cores = navigator.hardwareConcurrency;
+        if (cores && cores < 4) return false;
+        return true;
+    }
+
+    public get initialized() {
         return this._initialized;
     }
 
-    setSystemPrompt(prompt: string) {
-        this.systemPrompt = prompt;
+    onProgress(cb: (p: ProgressEvent) => void) {
+        this.progressCbs.add(cb);
+        return () => this.progressCbs.delete(cb);
     }
 
-    getSystemPrompt(): string {
-        return this.systemPrompt;
-    }
+    isReady() { return this._initialized && !this.failed; }
+    initFailed() { return this.failed; }
+    isBusy() { return this.busy; }
+    usingWorker() { return this.useWorker; }
 
-    getEngine() {
-        return this.engine;
-    }
+    setSystemPrompt(p: string) { this.systemPrompt = p; }
 
-    checkAvailableMemory() {
-        const minMemoryGB = 4;
-        const deviceMemory = (navigator as any).deviceMemory as number | undefined;
-        if (deviceMemory && deviceMemory < minMemoryGB) {
-            console.warn(`Device has only ${deviceMemory}GB RAM. WebLLM may not work well.`);
-            return false;
+    async init() {
+        if (this._initialized || this.failed) return;
+        await this.tryInitChain();
+
+        if (this._initialized) {
+            setTimeout(() => {
+                toast.success("LLM initialized successfully", {
+                    position: "bottom-center",
+                });
+            }, 600);
         }
-        return true;
     }
 
-    checkCpuAvailability() {
-        const minCpuCores = 4;
-        const cpuCores = navigator.hardwareConcurrency as number | undefined;
-        if (cpuCores && cpuCores < minCpuCores) {
-            console.warn(`Device has only ${cpuCores} CPU cores. WebLLM may not work well.`);
-            return false;
-        }
-        return true;
-    }
-
-    checkRequirements() {
-        // return false;
-        return this.checkAvailableMemory() && this.checkCpuAvailability();
-    }
-
-    async init(model: string = defaultModel.model_id) {
-        if (!this.requirementsMet) {
-            console.warn("System requirements not met. Skipping model initialization.");
-            return;
-        }
-        console.log("Initializing LLMService with model:", model);
+    private async tryInitChain() {
         try {
-            if (this.singleton) {
-                if (!LLMService.sharedEngine) {
-                    LLMService.sharedEngine = await CreateMLCEngine(model);
-                    await new Promise(res => setTimeout(res, 300));
-                }
-                this.engine = LLMService.sharedEngine;
-            } else {
-                this.engine = await CreateMLCEngine(model);
-                await new Promise(res => setTimeout(res, 300));
+            await this.loadEngine(this.modelId, this.useWorker);
+            this._initialized = true;
+            return;
+        } catch (e) {
+            console.warn("[LLM] Primary init failed:", e);
+        }
+        if (!this.fallbackTried) {
+            this.fallbackTried = true;
+            try {
+                console.warn("[LLM] Fallback: main-thread load of primary model");
+                await this.loadEngine(this.modelId, false);
+                this._initialized = true;
+                return;
+            } catch (e) {
+                console.warn("[LLM] Main-thread primary failed:", e);
             }
-            this._initialized = true; // Set to true
-            console.log("Model loaded successfully");
-        } catch (error) {
-            console.warn("Failed to load the model: ", model, error);
+        }
+        if (this.smallModelId && !this.smallTried) {
+            this.smallTried = true;
+            try {
+                console.warn("[LLM] Trying smaller model:", this.smallModelId);
+                await this.loadEngine(this.smallModelId, false);
+                this.modelId = this.smallModelId;
+                this._initialized = true;
+                return;
+            } catch (e) {
+                console.warn("[LLM] Smaller model failed:", e);
+            }
+        }
+
+
+        this.failed = true;
+    }
+
+    private async loadEngine(modelId: string, worker: boolean) {
+        const initProgressCallback: MLCEngineConfig["initProgressCallback"] = (p: any) => {
+            const progress = typeof p === "number" ? p : p?.progress ?? 0;
+            const text = typeof p === "object" ? p?.text : undefined;
+            this.progressCbs.forEach(cb => cb({ progress, text }));
+        };
+
+        const engineConfig: MLCEngineConfig = {
+            initProgressCallback,
+            appConfig: { ...prebuiltAppConfig, useIndexedDBCache: true } // correct field
+        };
+
+        if (worker) {
+            const w = new Worker(new URL("./LLM.webworker.ts", import.meta.url), { type: "module" }); // filename fixed
+            this.engine = await CreateWebWorkerMLCEngine(w, modelId, engineConfig);
+        } else {
+            this.engine = await CreateMLCEngine(modelId, engineConfig);
         }
     }
 
-    async getResponse(
-        userPrompt: string,
-        stream: boolean = false,
-        onStreamChunk?: (chunk: string) => void
-    ): Promise<string> {
-        if (!this.engine) throw new Error("Engine not initialized");
+    getResponse(prompt: string, stream = false, onStream?: StreamCb, opts?: GenerateOptions) {
+        return this.enqueue(prompt, stream, onStream, opts).promise;
+    }
+    getResponseAbortable(prompt: string, stream = false, onStream?: StreamCb, opts?: GenerateOptions) {
+        return this.enqueue(prompt, stream, onStream, opts);
+    }
+
+    abortAll() {
+        this.queue.forEach(t => t.controller.abort());
+    }
+
+    private enqueue(prompt: string, stream: boolean, onStream?: StreamCb, opts?: GenerateOptions) {
+        if (!this.engine || !this._initialized || this.failed) {
+            return {
+                promise: Promise.reject(new Error("LLM not ready")),
+                abort: () => { },
+                signal: new AbortController().signal
+            };
+        }
+        const controller = new AbortController();
+        const id = Date.now().toString(36) + Math.random().toString(36).slice(2);
+        const promise = new Promise<string>((resolve, reject) => {
+            const task: InternalTask = { id, prompt, stream, onStream, resolve, reject, controller, opts };
+            this.queue.push(task);
+            this.process();
+        });
+        return { promise, abort: () => controller.abort(), signal: controller.signal };
+    }
+
+    private async process() {
+        if (this.busy) return;
+        const task = this.queue.shift();
+        if (!task) return;
+        this.busy = true;
+        try {
+            const out = await this.exec(task);
+            task.resolve(out);
+        } catch (e) {
+            task.reject(e);
+            // Detect device lost / hung to trigger fallback to smaller model (future enhancement)
+            if (/device[_ ]lost|device[_ ]hung|dxgi_error_device_hung/i.test(String(e))) {
+                console.warn("[LLM] Device lost detected");
+            }
+        } finally {
+            this.busy = false;
+            queueMicrotask(() => this.process());
+        }
+    }
+
+    private async exec(t: InternalTask): Promise<string> {
+        if (t.controller.signal.aborted) throw new DOMException("Aborted", "AbortError");
         const messages = [
             { role: "system", content: this.systemPrompt },
-            { role: "user", content: userPrompt }
+            { role: "user", content: t.prompt }
         ];
-
-        if (stream) {
+        if (t.stream) {
             let reply = "";
-            const chunks = await this.engine.chat.completions.create({
+            const iterable = await this.engine!.chat.completions.create({
                 messages,
                 stream: true,
-                stream_options: { include_usage: true },
-            });
-            for await (const chunk of chunks) {
-                const delta = chunk.choices[0]?.delta.content || "";
-                reply += delta;
-                if (onStreamChunk) onStreamChunk(delta); // callback for each chunk
+                max_tokens: t.opts?.max_tokens,
+                temperature: t.opts?.temperature,
+                top_p: t.opts?.top_p,
+                stop: t.opts?.stop
+            } as any);
+            for await (const chunk of iterable as any) {
+                if (t.controller.signal.aborted) throw new DOMException("Aborted", "AbortError");
+                const delta = chunk.choices?.[0]?.delta?.content || "";
+                if (delta) {
+                    reply += delta;
+                    t.onStream?.(delta);
+                }
             }
             return reply;
         } else {
-            const reply = await this.engine.chat.completions.create({ messages });
-            return reply.choices[0].message.content;
+            const res: any = await this.engine!.chat.completions.create({
+                messages,
+                stream: false,
+                max_tokens: t.opts?.max_tokens,
+                temperature: t.opts?.temperature,
+                top_p: t.opts?.top_p,
+                stop: t.opts?.stop
+            } as any);
+            if (t.controller.signal.aborted) throw new DOMException("Aborted", "AbortError");
+            return res.choices?.[0]?.message?.content ?? "";
         }
     }
 }
