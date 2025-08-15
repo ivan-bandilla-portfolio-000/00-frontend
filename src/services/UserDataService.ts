@@ -1,4 +1,4 @@
-import { userDb } from '@/indexedDB/portfolioUserDb';
+import { userDb } from '@/indexedDB/PortfolioUserDB';
 import type { UserData } from '@/indexedDB/models/UserData';
 
 export class UserDataService {
