@@ -261,7 +261,7 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
     if (!canShowBubble) return null;
 
     return (
-        <div className="fixed inset-0 z-[10000] pointer-events-none">
+        <div className="fixed inset-0 z-[20] pointer-events-none">
             <Rnd
                 bounds="window"
                 size={{ width: 56, height: 56 }}
@@ -272,7 +272,7 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
                     setPosition({ x: data.x, y: data.y });
                     persist({ x: data.x, y: data.y });
                 }}
-                className="pointer-events-auto overflow-visible rounded-[50%] z-[10000]"
+                className="pointer-events-auto overflow-visible rounded-[50%] z-[20]"
             >
                 <Popover
                     open={open}
@@ -282,7 +282,7 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
                         if (!v) { persist(); }
                     }}
                 >
-                    <PopoverTrigger>
+                    <PopoverTrigger asChild>
 
                         <Button
                             type="button"
@@ -305,7 +305,7 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
                         side="top"
                         align="end"
                         sideOffset={14}
-                        className="p-0 z-[10001] rounded-xl shadow-2xl border border-border bg-background flex flex-col overflow-hidden"
+                        className="p-0 z-[21] rounded-xl shadow-2xl border border-border bg-background flex flex-col overflow-hidden"
                         style={{ width: panelSize.w, height: panelSize.h }}
                     >
                         <div className="flex items-center justify-between px-3 py-2 bg-neutral-900 text-neutral-100 text-sm font-medium">

@@ -1,4 +1,5 @@
 import CTA2 from "@/components/mvpblocks/cta-2";
+import PdfProvider from "@/features/pdf-provider";
 
 const Intro = () => {
     const description = () => (
@@ -10,13 +11,16 @@ const Intro = () => {
     );
 
     return (
-        <CTA2
-            title={{
-                level: 2, text: "About Ivan",
-                props: { className: "text-sm sm:text-sm md:text-sm" }
-            }}
-            description={description()}
-        />
+        <>
+            <CTA2
+                title={{
+                    level: 2, text: "About Ivan",
+                    props: { className: "text-sm sm:text-sm md:text-sm" }
+                }}
+                description={description()}
+            />
+            <PdfProvider triggerLabel="See Resume" />
+        </>
     );
 };
 
