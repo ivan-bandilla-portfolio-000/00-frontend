@@ -78,7 +78,7 @@ export const InfiniteMovingBadges = ({
             <ul
                 ref={scrollerRef}
                 className={cn(
-                    "flex w-max min-w-full shrink-0 flex-nowrap gap-4 py-4",
+                    "flex w-max min-w-full shrink-0 flex-nowrap gap-5 py-4",
                     start && "animate-scroll",
                     pauseOnHover && "hover:[animation-play-state:paused]",
                 )}
@@ -87,7 +87,7 @@ export const InfiniteMovingBadges = ({
                     <li key={idx} className="shrink-0">
                         <Badge
                             variant={item.variant ?? badgeVariant}
-                            className={cn("px-3 py-1 select-none cursor-text text-sm lg:text-base", badgeClassName)}
+                            className={cn("px-6 py-1 select-none cursor-text text-sm lg:text-base transition-all ease-in-out delay-50 hover:shadow hover:translate-x-0.5 hover:-translate-y-0.5 bg-stone-50 dark:bg-stone-800 dark:ring-1 dark:hover:ring-2 dark:ring-amber-900/50", badgeClassName)}
                         >
                             {item.icon ? <span className="ml-1 inline-flex">{item.icon}</span> : null}
                             {item.content}

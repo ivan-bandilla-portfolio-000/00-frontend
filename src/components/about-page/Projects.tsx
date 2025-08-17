@@ -201,9 +201,9 @@ const Projects = () => {
                 ref={gridRef}
                 layout
                 style={preservedStyle}
-                className="relative"
+                className="relative "
             >
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 3xl:grid-cols-4 gap-6 pointer-events-auto">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 3xl:grid-cols-4 gap-6 pointer-events-auto ">
                     <AnimatePresence mode="popLayout">
                         {filtered.map((project, idx) => {
                             const normalized: ProjectCardProps["project"] = {
@@ -225,7 +225,7 @@ const Projects = () => {
                                     exit={{ opacity: 0, scale: 0.96 }}
                                     transition={{ duration: 0.18, ease: "easeOut" }}
                                 >
-                                    <ProjectsCard project={normalized} />
+                                    <ProjectsCard project={normalized} className="dark:ring-1 dark:ring-amber-900/50" />
                                 </motion.div>
                             );
                         })}

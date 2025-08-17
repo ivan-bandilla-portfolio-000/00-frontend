@@ -100,7 +100,7 @@ const ExperienceCard = React.forwardRef<HTMLDivElement, ExperienceCardProps>(
             <motion.div
                 ref={ref}
                 className={cn(
-                    "w-full min-h-full space-y-4 rounded-lg bg-sidebar p-4 border max-w-96 overflow-hidden",
+                    "w-full min-h-full space-y-4 rounded-lg bg-stone-50 dark:bg-stone-800 p-4 border max-w-96 overflow-hidden",
                     className
                 )}
                 initial={{ opacity: 0, y: 20 }}

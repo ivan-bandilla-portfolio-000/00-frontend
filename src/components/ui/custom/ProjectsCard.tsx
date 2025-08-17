@@ -34,7 +34,7 @@ const ProjectsCard: React.FC<ProjectCardProps> = ({ project, className }) => {
     return (
         <motion.div
             className={cn(
-                "w-full h-full rounded-lg bg-sidebar p-4 border space-y-4 overflow-hidden",
+                "w-full h-full rounded-lg bg-stone-50 dark:bg-stone-800 p-4 border space-y-4 overflow-hidden",
                 className
             )}
             initial={{ opacity: 0, y: 20 }}

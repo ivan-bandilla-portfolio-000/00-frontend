@@ -20,7 +20,7 @@ const Intro = () => {
                 }}
                 description={description()}
                 ctaArea={
-                    <div className="flex w-full justify-center-safe">
+                    <div className="flex w-full justify-center-safe my-6 lg:my-0">
                         <PdfProvider
                             // @ts-ignore
                             docID={personalInfo.resume.cloudPdfDocID}
@@ -29,7 +29,7 @@ const Intro = () => {
                             title={`${personalInfo.name}'s Resume`}
                             trigger={{
                                 label: <>See Resume</>,
-                                props: { variant: "outline", className: "px-8 py-6 rounded-full" }
+                                props: { variant: "outline", className: "pointer-coarse:px-8 pointer-coarse:py-5 px-10 py-6 rounded-full text-base md:text-lg font-bold cursor-pointer" }
                             }}
                         />
                     </div>
