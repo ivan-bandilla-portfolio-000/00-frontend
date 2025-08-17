@@ -1,21 +1,22 @@
-import React from 'react'
+interface IframeProps {
+    name: string;
+    title: string;
+    src: string;
+}
 
-const Iframe = ({ name, title }: { name: string, title: string }) => {
+const Iframe = ({ name, title, src }: IframeProps) => {
     return (
-        <iframe src="https://drive.google.com/file/d/1rDkJ21vCOCThI5HO6A-2kpyX1gzXr1v3/preview"
+        <iframe
+            src={src}
             title={title}
             height={1280}
             width={720}
             style={{ height: "100%", width: "100%" }}
             loading="lazy"
             name={name}
-            border="0"
-            allowDownloads={false}
-            allowTopNavigation={false}
-            allowFullScreen={true}
-            allowPopups={false}
+            border={0}
             className='print:hidden'
-        ></iframe>
+        />
     )
 }
 

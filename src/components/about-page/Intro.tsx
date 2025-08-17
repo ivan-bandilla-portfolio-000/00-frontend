@@ -1,4 +1,5 @@
 import CTA2 from "@/components/mvpblocks/cta-2";
+import personalInfo from "@/constants/personalInfo";
 import PdfProvider from "@/features/pdf-provider";
 
 const Intro = () => {
@@ -18,8 +19,24 @@ const Intro = () => {
                     props: { className: "text-sm sm:text-sm md:text-sm" }
                 }}
                 description={description()}
+                ctaArea={
+                    <div className="flex w-full justify-center-safe">
+                        <PdfProvider
+                            // @ts-ignore
+                            docID={personalInfo.resume.cloudPdfDocID}
+                            fallbackSrc={personalInfo.resume.driveLink}
+                            description={null}
+                            title={`${personalInfo.name}'s Resume`}
+                            trigger={{
+                                label: <>See Resume</>,
+                                props: { variant: "outline", className: "px-8 py-6 rounded-full" }
+                            }}
+                        />
+                    </div>
+                }
             />
-            <PdfProvider triggerLabel="See Resume" />
+
+
         </>
     );
 };
