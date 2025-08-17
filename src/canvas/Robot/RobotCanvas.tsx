@@ -30,7 +30,7 @@ const RobotCanvas = () => {
 
     return (
         <div ref={ref}
-            className='relative w-full h-[100cqh]'
+            className='relative w-full h-[50svh] lg:h-[100cqh] overflow-clip'
         >
             {robotLoaded && SpeechBubbleOverlay && <SpeechBubbleOverlay />}
 

@@ -42,7 +42,7 @@ const SpeechBubbleOverlay = () => {
     if (visible !== true) return null;
 
     return (
-        <div className="absolute inset-0 -translate-x-[5%] translate-y-[4%] z-10">
+        <div className="absolute inset-0 lg:-translate-x-[5%] lg:translate-y-[4%] z-10">
             <SpeechBubble
                 showButtons={showButtons && !saving}
                 onYes={handleYes}
