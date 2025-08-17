@@ -328,7 +328,7 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
                                     s.moved = true;
                                 }
                             }}
-                            onTouchEnd={(e) => {
+                            onTouchEnd={(_e) => {
                                 const s = touchStartRef.current;
                                 touchStartRef.current = null;
                                 if (!s) return;

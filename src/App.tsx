@@ -1,18 +1,22 @@
-import { lazy, Suspense, useEffect } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
+import { Routes, Route, useLocation, Outlet } from 'react-router';
 import TopBar from '@/components/TopBar';
-
-const Toaster = lazy(() => import('@/components/ui/sonner').then(mod => ({ default: mod.Toaster })));
-const Home = lazy(() => import('@/pages/Home'));
-import { Routes, Route, useLocation } from 'react-router';
-const Contact = lazy(() => import('@/pages/Contact'));
-import { ThemeProvider } from "@/features/theming/components/theme-provider"
+import { ThemeProvider } from "@/features/theming/components/theme-provider";
 import { ClientDBProvider } from '@/clientDB/context';
 // import { useClientDB } from '@/clientDB/context';
+
 import ErrorBoundary from '@/components/errors/ErrorBoundary';
 import { LLMProvider } from '@/contexts/LLMContext';
 import SimpleLoader from './components/SimpleLoader';
-import About from './pages/About';
+import NProgressRouteListener from './components/NProgress';
 // import { PortfolioDataService } from '@/services/PortfolioDataService';
+
+// Lazies
+const Toaster = lazy(() => import('@/components/ui/sonner').then(m => ({ default: m.Toaster })));
+const ChatWidget = lazy(() => import('@/components/landing/Chat'));
+const Home = lazy(() => import('@/pages/Home'));
+const Contact = lazy(() => import('@/pages/Contact'));
+const About = lazy(() => import('@/pages/About'));
 
 // function DataBootstrapper() {
 //   const db = useClientDB();
@@ -23,21 +27,44 @@ import About from './pages/About';
 //   return null;
 // }
 
-function App() {
-
-  const location = useLocation();
-
-  const ChatWidget = lazy(() =>
-    import('@/components/landing/Chat')
+function Layout() {
+  const [showChat, setShowChat] = useState(false);
+  useEffect(() => {
+    const onFirst = () => {
+      setShowChat(true);
+      window.removeEventListener('pointerdown', onFirst);
+      window.removeEventListener('keydown', onFirst);
+    };
+    window.addEventListener('pointerdown', onFirst, { once: true });
+    window.addEventListener('keydown', onFirst, { once: true });
+    // optional idle fallback
+    requestIdleCallback?.(() => setShowChat(true));
+    return () => {
+      window.removeEventListener('pointerdown', onFirst);
+      window.removeEventListener('keydown', onFirst);
+    };
+  }, []);
+  return (
+    <>
+      <TopBar />
+      {showChat && (
+        <Suspense fallback={null}>
+          <ChatWidget />
+        </Suspense>
+      )}
+      <Outlet />
+    </>
   );
+}
+
+function App() {
+  const location = useLocation();
 
   useEffect(() => {
     if (location.hash) {
-      const id = location.hash.replace('#', '');
+      const id = location.hash.slice(1);
       const el = document.getElementById(id);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth' });
-      }
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
     }
   }, [location]);
 
@@ -49,33 +76,41 @@ function App() {
           <Suspense fallback={null}>
             <Toaster richColors closeButton />
           </Suspense>
-          <TopBar />
-          <Suspense fallback={null}>
-            <ChatWidget />
-          </Suspense>
+          <NProgressRouteListener />
           <Routes>
-            <Route path="/" element={
-              <ErrorBoundary>
-                <Suspense fallback={<SimpleLoader />}>
-                  <main><Home /></main>
-                </Suspense>
-              </ErrorBoundary>
-            } />
-            <Route path="/contact" element={
-              <Suspense fallback={<SimpleLoader />}>
-                <main><Contact /></main>
-              </Suspense>
-            } />
-            <Route path="/about" element={
-              <Suspense fallback={<SimpleLoader />}>
-                <main><About /></main>
-              </Suspense>
-            } />
+            <Route element={<Layout />}>
+              <Route
+                index
+                element={
+                  <ErrorBoundary>
+                    <Suspense fallback={<SimpleLoader />}>
+                      <main><Home /></main>
+                    </Suspense>
+                  </ErrorBoundary>
+                }
+              />
+              <Route
+                path="contact"
+                element={
+                  <Suspense fallback={<SimpleLoader />}>
+                    <main><Contact /></main>
+                  </Suspense>
+                }
+              />
+              <Route
+                path="about"
+                element={
+                  <Suspense fallback={<SimpleLoader />}>
+                    <main><About /></main>
+                  </Suspense>
+                }
+              />
+            </Route>
           </Routes>
         </LLMProvider>
-      </ThemeProvider >
+      </ThemeProvider>
     </ClientDBProvider>
-  )
+  );
 }
 
-export default App
+export default App;

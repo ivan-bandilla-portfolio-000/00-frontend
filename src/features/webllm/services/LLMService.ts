@@ -52,9 +52,9 @@ export class LLMService {
     private failed = false;
     private fallbackTried = false;
     private smallTried = false;
-    private progressCbs = new Set<(p: ProgressEvent) => void>();
     private _statusMessage: string | null = null;
     public readonly requirementsMet: boolean;
+    private progressListeners = new Set<(e: ProgressEvent) => void>();
 
     constructor(opts: LLMServiceOptions) {
         this.modelId = opts.modelId;
@@ -93,9 +93,9 @@ export class LLMService {
         return this._statusMessage;
     }
 
-    onProgress(cb: (p: ProgressEvent) => void) {
-        this.progressCbs.add(cb);
-        return () => this.progressCbs.delete(cb);
+    public onProgress(cb: (e: ProgressEvent) => void): () => void {
+        this.progressListeners.add(cb);
+        return () => { this.progressListeners.delete(cb); };
     }
 
     isReady() { return this._initialized && !this.failed; }
@@ -158,10 +158,10 @@ export class LLMService {
         const initProgressCallback: MLCEngineConfig["initProgressCallback"] = (p: any) => {
             const progress = typeof p === "number" ? p : p?.progress ?? 0;
             const text = typeof p === "object" ? p?.text : undefined;
-            this.progressCbs.forEach(cb => cb({ progress, text }));
 
             const progressPercent = Math.round(progress * 100);
             this._statusMessage = `[LLM] Init progress: ${progressPercent}%${text ? ` - ${text}` : ""}`;
+            this.progressListeners.forEach(cb => cb({ progress, text }));
         };
 
         const engineConfig: MLCEngineConfig = {
@@ -265,3 +265,35 @@ export class LLMService {
         }
     }
 }
+
+let __sharedLLM: LLMService | null = null;
+let __sharedInitPromise: Promise<void> | null = null;
+
+/**
+ * Get (or create) the single shared LLMService instance.
+ * Subsequent calls return the same object so model stays in memory across route remounts.
+ */
+export function getOrCreateSharedLLM(opts: LLMServiceOptions) {
+    if (!__sharedLLM) {
+        __sharedLLM = new LLMService(opts);
+    }
+    return __sharedLLM;
+}
+
+/**
+ * Ensure the shared LLM is initialized exactly once.
+ * Multiple concurrent callers await the same promise.
+ */
+export function ensureSharedLLMInitialized(initFn: () => Promise<void>) {
+    if (__sharedLLM?.isReady()) return Promise.resolve();
+    if (__sharedInitPromise) return __sharedInitPromise;
+    __sharedInitPromise = (async () => {
+        try {
+            await initFn();
+        } finally {
+            __sharedInitPromise = null;
+        }
+    })();
+    return __sharedInitPromise;
+}
+

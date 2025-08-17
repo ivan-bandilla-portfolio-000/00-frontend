@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, lazy, Suspense, memo } from 'react'
-import { useLocation } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import { styles } from '@/styles/js/styles'
 import { motion } from 'motion/react'
 import { useIsMobile } from '@/hooks/useIsMobile'
@@ -34,31 +34,53 @@ interface NavAreaProps {
 
 const NavArea: React.FC<NavAreaProps> = memo(({ active, setActive, shrink, className, isHeroVisible }) => {
     const location = useLocation();
+    const navigate = useNavigate();
     const currentPath = location.pathname;
 
     const getHref = useCallback((link: NavLink) => {
         if (link.type === 'anchor') {
-            // If already on the correct page, just use #id
-            if (link.baseUrl === currentPath) {
-                return `#${link.id}`;
-            }
-            // Otherwise, go to the correct page and anchor
+            if (link.baseUrl === currentPath) return `#${link.id}`;
             return `${link.baseUrl}#${link.id}`;
         }
         return link.url ?? "#";
     }, [currentPath]);
 
-    const isAnchorToCurrentPage = (link: NavLink) => {
-        // Internal if anchor and baseUrl matches current path
-        return link.type === 'anchor'
+    const isAnchorToCurrentPage = (link: NavLink) =>
+        link.type === 'anchor'
             ? (link.baseUrl === currentPath ? 'anchor' : 'internal')
             : link.type;
-    };
 
     const links = useMemo(
         () => navLinks.filter(link => !(link.id === 'hero' && isHeroVisible)),
         [isHeroVisible]
     );
+
+    const handleNavClick = useCallback((e: React.MouseEvent, link: NavLink) => {
+        e.preventDefault();
+        if (link.type === 'anchor') {
+            if (link.baseUrl === currentPath) {
+                // Same page anchor: smooth scroll + update hash without reload
+                const el = document.getElementById(link.id!);
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+                window.history.replaceState(null, '', `#${link.id}`);
+            } else {
+                // Navigate to base page with hash (App effect will scroll)
+                navigate(`${link.baseUrl}#${link.id}`);
+            }
+            setActive(link.id ?? "");
+            return;
+        }
+        // Internal route
+        if (link.type === 'internal') {
+            navigate(link.url);
+            setActive(link.id ?? link.url);
+            return;
+        }
+        // External: allow normal navigation
+        if (link.type === 'external') {
+            window.location.href = link.url;
+        }
+    }, [currentPath, navigate, setActive]);
 
     return (
         <NavigationMenu className={className ?? ""}>
@@ -89,7 +111,7 @@ const NavArea: React.FC<NavAreaProps> = memo(({ active, setActive, shrink, class
     transition-all
 `}
                                 href={getHref(link)}
-                                onClick={() => setActive(link.id ?? "")}
+                                onClick={(e) => handleNavClick(e, link)}
                             >
                                 <span className='-translate-x-2'>{link.title}</span>
                                 <Suspense fallback={null}>

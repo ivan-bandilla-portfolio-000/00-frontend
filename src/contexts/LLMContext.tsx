@@ -1,14 +1,19 @@
-import { createContext, useCallback, useRef, useContext, useState } from 'react';
-import { LLMService } from '@/features/webllm/services/LLMService';
+import { createContext, useCallback, useRef, useContext, useState, type FC } from 'react';
+import { getOrCreateSharedLLM, ensureSharedLLMInitialized } from '@/features/webllm/services/LLMService';
 import { defaultModel } from '@/features/webllm/constants/webLLM';
+import type { LLMService } from '@/features/webllm/services/LLMService';
+
+type LLMStatus = 'idle' | 'loading' | 'ready' | 'error' | 'unsupported';
 
 export interface LLMContextValue {
   llm: LLMService | null;
   llmReady: boolean;
-  status: 'idle' | 'loading' | 'ready' | 'error' | 'unsupported';
+  status: LLMStatus;
   progress: number;
   ensureLLM: () => Promise<void>;
 }
+
+export const LLMContext = createContext<LLMContextValue | null>(null);
 
 export function useLLM() {
   const ctx = useContext(LLMContext);
@@ -16,49 +21,54 @@ export function useLLM() {
   return ctx;
 }
 
-export const LLMContext = createContext<LLMContextValue | null>(null);
-
-export const LLMProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const LLMProvider: FC<{ children: React.ReactNode }> = ({ children }) => {
   const [llm, setLlm] = useState<LLMService | null>(null);
   const [llmReady, setLlmReady] = useState(false);
-  const [status, setStatus] = useState<LLMContextValue['status']>('idle');
+  const [status, setStatus] = useState<LLMStatus>('idle');
   const [progress, setProgress] = useState(0);
   const loadingRef = useRef<Promise<void> | null>(null);
+  const progressHookedRef = useRef(false);
 
   const ensureLLM = useCallback(async () => {
+    const capturedStatus = status;
+
     if (llmReady || status === 'unsupported') return;
     if (loadingRef.current) return loadingRef.current;
 
-    const load = async () => {
-      try {
-        setStatus('loading');
-        const service = new LLMService({
-          modelId: defaultModel.model_id,
-          smallModelId: defaultModel.model_id,
-          useWorker: true,
-          systemPrompt: 'You are a helpful assistant.'
-        });
-        service.onProgress(p => setProgress(p.progress));
-        setLlm(service);
-        if (!service.requirementsMet) {
-          setStatus('unsupported');
-          return;
-        }
-        await service.init();
-        if (service.isReady()) {
-          setLlmReady(true);
-          setStatus('ready');
-        } else {
-          setStatus('error');
-        }
-      } catch {
+
+    const service = getOrCreateSharedLLM({
+      modelId: defaultModel.model_id,
+      smallModelId: defaultModel.model_id,
+      useWorker: true,
+      systemPrompt: 'You are a helpful assistant.'
+    });
+
+    if (!progressHookedRef.current) {
+      service.onProgress(p => setProgress(p.progress));
+      progressHookedRef.current = true;
+    }
+    setLlm(service);
+
+    if (!service.requirementsMet) {
+      setStatus('unsupported');
+      return;
+    }
+
+    if (!service.isReady()) setStatus('loading');
+
+    const initPromise = ensureSharedLLMInitialized(async () => {
+      await service.init();
+    }).then(() => {
+      if (service.isReady()) {
+        setLlmReady(true);
+        setStatus('ready');
+      } else if (capturedStatus !== 'unsupported') {
         setStatus('error');
-      } finally {
-        loadingRef.current = null;
       }
-    };
-    loadingRef.current = load();
-    return loadingRef.current;
+    }).catch(() => setStatus('error'));
+
+    loadingRef.current = initPromise;
+    await initPromise;
   }, [llmReady, status]);
 
   return (
