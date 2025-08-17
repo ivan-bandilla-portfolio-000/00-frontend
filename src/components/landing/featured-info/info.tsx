@@ -43,7 +43,7 @@ const items = [
             urlPreview: {
                 children: (
                     <Tooltip>
-                        <TooltipTrigger>Read the Research</TooltipTrigger>
+                        <TooltipTrigger tabIndex={-1}>Read the Research</TooltipTrigger>
                         <TooltipContent side="bottom">
                             <p className='text-pretty max-w-32'>Estimated Reading Time: 16 min</p>
                         </TooltipContent>
