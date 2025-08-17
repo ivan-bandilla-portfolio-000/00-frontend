@@ -39,17 +39,20 @@ const Projects = () => {
     }, [clientDb]);
 
     useEffect(() => {
-        if (!carouselAPi) {
-            return
+        if (!carouselAPi) return
+
+        const update = () => {
+            setCount(carouselAPi.scrollSnapList().length)
+            setCurrent(carouselAPi.selectedScrollSnap())
         }
 
-        setCount(carouselAPi.scrollSnapList().length)
-        setCurrent(carouselAPi.selectedScrollSnap())
+        update()
+        carouselAPi.on?.("select", update)
 
-        carouselAPi.on("select", () => {
-            setCurrent(carouselAPi.selectedScrollSnap())
-        })
-    }, [carouselAPi])
+        return () => {
+            carouselAPi.off?.("select", update)
+        }
+    }, [carouselAPi, projects])
 
 
     return (
