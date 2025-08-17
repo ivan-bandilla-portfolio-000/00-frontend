@@ -66,12 +66,21 @@ export class LLMService {
     static checkRequirements(): boolean {
         // WebGPU presence
         const webgpu = 'gpu' in navigator;
-        if (!webgpu) return false;
+        if (!webgpu) {
+            console.warn("[LLM] WebGPU not available");
+            return false;
+        }
         // Heuristics (adjust thresholds if needed)
         const mem = (navigator as any).deviceMemory;
-        if (mem && mem < 4) return false;
+        if (mem && mem < 4) {
+            console.warn("[LLM] Insufficient memory");
+            return false;
+        }
         const cores = navigator.hardwareConcurrency;
-        if (cores && cores < 4) return false;
+        if (cores && cores < 4) {
+            console.warn("[LLM] Insufficient CPU cores");
+            return false;
+        }
         return true;
     }
 

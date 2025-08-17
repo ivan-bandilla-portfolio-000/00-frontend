@@ -69,6 +69,9 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
     const [hasStartedLLM, setHasStartedLLM] = useState(false);
     const modelBusy = llm?.isBusy() && !streaming;
 
+    const touchStartRef = useRef<{ x: number; y: number; moved: boolean } | null>(null);
+    const TOUCH_MOVE_THRESHOLD = 8;
+
     // Resize refs
     const resizeRef = useRef<{
         startX: number;
@@ -272,7 +275,7 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
                     setPosition({ x: data.x, y: data.y });
                     persist({ x: data.x, y: data.y });
                 }}
-                className="pointer-events-auto overflow-visible rounded-[50%] z-[20]"
+                className={` pointer-events-auto overflow-visible rounded-[50%] z-[20]`}
             >
                 <Popover
                     open={open}
@@ -287,7 +290,7 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
                         <Button
                             type="button"
                             aria-label="Open chat"
-                            disabled={status === "unsupported"}
+                            className={` ${status === "unsupported" ? "opacity-50 cursor-not-allowed border-2 border-red-400 from-gray-200 to-gray-500  shadow-red-900/30" : "from-emerald-500 to-green-500 shadow-emerald-900/30"} ${!llmReady ? "opacity-70" : ""} w-14 h-14 rounded-full bg-gradient-to-br  flex items-center justify-center text-white font-semibold text-sm active:scale-95 shadow-lg transition select-none cursor-grab chat-drag-anywhere`}
                             onClick={() => {
                                 // If model hasn't started loading yet, kick it off on user interaction
                                 if (!llmReady && status !== "unsupported" && !hasStartedLLM) {
@@ -295,8 +298,35 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
                                     setHasStartedLLM(true);
                                 }
                             }}
+                            onTouchStart={(e) => {
+                                const t = e.touches?.[0];
+                                if (!t) return;
+                                touchStartRef.current = { x: t.clientX, y: t.clientY, moved: false };
+                            }}
+                            onTouchMove={(e) => {
+                                const t = e.touches?.[0];
+                                const s = touchStartRef.current;
+                                if (!t || !s) return;
+                                const dx = Math.abs(t.clientX - s.x);
+                                const dy = Math.abs(t.clientY - s.y);
+                                if (dx > TOUCH_MOVE_THRESHOLD || dy > TOUCH_MOVE_THRESHOLD) {
+                                    s.moved = true;
+                                }
+                            }}
+                            onTouchEnd={(e) => {
+                                const s = touchStartRef.current;
+                                touchStartRef.current = null;
+                                if (!s) return;
+                                // treat as a tap only if the finger didn't move much
+                                if (!s.moved && status !== "unsupported") {
+                                    if (!llmReady && !hasStartedLLM) {
+                                        ensureLLM();
+                                        setHasStartedLLM(true);
+                                    }
+                                    setOpen(true);
+                                }
+                            }}
                             title={buttonLabel}
-                            className={` ${status === "unsupported" ? "opacity-0 cursor-not-allowed" : (!llmReady ? "opacity-70" : "")} chat-drag-anywhere w-14 h-14 rounded-full bg-gradient-to-br from-emerald-500 to-green-500 shadow-lg shadow-emerald-900/30 flex items-center justify-center text-white font-semibold text-sm active:scale-95 transition select-none cursor-grab`}
                         >
                             <SparklesIcon className="" />
                         </Button>
@@ -305,7 +335,7 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
                         side="top"
                         align="end"
                         sideOffset={14}
-                        className="p-0 z-[21] rounded-xl shadow-2xl border border-border bg-background flex flex-col overflow-hidden"
+                        className={`${!llmReady || streaming || modelBusy ? "cursor-progress" : ""} p-0 z-[21] rounded-xl shadow-2xl border border-border bg-background flex flex-col overflow-hidden`}
                         style={{ width: panelSize.w, height: panelSize.h }}
                     >
                         <div className="flex items-center justify-between px-3 py-2 bg-neutral-900 text-neutral-100 text-sm font-medium">
@@ -402,7 +432,7 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
                                     }}
                                     disabled={!llmReady || streaming || modelBusy}
                                     placeholder="Ask me something about me... (Enter to send, Shift+Enter for newline)"
-                                    className="flex-1 resize-none rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50"
+                                    className="flex-1 resize-none rounded-md bg-background px-3 py-2 text-sm "
                                 />
                                 <div className="flex gap-2 items-center-safe">
                                     {streaming && (
