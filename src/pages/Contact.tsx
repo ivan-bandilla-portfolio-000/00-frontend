@@ -196,7 +196,7 @@ const Contact = () => {
 
     return (
         <div className="relative z-50 container h-full pointer-events-none">
-            <div className="flex lg:h-[80svh] gap-16 pointer-events-none">
+            <div className="flex flex-col lg:flex-row lg:h-[80svh] gap-16 pointer-events-none">
                 <Card className="flex-[0.90] opacity-[95%] gap-10 py-10 px-6 pointer-events-auto">
                     <CardHeader>
                         <CardTitle className="nunito-text text-4xl font-black">Other Contact</CardTitle>
@@ -255,7 +255,7 @@ export default SectionWrapper(
     (props) => <Contact {...props} hyperspeedRef={hyperspeedRef} />,
     "contact",
     {
-        className: "h-dvh bg-gray-50 dark:bg-gray-950",
+        className: "h-fit lg:h-dvh bg-gray-50 dark:bg-gray-950",
         background: <DeferredBackground />
     }
 );
