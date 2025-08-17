@@ -53,6 +53,7 @@ export class LLMService {
     private fallbackTried = false;
     private smallTried = false;
     private progressCbs = new Set<(p: ProgressEvent) => void>();
+    private _statusMessage: string | null = null;
     public readonly requirementsMet: boolean;
 
     constructor(opts: LLMServiceOptions) {
@@ -68,7 +69,7 @@ export class LLMService {
         const webgpu = 'gpu' in navigator;
         if (!webgpu) {
             console.warn("[LLM] WebGPU not available");
-            return false;
+            // return false;
         }
         // Heuristics (adjust thresholds if needed)
         const mem = (navigator as any).deviceMemory;
@@ -86,6 +87,10 @@ export class LLMService {
 
     public get initialized() {
         return this._initialized;
+    }
+
+    public get statusMessage() {
+        return this._statusMessage;
     }
 
     onProgress(cb: (p: ProgressEvent) => void) {
@@ -154,15 +159,18 @@ export class LLMService {
             const progress = typeof p === "number" ? p : p?.progress ?? 0;
             const text = typeof p === "object" ? p?.text : undefined;
             this.progressCbs.forEach(cb => cb({ progress, text }));
+
+            const progressPercent = Math.round(progress * 100);
+            this._statusMessage = `[LLM] Init progress: ${progressPercent}%${text ? ` - ${text}` : ""}`;
         };
 
         const engineConfig: MLCEngineConfig = {
             initProgressCallback,
-            appConfig: { ...prebuiltAppConfig, useIndexedDBCache: true } // correct field
+            appConfig: { ...prebuiltAppConfig, useIndexedDBCache: true }
         };
 
         if (worker) {
-            const w = new Worker(new URL("./LLM.webworker.ts", import.meta.url), { type: "module" }); // filename fixed
+            const w = new Worker(new URL("./LLM.webworker.ts", import.meta.url), { type: "module" });
             this.engine = await CreateWebWorkerMLCEngine(w, modelId, engineConfig);
         } else {
             this.engine = await CreateMLCEngine(modelId, engineConfig);

@@ -72,6 +72,8 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
     const touchStartRef = useRef<{ x: number; y: number; moved: boolean } | null>(null);
     const TOUCH_MOVE_THRESHOLD = 8;
 
+    const [engineStatus, setEngineStatus] = useState<string | null>(() => llm?.statusMessage ?? null);
+
     // Resize refs
     const resizeRef = useRef<{
         startX: number;
@@ -110,6 +112,19 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
             y: vpH - bubble - 24
         });
     }, [minChatWidth, minChatHeight, maxChatWidth, maxChatHeight]);
+
+
+    // subscribe to engine init progress / status
+    useEffect(() => {
+        if (!llm) return;
+        // Seed with current message
+        setEngineStatus(llm.statusMessage ?? null);
+        const unsub = llm.onProgress((p) => {
+            const pct = Math.round((p.progress ?? 0) * 100);
+            setEngineStatus(p.text ? `${pct}% — ${p.text}` : `${pct}%`);
+        });
+        return () => unsub();
+    }, [llm]);
 
     useEffect(() => {
         try {
@@ -365,7 +380,7 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
                             )}
                             {!llmReady && status !== "unsupported" && status !== "error" && (
                                 <div className="p-3 text-xs text-neutral-500">
-                                    {hasStartedLLM ? "Loading model..." : "Open to start loading..."}
+                                    {hasStartedLLM ? `Loading model... ${engineStatus ?? llm?.statusMessage ?? ""}` : "Open to start loading..."}
                                 </div>
                             )}
 
