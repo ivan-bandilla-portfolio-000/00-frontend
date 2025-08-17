@@ -63,9 +63,9 @@ const FeaturedTechStack = () => {
   const isHidden = imagesLoaded < techStack.length ? "opacity-0 pointer-events-none aria-hidden" : "";
 
   return (
-    <div className={`absolute [bottom:calc(var(--spacing)*27+4dvh)] w-full flex justify-end-safe items-center-safe text-xs md:text-sm z-20 transition-opacity duration-300 ${isHidden} `}>
-      <hgroup className="px-28 min-w-sm text-center space-x-2 ">
-        <span className="inline-block translate-y-[2px]">
+    <div className={`absolute [bottom:calc(var(--spacing)*12+1dvh+8dvw)] w-full flex justify-end-safe items-center-safe text-sm md:text-base z-20 transition-opacity duration-300 ${isHidden} `}>
+      <hgroup className="mr-8 lg:px-28 min-w-sm text-right md:text-center space-x-2 ">
+        <span className="inline-block translate-y-[2px] text-[0.75em]">
           <i>Proficient in</i>
         </span>
         <div className="contents">
@@ -150,12 +150,12 @@ const HeroSection = () => {
         <Background />
       </motion.div>)}
 
-      <div className='absolute inset-0 -top-12 z-10 flex items-center justify-center text-base md:text-2xl lg:text-5xl 3xl:text-6xl'>
+      <div className='absolute inset-0 -top-12 z-10 flex items-center justify-center text-lg md:text-2xl lg:text-5xl 3xl:text-6xl'>
         <div>
-          <h1 className=' text-[0.6em] font-bold text-gray-700 dark:text-gray-100 text-center '>
+          <h1 className=' text-[0.8em] lg:text-[0.6em] font-bold text-gray-700 dark:text-gray-100 text-center '>
             Aspiring Junior Backend Developer
           </h1>
-          <div className="text-balance font-black text-[1em] mx-auto my-1 lg:my-4 text-center  text-gray-900 dark:text-white">
+          <div className="text-balance font-black text-[1.2em] lg:text-[1.1em]  mx-auto my-1 lg:my-4 text-center  text-gray-900 dark:text-white">
             Crafting Code That Scales,
             <br />
             Building Solutions That Last
@@ -163,11 +163,11 @@ const HeroSection = () => {
 
           {showText ? (
             <TextGenerateEffect
-              className="text-center md:text-[0.5em] text-[0.5em] text-gray-500 dark:text-gray-400 font-medium "
+              className="text-center md:text-[0.5em] text-[0.8em] text-gray-500 dark:text-gray-400 font-medium "
               words={"This is Ivan Bandilla"}
             />
           ) : (
-            <div className="text-center md:text-[0.5em] text-[0.5em] text-gray-500 dark:text-gray-400 font-medium lg:mt-4" aria-hidden="true">
+            <div className="text-center md:text-[0.5em] text-[0.8em] text-gray-500 dark:text-gray-400 font-medium lg:mt-4" aria-hidden="true">
               <div className="mt-1 lg:mt-4">
                 <div className="leading-snug tracking-wide opacity-0" >
                   This is Ivan Bandilla
