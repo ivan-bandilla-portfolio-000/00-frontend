@@ -113,7 +113,7 @@ const ExperienceCard = React.forwardRef<HTMLDivElement, ExperienceCardProps>(
                         <CarouselContent>
                             {thumbnails.map((src, index) => (
                                 <CarouselItem key={src} className="basis-full">
-                                    <div className="relative aspect-video w-full overflow-hidden rounded-xl border">
+                                    <div className="relative aspect-video w-full overflow-hidden rounded-md border">
                                         <img
                                             src={src}
                                             alt={alts[index] || `${item.company} preview ${index + 1}`}

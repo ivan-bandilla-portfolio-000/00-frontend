@@ -36,14 +36,14 @@ export default function CTA2({ title, description, ctaArea }: Props) {
       <div className="relative z-10">
         <HeadingTag
           className={cn(
-            'mb-3 text-3xl font-bold text-white sm:text-4xl md:mb-4 md:text-5xl',
+            'mb-3 text-3xl font-bold text-white sm:text-4xl md:mb-4 md:text-5xl text-pretty',
             className
           )}
           {...restProps}
         >
           {title.text}
         </HeadingTag>
-        <div className="mb-6 max-w-prose text-base text-white sm:text-lg md:mb-8">
+        <div className="mb-6 max-w-prose text-pretty text-base text-white sm:text-lg md:mb-8">
           {description}
         </div>
 

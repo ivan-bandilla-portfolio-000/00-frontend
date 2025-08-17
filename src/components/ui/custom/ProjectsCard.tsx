@@ -41,7 +41,7 @@ const ProjectsCard: React.FC<ProjectCardProps> = ({ project, className }) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: "easeOut" }}
         >
-            <div className="relative aspect-video w-full overflow-hidden rounded-xl border mb-2">
+            <div className="relative aspect-video w-full overflow-hidden rounded-md border mb-2">
                 <img
                     src={getImageUrl(project.image)}
                     alt={project.name}

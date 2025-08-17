@@ -38,7 +38,7 @@ const Experience = () => {
         <>
             <AboutSectionHeading text="Experience" />
             {items.length > 0 && (
-                <Carousel setApi={setCarouselAPi} className='container pointer-events-auto'>
+                <Carousel setApi={setCarouselAPi} className='container ml-6 md:mx-0 relative pointer-events-auto'>
                     <CarouselContent>
                         {items.map((item, idx) => (
                             <CarouselItem key={`carousel-item-${idx}`} className="md:basis-1/2 lg:basis-1/3">
@@ -46,8 +46,8 @@ const Experience = () => {
                             </CarouselItem>
                         ))}
                     </CarouselContent>
-                    <CarouselPrevious />
-                    <CarouselNext />
+                    <CarouselPrevious className="-left-9 md:-left-12" />
+                    <CarouselNext className="right-3 md:-right-12" />
                     <div className="flex justify-end mt-4 me-[3dvw] px-4">
                         <span className="text-xs lg:text-sm text-gray-500 dark:text-gray-300">
                             {itemsLeft > 0 ? `${itemsLeft} more` : '\u00A0'}
