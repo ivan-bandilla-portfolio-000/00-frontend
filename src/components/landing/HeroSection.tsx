@@ -64,7 +64,7 @@ const FeaturedTechStack = () => {
 
   return (
     <div className={`absolute [bottom:calc(var(--spacing)*12+1dvh+8dvw)] w-full flex justify-end-safe items-center-safe text-sm md:text-base z-20 transition-opacity duration-300 ${isHidden} `}>
-      <hgroup className="mr-8 lg:px-28 min-w-sm text-right md:text-center space-x-2 ">
+      <hgroup className="pr-8 lg:px-28 min-w-sm text-right md:text-center space-x-2 ">
         <span className="inline-block translate-y-[2px] text-[0.75em]">
           <i>Proficient in</i>
         </span>

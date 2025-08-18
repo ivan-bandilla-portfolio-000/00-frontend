@@ -128,8 +128,8 @@ const Projects = () => {
                         <CarouselContent className="">
                             <Items projects={projects} />
                         </CarouselContent>
-                        <CarouselPrevious className="enabled:scale-105 lg:enabled:scale-125 disabled:pointer-events-none transition-transform touch-manipulation" />
-                        <CarouselNext className="enabled:scale-105 lg:enabled:scale-125 disabled:pointer-events-none transition-transform touch-manipulation" />
+                        <CarouselPrevious className="" />
+                        <CarouselNext className="" />
                         <div className="flex justify-end mt-1 px-4">
                             {(
                                 <span className="text-xs lg:text-sm text-gray-500 dark:text-gray-300">

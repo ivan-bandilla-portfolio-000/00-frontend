@@ -100,8 +100,7 @@ const ExperienceCard = React.forwardRef<HTMLDivElement, ExperienceCardProps>(
             <motion.div
                 ref={ref}
                 className={cn(
-                    "w-full min-h-full space-y-4 rounded-lg bg-gray-100 dark:bg-stone-800 p-4 border max-w-96 overflow-hidden",
-                    className
+                    "w-full min-h-full space-y-4 rounded-lg bg-gray-100 dark:bg-stone-800 p-4 border max-w-96 transition-transform ease-in-out hover:shadow dark:hover:shadow-[0_8px_20px_rgba(245,158,11,0.12)] hover:-translate-y-0.5 motion-reduce:hover:translate-y-0",
                 )}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -110,10 +109,10 @@ const ExperienceCard = React.forwardRef<HTMLDivElement, ExperienceCardProps>(
             >
                 <div className="relative w-full">
                     <Carousel setApi={setCarouselApi} className="w-full">
-                        <CarouselContent>
+                        <CarouselContent className="">
                             {thumbnails.map((src, index) => (
-                                <CarouselItem key={src} className="basis-full">
-                                    <div className="relative aspect-video w-full overflow-hidden rounded-md border">
+                                <CarouselItem key={src} className="basis-full hover">
+                                    <div className="relative aspect-video w-full transition-all ease-in-out hover:scale-105 active:scale-105 border rounded-md ">
                                         <img
                                             src={src}
                                             alt={alts[index] || `${item.company} preview ${index + 1}`}

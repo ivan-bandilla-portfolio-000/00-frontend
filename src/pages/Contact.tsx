@@ -2,6 +2,7 @@ import { forwardRef, useRef, useState, useEffect, lazy, createRef } from "react"
 import { getRequestStatusById } from "@/constants/requestStatuses";
 import { ContactInfoService, type ContactInfo } from "@/services/ContactInfoService";
 import ContactForm from '@/components/forms/ContactForm/';
+import { Link } from "react-router";
 
 import { SectionWrapper } from '@/hoc';
 import { Suspense } from 'react';
@@ -226,21 +227,27 @@ const Contact = () => {
                                 nonceManager={NonceManager}
                             />
                         </CardContent>
-                        <CardFooter className="select-none -mt-4 ">
-                            <Button variant="link" className="flex-1 h-full text-left justify-start items-center-safe group ">
-                                <MoveLeft className="group-hover:-translate-x-1 transition-transform" />
-                                <a href="/" className="pointer-coarse:py-4 py-3 px-2 grid place-content-center"><span>Back to Home</span></a>
-                            </Button>
-                            <Button
-                                type="button"
-                                onClick={handleExternalSubmit}
-                                className="flex-2 py-6"
-                                disabled={status.id !== "ready"}
-                            >
-                                {status.id !== "ready"
-                                    ? `${status.label}...`
-                                    : "Submit"}
-                            </Button>
+                        <CardFooter className="select-none -mt-4 @container">
+                            <div className="flex gap-2 items-stretch w-full @max-md:flex-col">
+                                <Button
+                                    variant="link"
+                                    className="w-full order-1 @max-md:order-2 @md:flex-1 @md:w-auto h-fit text-left @max-md:text-center @max-md:justify-center justify-start items-center-safe @max-md:translate-y-0 -translate-y-2 group shrink-1"
+                                >
+                                    <MoveLeft className="group-hover:-translate-x-1 transition-transform" />
+                                    <Link to="/" className="pointer-coarse:py-4 py-3 px-2 grid place-content-center ">
+                                        <span>Back to Home</span>
+                                    </Link>
+                                </Button>
+
+                                <Button
+                                    type="button"
+                                    onClick={handleExternalSubmit}
+                                    className="w-full @md:flex-[2] py-6 order-2 @max-md:order-1"
+                                    disabled={status.id !== "ready"}
+                                >
+                                    {status.id !== "ready" ? `${status.label}...` : "Submit"}
+                                </Button>
+                            </div>
                         </CardFooter>
                     </Suspense>
                 </Card>

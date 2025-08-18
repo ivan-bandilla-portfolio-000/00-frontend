@@ -160,7 +160,7 @@ const FeaturedInfo = () => {
           <Button asChild variant={'outline'} className='h-[64px] flex items-center p-[11px] hover:!bg-primary hover:underline cursor-pointer px-6 rounded-full'>
             <a href="#projects">See My Work</a>
           </Button>
-          <WrapButton className="mr-2 hover:mr-0 ease-in-out transition-all " href="/contact" arrowRotation="up">
+          <WrapButton className="mr-2 hover:mr-0 ease-in-out transition-all text-nowrap" href="/contact" arrowRotation="up">
             <Globe className="animate-spin " />
             Contact Me
           </WrapButton>

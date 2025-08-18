@@ -38,10 +38,10 @@ const Experience = () => {
         <>
             <AboutSectionHeading text="Experience" />
             {items.length > 0 && (
-                <Carousel setApi={setCarouselAPi} className='container ml-6 md:mx-0 relative pointer-events-auto'>
-                    <CarouselContent>
+                <Carousel setApi={setCarouselAPi} className='container ml-6 md:mx-0 relative pointer-events-auto '>
+                    <CarouselContent className="">
                         {items.map((item, idx) => (
-                            <CarouselItem key={`carousel-item-${idx}`} className="md:basis-1/2 lg:basis-1/3">
+                            <CarouselItem key={`carousel-item-${idx}`} className="md:basis-1/2 lg:basis-1/3 ">
                                 <ExperienceCard key={`${item.company}-${idx}`} item={item} className="dark:ring-1 dark:ring-amber-900/50" />
                             </CarouselItem>
                         ))}
