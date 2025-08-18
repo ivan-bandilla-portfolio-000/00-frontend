@@ -69,7 +69,7 @@ export class LLMService {
         const webgpu = 'gpu' in navigator;
         if (!webgpu) {
             console.warn("[LLM] WebGPU not available");
-            // return false;
+            return false;
         }
         // Heuristics (adjust thresholds if needed)
         const mem = (navigator as any).deviceMemory;
