@@ -81,6 +81,7 @@
     "@types/culori": "^4.0.0",
     "@types/lovefield": "^2.1.7",
     "@types/node": "^24.2.0",
+    "@types/nprogress": "^0.2.3",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^4.6.0",
