@@ -9,6 +9,7 @@ import {
   useMotionValue,
   useSpring,
 } from "motion/react";
+import { Link } from 'react-router';
 
 import { cn } from "@/lib/utils";
 
@@ -99,12 +100,14 @@ export const LinkPreview = ({
           setOpen(open);
         }}
       >
-        <HoverCardPrimitive.Trigger
-          onMouseMove={handleMouseMove}
-          className={cn("text-black dark:text-white", className)}
-          href={url}
-        >
-          {children}
+        <HoverCardPrimitive.Trigger asChild>
+          <Link
+            onMouseMove={handleMouseMove}
+            className={cn("text-black dark:text-white", className)}
+            to={url}
+          >
+            {children}
+          </Link>
         </HoverCardPrimitive.Trigger>
 
         <HoverCardPrimitive.Content
@@ -133,8 +136,8 @@ export const LinkPreview = ({
                   x: translateX,
                 }}
               >
-                <a
-                  href={url}
+                <Link
+                  to={url}
                   className="block p-1 bg-white border-2 border-transparent shadow rounded-xl hover:border-neutral-200 dark:hover:border-neutral-800"
                   style={{ fontSize: 0 }}
                 >
@@ -147,7 +150,7 @@ export const LinkPreview = ({
                     className="rounded-lg"
                     alt={`preview image of ${url}`}
                   />
-                </a>
+                </Link>
               </motion.div>
             )}
           </AnimatePresence>

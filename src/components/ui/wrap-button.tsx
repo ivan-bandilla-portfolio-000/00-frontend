@@ -1,5 +1,6 @@
 import React from "react"
 import { ArrowRight, Globe } from "lucide-react"
+import { Link } from 'react-router';
 
 import { cn } from "@/lib/utils"
 
@@ -19,7 +20,7 @@ const WrapButton: React.FC<WrapButtonProps> = ({
   return (
     <div className="flex items-center justify-center">
       {href ? (
-        <a href={href}>
+        <Link to={href}>
           <div
             className={cn(
               "group cursor-pointer border group border-[#3B3A3A] bg-[#151515] gap-2  h-[64px] flex items-center p-[11px] rounded-full",
@@ -43,7 +44,7 @@ const WrapButton: React.FC<WrapButtonProps> = ({
               />
             </div>
           </div>
-        </a>
+        </Link>
       ) : (
         <div
           className={cn(

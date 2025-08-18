@@ -11,6 +11,7 @@ import {
 import { motion } from 'framer-motion';
 import { LinkPreview } from "@/components/ui/link-preview";
 import type { LinkPreviewProps } from "@/components/ui/link-preview";
+import { Link } from 'react-router';
 
 interface BentoActionProps {
   url?: string;
@@ -55,7 +56,7 @@ const renderCTA = (cta: BentoActionProps | undefined) => {
         isStatic={true}
         imageSrc={cta.urlPreview.imageSrc!}
         className={cn(
-          "text-primary-dark text-[calc(0.25em+0.6cqw)] font-medium opacity-75 transition-opacity group-hover:opacity-100 flex items-center",
+          "text-primary-dark text-[calc(0.25em+0.6cqw)] py-2 font-medium opacity-75 transition-opacity group-hover:opacity-100 flex items-center",
           cta.urlPreview.className
         )}
       >
@@ -75,7 +76,7 @@ const renderCTA = (cta: BentoActionProps | undefined) => {
       <LinkPreview
         url={cta.url}
         className={cn(
-          "text-primary-dark text-[calc(0.25em+0.6cqw)] font-medium opacity-75 transition-opacity group-hover:opacity-100 flex items-center",
+          "text-primary-dark text-[calc(0.25em+0.6cqw)] py-2 font-medium opacity-75 transition-opacity group-hover:opacity-100 flex items-center",
           cta.urlPreview.className
         )}
         width={cta.urlPreview.width}
@@ -101,14 +102,14 @@ const renderCTA = (cta: BentoActionProps | undefined) => {
   // If it has url but no preview, render as link
   if (cta.url) {
     return (
-      <a
-        href={cta.url}
+      <Link
+        to={cta.url}
         onClick={handleClick}
         className="text-primary-dark text-sm font-medium opacity-75 transition-opacity group-hover:opacity-100 flex items-center ease-in-out delay-50 group-hover:translate-x-2"
       >
         <span className="mr-1">{cta.urlText || 'Explore'}</span>
         {cta.icon && <cta.icon className="size-3" />}
-      </a>
+      </Link>
     );
   }
 
@@ -188,7 +189,7 @@ export default function BentoGrid({ items }: BentoGridProps) {
               </CardHeader>
 
               <CardContent className="relative space-y-2 p-4 pt-0">
-                <h3 className="text-foreground ttext-lg md:text-xl font-medium tracking-tight text-pretty">
+                <h3 className="text-foreground text-lg md:text-2xl font-medium tracking-tight text-pretty">
                   <RichText content={item.title} />
                   {item.meta && (
                     <span className="text-muted-foreground ml-2 text-xs font-normal">
