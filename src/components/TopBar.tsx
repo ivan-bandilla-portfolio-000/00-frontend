@@ -21,6 +21,7 @@ const IconLink = lazy(() => import('./ui/custom/IconLink'))
 const LazyModeToggle = lazy(() =>
     import('@/features/theming/components/mode-toggle').then(m => ({ default: m.ModeToggle }))
 )
+import HeaderMobile, { type ReusableNavItem } from '@/components/mvpblocks/header-mobile'
 
 const shrinkDuration: number = 0.3; // seconds
 
@@ -142,6 +143,19 @@ const TopBar = () => {
         ? defaultFontSize
         : (shrink ? shrunkFontSize : defaultFontSize)
 
+    const location = useLocation();
+    const navigate = useNavigate();
+    const currentPath = location.pathname;
+
+    const getHref = useCallback((link: NavLink) => {
+        if (link.type === 'anchor') {
+            if (link.baseUrl === currentPath) return `#${link.id}`;
+            return `${link.baseUrl}#${link.id}`;
+        }
+        return link.url ?? "#";
+    }, [currentPath]);
+
+
     useEffect(() => {
         const handleScroll = () => {
             setShrink(window.scrollY > 50)
@@ -155,6 +169,69 @@ const TopBar = () => {
             setHeroHasLoaded(true);
         }
     }, [isHeroVisible, heroHasLoaded]);
+
+    const linkClassStyle = `
+        items-center
+        relative
+        dark:before:content-['']
+        dark:before:absolute
+        dark:before:left-1/2 dark:before:top-1/2
+        dark:before:w-[300%] dark:before:h-[210%]
+        dark:before:-translate-x-1/2 dark:before:-translate-y-1/2
+        dark:before:rounded-full
+        dark:before:pointer-events-none
+        dark:before:bg-[radial-gradient(circle,_rgba(34,197,94,0.22)_0%,_rgba(34,197,94,0.10)_60%,_rgba(34,197,94,0)_100%)]
+        dark:before:opacity-90
+    `;
+
+    const handleMobileNavClick = useCallback((e: React.MouseEvent, link: ReusableNavItem) => {
+        e.preventDefault();
+        // extended info stored in passed item via casting
+        const extended = link as unknown as NavLink;
+        if (extended.type === 'anchor') {
+            if (extended.baseUrl === currentPath) {
+                const el = document.getElementById(extended.id!);
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+                window.history.replaceState(null, '', `#${extended.id}`);
+            } else {
+                navigate(`${extended.baseUrl}#${extended.id}`);
+            }
+            setActive(extended.id ?? "");
+            return;
+        }
+        if (extended.type === 'internal') {
+            navigate(extended.url!);
+            setActive(extended.id ?? extended.url!);
+            return;
+        }
+        if (extended.type === 'external') {
+            window.location.href = extended.url!;
+        }
+    }, [currentPath, navigate]);
+
+    // Mobile: use reusable header
+    if (isMobile) {
+        const mobileItems: ReusableNavItem[] = navLinks.map(l => ({
+            name: l.title,
+            href: getHref(l),
+            url: l.type !== 'anchor' ? l.url : undefined,
+            id: l.id,
+            type: l.type,
+            baseUrl: l.baseUrl
+        }));
+        return (
+            <HeaderMobile
+                brand={{ name: personalInfo.name }}
+                navItems={mobileItems}
+                onNavClick={(e, item) => handleMobileNavClick(e, item)}
+                includeDarkModeToggle
+                darkModeToggleProps={{ showAsLabel: true }}
+                showSearch={false}
+                showAuthButtons={false}
+                fixed
+            />
+        );
+    }
 
     return (
         <motion.div
@@ -170,19 +247,7 @@ const TopBar = () => {
             style={{ height: shrink ? shrunkHeight : defaultHeight }}
         >
             <div
-                className={`
-        items-center
-        relative
-        dark:before:content-['']
-        dark:before:absolute
-        dark:before:left-1/2 dark:before:top-1/2
-        dark:before:w-[300%] dark:before:h-[210%]
-        dark:before:-translate-x-1/2 dark:before:-translate-y-1/2
-        dark:before:rounded-full
-        dark:before:pointer-events-none
-        dark:before:bg-[radial-gradient(circle,_rgba(34,197,94,0.22)_0%,_rgba(34,197,94,0.10)_60%,_rgba(34,197,94,0)_100%)]
-        dark:before:opacity-90
-    `}
+                className={`${linkClassStyle}`}
             >
                 <motion.div
                     animate={{ fontSize: fontSize ?? defaultFontSize }}
@@ -212,7 +277,7 @@ const TopBar = () => {
                         />
                     }
                 >
-                    <LazyModeToggle />
+                    <LazyModeToggle showAsLabel={false} shrink={shrink} />
                 </Suspense>
             </div>
         </motion.div>
