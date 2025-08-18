@@ -1,229 +1,275 @@
-import { useState, useEffect, useMemo, useCallback, lazy, Suspense, memo } from 'react'
+import {
+    useState,
+    useEffect,
+    useMemo,
+    useCallback,
+    lazy,
+    Suspense,
+    memo,
+    type ReactNode,
+} from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import { styles } from '@/styles/js/styles'
-import { motion } from 'motion/react'
-import { useIsMobile } from '@/hooks/useIsMobile'
-import personalInfo from '@/constants/personalInfo'
-import navLinks from '@/constants/topbarNavlinks'
-import type { NavLink } from '@/constants/topbarNavlinks'
+import { styles } from '@/styles/js/styles';
+import { motion } from 'motion/react';
+import { useIsMobile } from '@/hooks/useIsMobile';
+import personalInfo from '@/constants/personalInfo';
+import navLinks, { type NavLink } from '@/constants/topbarNavlinks';
 import {
     NavigationMenu,
-    // NavigationMenuContent,
-    // NavigationMenuIndicator,
     NavigationMenuItem,
     NavigationMenuLink,
     NavigationMenuList,
-    // NavigationMenuTrigger,
-    // NavigationMenuViewport,
-} from "@/components/ui/navigation-menu";
-import { useIdInViewport } from '@/hooks/useIdInViewport'
-const IconLink = lazy(() => import('./ui/custom/IconLink'))
+} from '@/components/ui/navigation-menu';
+import { useIdInViewport } from '@/hooks/useIdInViewport';
+import HeaderMobile, { type ReusableNavItem } from '@/components/mvpblocks/header-mobile';
+
+const IconLink = lazy(() => import('./ui/custom/IconLink'));
 const LazyModeToggle = lazy(() =>
-    import('@/features/theming/components/mode-toggle').then(m => ({ default: m.ModeToggle }))
-)
-import HeaderMobile, { type ReusableNavItem } from '@/components/mvpblocks/header-mobile'
+    import('@/features/theming/components/mode-toggle').then(m => ({ default: m.ModeToggle })),
+);
 
-const shrinkDuration: number = 0.3; // seconds
+/* -------------------------------------------------
+ * Configuration constants
+ * ------------------------------------------------- */
+const SHRINK_ANIMATION_DURATION_SECONDS = 0.3;
 
-interface NavAreaProps {
-    active: string | undefined;
-    setActive: (id: string) => void;
-    shrink: boolean;
-    className?: string;
-    isHeroVisible: boolean;
-}
+/* -------------------------------------------------
+ * Class name tokens (kept here to reduce JSX clutter)
+ * ------------------------------------------------- */
+const desktopWrapperClasses = `
+    ${styles.paddingX}
+    w-svw flex justify-between items-center fixed top-0 z-20
+    feather-shadow bg-clip-padding backdrop-filter backdrop-blur-sm
+    dark:bg-background text-primary-dark dark:text-primary
+`;
 
-const NavArea: React.FC<NavAreaProps> = memo(({ active, setActive, shrink, className, isHeroVisible }) => {
-    const location = useLocation();
-    const navigate = useNavigate();
-    const currentPath = location.pathname;
+const nameRevealContainerClasses = `
+    items-center relative
+    dark:before:content-[''] dark:before:absolute
+    dark:before:left-1/2 dark:before:top-1/2
+    dark:before:w-[300%] dark:before:h-[210%]
+    dark:before:-translate-x-1/2 dark:before:-translate-y-1/2
+    dark:before:rounded-full dark:before:pointer-events-none
+    dark:before:bg-[radial-gradient(circle,_rgba(34,197,94,0.22)_0%,_rgba(34,197,94,0.10)_60%,_rgba(34,197,94,0)_100%)]
+    dark:before:opacity-90
+`;
 
-    const getHref = useCallback((link: NavLink) => {
-        if (link.type === 'anchor') {
-            if (link.baseUrl === currentPath) return `#${link.id}`;
-            return `${link.baseUrl}#${link.id}`;
-        }
-        return link.url ?? "#";
-    }, [currentPath]);
-
-    const isAnchorToCurrentPage = (link: NavLink) =>
-        link.type === 'anchor'
-            ? (link.baseUrl === currentPath ? 'anchor' : 'internal')
-            : link.type;
-
-    const links = useMemo(
-        () => navLinks.filter(link => !(link.id === 'hero' && isHeroVisible)),
-        [isHeroVisible]
-    );
-
-    const handleNavClick = useCallback((e: React.MouseEvent, link: NavLink) => {
-        e.preventDefault();
-        if (link.type === 'anchor') {
-            if (link.baseUrl === currentPath) {
-                // Same page anchor: smooth scroll + update hash without reload
-                const el = document.getElementById(link.id!);
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-                window.history.replaceState(null, '', `#${link.id}`);
-            } else {
-                // Navigate to base page with hash (App effect will scroll)
-                navigate(`${link.baseUrl}#${link.id}`);
-            }
-            setActive(link.id ?? "");
-            return;
-        }
-        // Internal route
-        if (link.type === 'internal') {
-            navigate(link.url);
-            setActive(link.id ?? link.url);
-            return;
-        }
-        // External: allow normal navigation
-        if (link.type === 'external') {
-            window.location.href = link.url;
-        }
-    }, [currentPath, navigate, setActive]);
-
-    return (
-        <NavigationMenu className={className ?? ""}>
-            <NavigationMenuList className="gap-8">
-                {links.map((link: NavLink, idx: number) => (
-                    <NavigationMenuItem key={link.id ?? idx}>
-                        <motion.div
-                            animate={{ scale: shrink ? 0.85 : 1 }}
-                            transition={{ duration: shrinkDuration }}
-                            style={{ display: 'inline-block' }}
-                        >
-                            <NavigationMenuLink
-                                active={active === link.id}
-                                className={`
-    text-md hover:underline font-medium ps-6 pe-5 group/link-icon
-    relative
+const navMenuLinkBaseClasses = `
+    text-md font-medium ps-6 pe-5 group/link-icon relative
+    hover:underline transition-all
     dark:text-green-400
-    dark:before:content-['']
-    dark:before:absolute
+    dark:before:content-[''] dark:before:absolute
     dark:before:left-1/2 dark:before:top-1/2
     dark:before:w-[120%] dark:before:h-[110%]
     dark:before:-translate-x-1/2 dark:before:-translate-y-1/2
-    dark:before:rounded-full
-    dark:before:pointer-events-none
+    dark:before:rounded-full dark:before:pointer-events-none
     dark:before:bg-[radial-gradient(circle,_rgba(34,197,94,0.28)_0%,_rgba(34,197,94,0.10)_60%,_rgba(34,197,94,0)_100%)]
-    dark:before:opacity-50
-    dark:hover:before:opacity-100
-    transition-all
-`}
-                                href={getHref(link)}
-                                onClick={(e) => handleNavClick(e, link)}
+    dark:before:opacity-50 dark:hover:before:opacity-100
+`;
+
+/* -------------------------------------------------
+ * Utility helpers (kept local; tiny enough not to split file)
+ * ------------------------------------------------- */
+
+/**
+ * Build the href for a nav link.
+ * Anchor links differ depending on whether we are already on the base URL.
+ */
+const buildHref = (navigationLink: NavLink, currentPathname: string): string => {
+    if (navigationLink.type === 'anchor') {
+        return navigationLink.baseUrl === currentPathname
+            ? `#${navigationLink.id}`
+            : `${navigationLink.baseUrl}#${navigationLink.id}`;
+    }
+    return navigationLink.url ?? '#';
+};
+
+/**
+ * Returns a semantic type for the icon logic (anchor pointing to current page vs internal route).
+ */
+const resolveIconType = (
+    navigationLink: NavLink,
+    currentPathname: string,
+): 'anchor' | 'internal' | 'external' =>
+    navigationLink.type === 'anchor'
+        ? navigationLink.baseUrl === currentPathname
+            ? 'anchor'
+            : 'internal'
+        : navigationLink.type;
+
+/**
+ * Smooth-scroll to anchor inside the same page (no full navigation).
+ */
+const scrollToAnchorOnSamePage = (anchorId: string | undefined) => {
+    if (!anchorId) return;
+    const targetElement = document.getElementById(anchorId);
+    if (targetElement) targetElement.scrollIntoView({ behavior: 'smooth' });
+    window.history.replaceState(null, '', `#${anchorId}`);
+};
+
+/**
+ * Centralized navigation click handler (desktop + mobile).
+ * Keeping logic identical avoids drift and subtle inconsistencies.
+ */
+const handleNavigation = (
+    event: React.MouseEvent,
+    navigationLink: NavLink,
+    currentPathname: string,
+    navigate: (to: string) => void,
+    setActive: (id: string) => void,
+): void => {
+    event.preventDefault();
+
+    if (navigationLink.type === 'anchor') {
+        if (navigationLink.baseUrl === currentPathname) {
+            scrollToAnchorOnSamePage(navigationLink.id);
+        } else {
+            navigate(`${navigationLink.baseUrl}#${navigationLink.id}`);
+        }
+        setActive(navigationLink.id ?? '');
+        return;
+    }
+
+    if (navigationLink.type === 'internal') {
+        navigate(navigationLink.url);
+        setActive(navigationLink.id ?? navigationLink.url);
+        return;
+    }
+
+    if (navigationLink.type === 'external') {
+        window.location.href = navigationLink.url;
+    }
+};
+
+/* -------------------------------------------------
+ * NavArea (desktop navigation list)
+ * ------------------------------------------------- */
+interface NavAreaProps {
+    activeId: string | undefined;
+    setActiveId: (id: string) => void;
+    isShrunk: boolean;
+    isHeroInViewport: boolean;
+    className?: string;
+}
+
+const NavArea: React.FC<NavAreaProps> = memo(
+    ({ activeId, setActiveId, isShrunk, isHeroInViewport, className }) => {
+        const location = useLocation();
+        const navigate = useNavigate();
+        const currentPathname = location.pathname;
+
+        // Hide hero link once hero is scrolled past (per original logic).
+        const visibleNavigationLinks = useMemo(
+            () => navLinks.filter(nav => !(nav.id === 'hero' && isHeroInViewport)),
+            [isHeroInViewport],
+        );
+
+        const onNavItemClick = useCallback(
+            (event: React.MouseEvent, navigationLink: NavLink) => {
+                handleNavigation(event, navigationLink, currentPathname, navigate, setActiveId);
+            },
+            [currentPathname, navigate, setActiveId],
+        );
+
+        return (
+            <NavigationMenu className={className ?? ''}>
+                <NavigationMenuList className="gap-8">
+                    {visibleNavigationLinks.map((navigationLink: NavLink, navigationIndex: number): ReactNode => (
+                        <NavigationMenuItem key={navigationLink.id ?? navigationIndex}>
+                            <motion.div
+                                animate={{ scale: isShrunk ? 0.85 : 1 }}
+                                transition={{ duration: SHRINK_ANIMATION_DURATION_SECONDS }}
+                                style={{ display: 'inline-block' }}
                             >
-                                <span className='-translate-x-2'>{link.title}</span>
-                                <Suspense fallback={null}>
-                                    <IconLink type={isAnchorToCurrentPage(link)} />
-                                </Suspense>
-                            </NavigationMenuLink>
-                        </motion.div>
-                    </NavigationMenuItem>
-                ))}
-            </NavigationMenuList>
-        </NavigationMenu>
-    )
-})
+                                <NavigationMenuLink
+                                    active={activeId === navigationLink.id}
+                                    className={navMenuLinkBaseClasses}
+                                    href={buildHref(navigationLink, currentPathname)}
+                                    onClick={event => onNavItemClick(event, navigationLink)}
+                                >
+                                    <span className="-translate-x-2">{navigationLink.title}</span>
+                                    <Suspense fallback={null}>
+                                        <IconLink type={resolveIconType(navigationLink, currentPathname)} />
+                                    </Suspense>
+                                </NavigationMenuLink>
+                            </motion.div>
+                        </NavigationMenuItem>
+                    ))}
+                </NavigationMenuList>
+            </NavigationMenu>
+        );
+    },
+);
+NavArea.displayName = 'NavArea';
 
+/* -------------------------------------------------
+ * TopBar root component
+ * ------------------------------------------------- */
 const TopBar = () => {
-    const [shrink, setShrink] = useState(false)
-    const [active, setActive] = useState(navLinks[0].id)
-    const [heroHasLoaded, setHeroHasLoaded] = useState(false);
+    const [isShrunk, setIsShrunk] = useState(false);
+    const [activeId, setActiveId] = useState(navLinks[0].id);
+    const [heroHasBeenVisibleOnce, setHeroHasBeenVisibleOnce] = useState(false);
 
-    const isMobile: boolean | undefined = useIsMobile();
-    const isHeroVisible = useIdInViewport('hero');
-
-    const defaultHeight: number | undefined = isMobile === undefined ? 64 : (isMobile ? 48 : 64)
-    const shrunkHeight: number | undefined = isMobile === undefined ? 48 : (isMobile ? 40 : 48)
-    const defaultFontSize: string = '1.5rem'
-    const shrunkFontSize: string = '1.1rem'
-    const fontSize: string | undefined = isMobile === undefined
-        ? defaultFontSize
-        : (shrink ? shrunkFontSize : defaultFontSize)
+    const isMobile = useIsMobile();
+    const isHeroInViewport = useIdInViewport('hero');
 
     const location = useLocation();
     const navigate = useNavigate();
-    const currentPath = location.pathname;
+    const currentPathname = location.pathname;
 
-    const getHref = useCallback((link: NavLink) => {
-        if (link.type === 'anchor') {
-            if (link.baseUrl === currentPath) return `#${link.id}`;
-            return `${link.baseUrl}#${link.id}`;
-        }
-        return link.url ?? "#";
-    }, [currentPath]);
+    // Heights + font sizes adapt to mobile and shrink.
+    const defaultBarHeight = isMobile === undefined ? 64 : isMobile ? 48 : 64;
+    const shrunkBarHeight = isMobile === undefined ? 48 : isMobile ? 40 : 48;
+    const defaultTitleFontSize = '1.5rem';
+    const shrunkTitleFontSize = '1.1rem';
+    const animatedFontSize =
+        isMobile === undefined ? defaultTitleFontSize : isShrunk ? shrunkTitleFontSize : defaultTitleFontSize;
 
-
+    // Track scroll to toggle shrink state.
     useEffect(() => {
-        const handleScroll = () => {
-            setShrink(window.scrollY > 50)
-        }
-        window.addEventListener('scroll', handleScroll)
-        return () => window.removeEventListener('scroll', handleScroll)
-    }, [])
+        const onScroll = () => setIsShrunk(window.scrollY > 50);
+        window.addEventListener('scroll', onScroll);
+        return () => window.removeEventListener('scroll', onScroll);
+    }, []);
 
+    // Remember that hero was once on screen: used to fade in name after leaving hero.
     useEffect(() => {
-        if (isHeroVisible && !heroHasLoaded) {
-            setHeroHasLoaded(true);
-        }
-    }, [isHeroVisible, heroHasLoaded]);
+        if (isHeroInViewport && !heroHasBeenVisibleOnce) setHeroHasBeenVisibleOnce(true);
+    }, [isHeroInViewport, heroHasBeenVisibleOnce]);
 
-    const linkClassStyle = `
-        items-center
-        relative
-        dark:before:content-['']
-        dark:before:absolute
-        dark:before:left-1/2 dark:before:top-1/2
-        dark:before:w-[300%] dark:before:h-[210%]
-        dark:before:-translate-x-1/2 dark:before:-translate-y-1/2
-        dark:before:rounded-full
-        dark:before:pointer-events-none
-        dark:before:bg-[radial-gradient(circle,_rgba(34,197,94,0.22)_0%,_rgba(34,197,94,0.10)_60%,_rgba(34,197,94,0)_100%)]
-        dark:before:opacity-90
-    `;
+    // Shared click handler for mobile list (reuses the same navigation logic).
+    const onMobileNavClick = useCallback(
+        (event: React.MouseEvent, navItem: ReusableNavItem) => {
+            // navItem is extended from NavLink so we cast.
+            const extended = navItem as unknown as NavLink;
+            handleNavigation(event, extended, currentPathname, navigate, setActiveId);
+        },
+        [currentPathname, navigate],
+    );
 
-    const handleMobileNavClick = useCallback((e: React.MouseEvent, link: ReusableNavItem) => {
-        e.preventDefault();
-        // extended info stored in passed item via casting
-        const extended = link as unknown as NavLink;
-        if (extended.type === 'anchor') {
-            if (extended.baseUrl === currentPath) {
-                const el = document.getElementById(extended.id!);
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-                window.history.replaceState(null, '', `#${extended.id}`);
-            } else {
-                navigate(`${extended.baseUrl}#${extended.id}`);
-            }
-            setActive(extended.id ?? "");
-            return;
-        }
-        if (extended.type === 'internal') {
-            navigate(extended.url!);
-            setActive(extended.id ?? extended.url!);
-            return;
-        }
-        if (extended.type === 'external') {
-            window.location.href = extended.url!;
-        }
-    }, [currentPath, navigate]);
+    // Derived mobile nav items.
+    const mobileNavItems: ReusableNavItem[] = useMemo(
+        () =>
+            navLinks.map(navigationLink => ({
+                name: navigationLink.title,
+                href: buildHref(navigationLink, currentPathname),
+                url: navigationLink.type !== 'anchor' ? navigationLink.url : undefined,
+                id: navigationLink.id,
+                type: navigationLink.type,
+                baseUrl: navigationLink.type === 'anchor' ? navigationLink.baseUrl : undefined,
+            })),
+        [currentPathname],
+    );
 
-    // Mobile: use reusable header
+    /* -------------------------------------------------
+     * Mobile branch renders alternate component early
+     * ------------------------------------------------- */
     if (isMobile) {
-        const mobileItems: ReusableNavItem[] = navLinks.map(l => ({
-            name: l.title,
-            href: getHref(l),
-            url: l.type !== 'anchor' ? l.url : undefined,
-            id: l.id,
-            type: l.type,
-            baseUrl: l.baseUrl
-        }));
         return (
             <HeaderMobile
                 brand={{ name: personalInfo.name }}
-                navItems={mobileItems}
-                onNavClick={(e, item) => handleMobileNavClick(e, item)}
+                navItems={mobileNavItems}
+                onNavClick={onMobileNavClick}
                 includeDarkModeToggle
                 darkModeToggleProps={{ showAsLabel: true }}
                 showSearch={false}
@@ -233,41 +279,48 @@ const TopBar = () => {
         );
     }
 
+    /* -------------------------------------------------
+     * Desktop render
+     * ------------------------------------------------- */
     return (
         <motion.div
-            className={`
-        ${styles.paddingX}
-        w-svw flex justify-between items-center fixed top-0 z-20
-        feather-shadow bg-clip-padding backdrop-filter backdrop-blur-sm
-        dark:bg-background
-        text-primary-dark  dark:text-primary
-    `}
-            animate={{ height: shrink ? shrunkHeight : defaultHeight }}
-            transition={{ duration: shrinkDuration }}
-            style={{ height: shrink ? shrunkHeight : defaultHeight }}
+            className={desktopWrapperClasses}
+            animate={{ height: isShrunk ? shrunkBarHeight : defaultBarHeight }}
+            transition={{ duration: SHRINK_ANIMATION_DURATION_SECONDS }}
+            style={{ height: isShrunk ? shrunkBarHeight : defaultBarHeight }}
         >
-            <div
-                className={`${linkClassStyle}`}
-            >
+            {/* Left section: Name appears after hero leaves viewport to save visual focus */}
+            <div className={nameRevealContainerClasses}>
                 <motion.div
-                    animate={{ fontSize: fontSize ?? defaultFontSize }}
-                    transition={{ duration: shrinkDuration }}
-                    style={{ fontWeight: 'bold', fontSize: fontSize ?? defaultFontSize }}
+                    animate={{ fontSize: animatedFontSize }}
+                    transition={{ duration: SHRINK_ANIMATION_DURATION_SECONDS }}
+                    style={{ fontWeight: 'bold', fontSize: animatedFontSize }}
                     className="relative"
                 >
                     <span
-                        className={`nunito-text font-black transition-opacity duration-500 ${heroHasLoaded && !isHeroVisible ? 'opacity-100' : 'opacity-0'}`}
+                        className={`nunito-text font-black transition-opacity duration-500 ${heroHasBeenVisibleOnce && !isHeroInViewport ? 'opacity-100' : 'opacity-0'
+                            }`}
                     >
-                        {heroHasLoaded && !isHeroVisible && personalInfo.name}
+                        {heroHasBeenVisibleOnce && !isHeroInViewport && personalInfo.name}
                     </span>
                 </motion.div>
             </div>
 
-            <NavArea active={active} setActive={setActive} shrink={shrink} isHeroVisible={isHeroVisible} />
+            {/* Center navigation */}
+            <NavArea
+                activeId={activeId}
+                setActiveId={setActiveId}
+                isShrunk={isShrunk}
+                isHeroInViewport={isHeroInViewport}
+            />
 
+            {/* Right side: theme toggle (prefetched on hover for snappier UX) */}
             <div
                 className="w-auto"
-                onMouseEnter={() => { import('@/features/theming/components/mode-toggle') }}
+                onMouseEnter={() => {
+                    // Prefetch chunk to minimize flicker on first open.
+                    void import('@/features/theming/components/mode-toggle');
+                }}
             >
                 <Suspense
                     fallback={
@@ -277,13 +330,11 @@ const TopBar = () => {
                         />
                     }
                 >
-                    <LazyModeToggle showAsLabel={false} shrink={shrink} />
+                    <LazyModeToggle showAsLabel={false} shrink={isShrunk} />
                 </Suspense>
             </div>
         </motion.div>
+    );
+};
 
-
-    )
-}
-
-export default TopBar
+export default TopBar;

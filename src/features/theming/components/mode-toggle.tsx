@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useTheme } from "@/features/theming/components/theme-provider"
 
-import { useCallback } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { createAnimation } from "@/components/ui/theme-animations"
 
 export function ModeToggle({ showAsLabel = false, shrink = false }: { showAsLabel?: boolean; shrink?: boolean }) {
@@ -56,12 +56,40 @@ export function ModeToggle({ showAsLabel = false, shrink = false }: { showAsLabe
         }
     }, [setTheme, applyAnimationCss])
 
+    const [appliedTheme, setAppliedTheme] = useState<"light" | "dark">(() => {
+        if (typeof window === "undefined") return theme === "dark" ? "dark" : "light"
+        if (theme === "system") {
+            return window.matchMedia?.("(prefers-color-scheme: dark)")?.matches ? "dark" : "light"
+        }
+        return theme === "dark" ? "dark" : "light"
+    })
+
+    useEffect(() => {
+        if (theme === "system") {
+            const m = window.matchMedia("(prefers-color-scheme: dark)")
+            const handler = (e: MediaQueryListEvent | MediaQueryList) => setAppliedTheme(Boolean((e as any).matches) ? "dark" : "light")
+            // set initial
+            setAppliedTheme(m.matches ? "dark" : "light")
+            // listen for changes
+            if (typeof m.addEventListener === "function") {
+                m.addEventListener("change", handler as EventListener)
+                return () => m.removeEventListener("change", handler as EventListener)
+            } else {
+                m.addListener(handler as any)
+                return () => m.removeListener(handler as any)
+            }
+        } else {
+            setAppliedTheme(theme === "dark" ? "dark" : "light")
+        }
+    }, [theme])
+
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="outline" size={`${showAsLabel ? 'default' : 'icon'}`} className={`${shrink ? 'scale-90' : ''}`}>
-                    <Sun className="h-[1.2rem] w-[1.2rem] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
-                    <Moon className="absolute h-[1.2rem] w-[1.2rem] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
+                    {appliedTheme === "light" ? <Sun className="h-[1.2rem] w-[1.2rem] scale-100 rotate-0 transition-all" /> : null}
+                    {appliedTheme === 'dark' ? <Moon className="h-[1.2rem] w-[1.2rem] scale-100 rotate-0 transition-all" /> : null}
                     <span className={`${showAsLabel ? '' : 'sr-only'}`}>Toggle theme</span>
                 </Button>
             </DropdownMenuTrigger>

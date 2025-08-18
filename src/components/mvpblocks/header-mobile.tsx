@@ -81,7 +81,7 @@ const HeaderMobile: React.FC<HeaderProps> = ({
     const brandContent = (
         <Link to={brand.href ?? '/'} className="flex items-center space-x-3">
             <div className="flex flex-col">
-                <span className="text-foreground text-lg font-bold">{brand.name}</span>
+                <span className="nunito-text text-primary-dark text-lg font-bold">{brand.name}</span>
                 {brand.tagline && (
                     <span className="text-muted-foreground -mt-1 text-xs">
                         {brand.tagline}
