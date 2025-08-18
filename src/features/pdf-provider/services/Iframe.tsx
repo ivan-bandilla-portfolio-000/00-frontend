@@ -14,7 +14,6 @@ const Iframe = ({ name, title, src }: IframeProps) => {
             style={{ height: "100%", width: "100%" }}
             loading="lazy"
             name={name}
-            border={0}
             className='print:hidden'
         />
     )
