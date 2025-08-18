@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button"
 import {
     DropdownMenu,
     DropdownMenuContent,
-    DropdownMenuItem,
     DropdownMenuTrigger,
+    DropdownMenuRadioGroup,
+    DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu"
 import { useTheme } from "@/features/theming/components/theme-provider"
 
@@ -13,7 +14,7 @@ import { useCallback } from "react"
 import { createAnimation } from "@/components/ui/theme-animations"
 
 export function ModeToggle() {
-    const { setTheme } = useTheme()
+    const { theme, setTheme } = useTheme()
 
     const applyAnimationCss = useCallback((css: string) => {
         const id = "theme-transition-styles"
@@ -28,7 +29,7 @@ export function ModeToggle() {
 
     const runWithAnimation = useCallback((target: "light" | "dark" | "system") => {
         if (typeof window === "undefined" || typeof document === "undefined") {
-            setTheme(target as any)
+            setTheme(target)
             return
         }
 
@@ -37,19 +38,16 @@ export function ModeToggle() {
         const systemPrefersDark = window.matchMedia?.("(prefers-color-scheme: dark)")?.matches
         const nextApplied: "light" | "dark" = target === "system" ? (systemPrefersDark ? "dark" : "light") : target
 
-        // If the visual theme wouldn’t change, skip animation.
         if (currentApplied === nextApplied) {
-            setTheme(target as any)
+            setTheme(target)
             return
         }
 
-        // Use top-right origin
         const { css } = createAnimation("circle-blur", "top-right")
         applyAnimationCss(css)
 
-        const switchTheme = () => setTheme(target as any)
+        const switchTheme = () => setTheme(target)
 
-        // Bind to document to avoid "Illegal invocation"
         const startVT = (document as any).startViewTransition?.bind(document)
         if (startVT) {
             startVT(switchTheme)
@@ -68,15 +66,20 @@ export function ModeToggle() {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" >
-                <DropdownMenuItem className=" text-md" onClick={() => runWithAnimation("light")}>
-                    Light
-                </DropdownMenuItem>
-                <DropdownMenuItem className=" text-md" onClick={() => runWithAnimation("dark")}>
-                    Dark
-                </DropdownMenuItem>
-                <DropdownMenuItem className=" text-md" onClick={() => runWithAnimation("system")}>
-                    System
-                </DropdownMenuItem>
+                <DropdownMenuRadioGroup
+                    value={theme}
+                    onValueChange={(v) => runWithAnimation(v as "light" | "dark" | "system")}
+                >
+                    <DropdownMenuRadioItem value="light" className="text-md flex items-center gap-2">
+                        Light
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="dark" className="text-md flex items-center gap-2">
+                        Dark
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="system" className="text-md flex items-center gap-2">
+                        System
+                    </DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
             </DropdownMenuContent>
         </DropdownMenu>
     )
