@@ -4,6 +4,7 @@ import * as React from "react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { getImageUrl, handleImageError } from "@/app/helpers/image";
 
 export type Tag = {
     id: number;
@@ -25,10 +26,6 @@ export type ProjectCardProps = {
     className?: string;
 };
 
-const getImageUrl = (img?: string) =>
-    img
-        ? `/images/projects/${img}.jpg`
-        : "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?q=80&w=640&h=360&auto=format&fit=crop";
 
 const ProjectsCard: React.FC<ProjectCardProps> = ({ project, className }) => {
     return (
@@ -47,7 +44,13 @@ const ProjectsCard: React.FC<ProjectCardProps> = ({ project, className }) => {
                     alt={project.name}
                     className="h-full w-full object-cover"
                     loading="lazy"
+                    decoding="async"
                     draggable={false}
+                    onError={(e) => {
+                        void handleImageError(e.currentTarget as HTMLImageElement, {
+                            fallbackOnFetchError: true,
+                        });
+                    }}
                 />
             </div>
             <div className="space-y-2">

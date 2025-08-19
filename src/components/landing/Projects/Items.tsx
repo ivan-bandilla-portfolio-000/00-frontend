@@ -7,19 +7,29 @@ import {
     CarouselItem,
 } from "@/components/ui/carousel"
 import type { Project } from "@/clientDB/@types/Project";
+import { getImageUrl, handleImageError } from "@/app/helpers/image";
 
 interface ProjectCardProps extends Project {
     index: number;
 }
 
-const ProjectCard = ({ index, source_code_link }: ProjectCardProps) => (
+const ProjectCard = ({ index, image, name, source_code_link }: ProjectCardProps) => (
     <motion.div
-        className="bg-primary p-5 rounded-2xl lg:w-[480px] w-full h-[20svh] lg:h-auto shadow"
+        className=" p-5 rounded-2xl lg:w-[480px] w-full h-[20svh] lg:h-auto select-none"
         variants={fadeIn('up', 'spring', Math.log(index + 1) * 0.5, 0.75)}
     >
         <div className="relative w-full h-[12dvw]">
-            {/* <img src={image} alt={name} className="object-cover w-full h-full rounded-2xl" /> */}
-            <div className="object-cover w-full h-full rounded-2xl" />
+            <img src={image}
+                alt={`${name} thumbnail`}
+                width={440} height={230}
+                loading="lazy"
+                className="object-cover w-full h-full rounded-2xl"
+                onError={(e) => {
+                    void handleImageError(e.currentTarget as HTMLImageElement, {
+                        fallbackOnFetchError: true,
+                    });
+                }}
+            />
             {source_code_link ? (
                 <div className="absolute inset-0 flex justify-end m-3 card-img_hover">
                     <div
@@ -50,7 +60,7 @@ const Items = ({ projects }: ItemsProps) => {
                             name={project.name}
                             description={project.description}
                             tags={project.tags}
-                            image={project.image}
+                            image={getImageUrl(project.image)}
                             source_code_link={project.source_code_link}
                         />
                     </div>

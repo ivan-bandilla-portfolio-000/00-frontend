@@ -152,6 +152,7 @@ const ProductSwapCard = React.forwardRef<HTMLDivElement, ProductSwapCardProps>(
                                                 objectPosition: index === 0 ? "top" : "center",
                                             }}
                                             loading="lazy"
+                                            decoding="async"
                                             draggable={false}
                                         />
                                     </div>

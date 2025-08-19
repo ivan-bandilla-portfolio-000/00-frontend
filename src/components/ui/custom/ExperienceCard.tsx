@@ -12,6 +12,7 @@ import {
     CarouselItem,
 } from "@/components/ui/carousel";
 import type { CarouselApi } from "@/components/ui/carousel";
+import { getImageUrl } from "@/app/helpers/image";
 
 export type ExperienceItem = {
     company: string;
@@ -32,11 +33,6 @@ type ExperienceCardProps = React.HTMLAttributes<HTMLDivElement> &
         item: ExperienceItem;
         onSwap?: (isFirstVisible: boolean) => void;
     };
-
-const DEFAULT_THUMBNAILS = [
-    "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=640&h=360&auto=format&fit=crop", // office teamwork
-    "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?q=80&w=640&h=360&auto=format&fit=crop", // coding desk
-];
 
 const formatMonthYear = (date: Date | string) =>
     new Date(date).toLocaleString("en-US", { month: "short", year: "numeric" });
@@ -69,7 +65,7 @@ const ExperienceCard = React.forwardRef<HTMLDivElement, ExperienceCardProps>(
         const thumbnails =
             item.thumbnail && item.thumbnail.length > 0
                 ? item.thumbnail
-                : DEFAULT_THUMBNAILS;
+                : [getImageUrl()];
 
         const alts =
             item.alt && item.alt.length === thumbnails.length
@@ -119,6 +115,7 @@ const ExperienceCard = React.forwardRef<HTMLDivElement, ExperienceCardProps>(
                                             className="h-full w-full object-cover"
                                             style={{ objectPosition: index === 0 ? "top" : "center" }}
                                             loading="lazy"
+                                            decoding="async"
                                             draggable={false}
                                         />
                                     </div>

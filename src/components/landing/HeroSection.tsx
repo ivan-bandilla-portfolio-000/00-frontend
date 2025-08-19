@@ -72,7 +72,7 @@ const FeaturedTechStack = () => {
           {techStack.map((tech) => (
             <span key={tech.name} className="px-1 py-1 space-x-0.5">
               <img
-                className={`inline-block ${tech.className ?? ""} transition-transform duration-300 hover:scale-110`}
+                className={`inline-block ${tech.className ?? ""} transition-transform duration-300 hover:-translate-y-0.5`}
                 loading="lazy"
                 decoding="async"
                 src={tech.icon}

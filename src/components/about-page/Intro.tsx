@@ -15,8 +15,8 @@ const Intro = () => {
         <>
             <CTA2
                 title={{
-                    level: 2, text: "About Ivan",
-                    props: { className: "text-sm sm:text-sm md:text-sm" }
+                    level: 1, text: "About Ivan",
+                    props: { className: "text-sm sm:text-sm md:text-base font-black" }
                 }}
                 description={description()}
                 ctaArea={
