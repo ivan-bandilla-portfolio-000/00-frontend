@@ -30,20 +30,36 @@ const About = lazy(() => import('@/pages/About'));
 function Layout() {
   const [showChat, setShowChat] = useState(false);
   useEffect(() => {
+    const fire = () => {
+      // Notify hooks waiting to lazily start LLM work
+      window.dispatchEvent(new Event('first-user-interaction'));
+    };
     const onFirst = () => {
       setShowChat(true);
+      fire();
       window.removeEventListener('pointerdown', onFirst);
       window.removeEventListener('keydown', onFirst);
     };
     window.addEventListener('pointerdown', onFirst, { once: true });
     window.addEventListener('keydown', onFirst, { once: true });
-    // optional idle fallback
-    requestIdleCallback?.(() => setShowChat(true));
+
+    // Idle fallback (if no interaction after a while)
+    const idleFallback = setTimeout(() => {
+      if (!showChat) setShowChat(true);
+      fire();
+    }, 8000);
+
+    requestIdleCallback?.(() => {
+      // Secondary earlier hint (keeps deferral but can start sooner if system idle)
+      fire();
+    });
+
     return () => {
+      clearTimeout(idleFallback);
       window.removeEventListener('pointerdown', onFirst);
       window.removeEventListener('keydown', onFirst);
     };
-  }, []);
+  }, [showChat]);
   return (
     <>
       <TopBar />

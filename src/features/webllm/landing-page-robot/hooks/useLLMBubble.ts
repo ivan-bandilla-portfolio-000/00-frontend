@@ -9,56 +9,86 @@ const initialMessages = [
 
 const defaultMessage = "Are you working as an IT professional?";
 
+const CACHE_KEY = 'webllm_bubble_message_v1';
+
+// ---- Module-scope in-memory cache (survives component unmount within same tab) ----
+let inMemoryBubbleMessage: string | null = null;
+let generationPromise: Promise<string> | null = null;
+
+// Try to hydrate in-memory cache from localStorage once (module evaluation time)
+(function hydrateFromLocalStorageOnce() {
+    if (typeof window === 'undefined') return;
+    try {
+        if (!inMemoryBubbleMessage) {
+            const cached = localStorage.getItem(CACHE_KEY);
+            if (cached) inMemoryBubbleMessage = cached;
+        }
+    } catch {
+        /* ignore */
+    }
+})();
+
 export const useLLMBubble = () => {
-    const { llm, ensureLLM, status, progress } = useLLM();
-    const [bubbleText, setBubbleText] = useState("Hello");
-    const [showButtons, setShowButtons] = useState(false);
-    const isFetching = useRef(false);
-    const responseArrived = useRef(false);
+    const { llm, ensureLLM, status } = useLLM();
+
+    const [bubbleText, setBubbleText] = useState<string>(() => inMemoryBubbleMessage || "");
+    const [showButtons, setShowButtons] = useState<boolean>(() => !!inMemoryBubbleMessage);
+    const responseArrived = useRef<boolean>(!!inMemoryBubbleMessage);
+    const startedRef = useRef(false);
     const abortRef = useRef<(() => void) | null>(null);
 
+    // Placeholder while loading (only if we DON'T already have a cached message)
     useEffect(() => {
-        // if (status === 'loading') {
-        console.log(`Loading model ${(progress * 100).toFixed(0)}% ...`);
-        // }
-    }, [status, progress]);
+        if (responseArrived.current || inMemoryBubbleMessage) return;
+        const t = setTimeout(() => {
+            setBubbleText(
+                initialMessages[Math.floor(Math.random() * initialMessages.length)]
+            );
+        }, 400);
+        return () => clearTimeout(t);
+    }, []);
 
+    // Listen for first-user-interaction (or idle fallback event) to kick off initialization & generation
     useEffect(() => {
-        if (status === 'idle') {
-            const t = setTimeout(() => { ensureLLM(); }, 200);
-            return () => clearTimeout(t);
+        if (inMemoryBubbleMessage) return; // already have it
+        function trigger() {
+            if (startedRef.current) return;
+            startedRef.current = true;
+            // Start model init lazily
+            if (status === 'idle') {
+                ensureLLM().catch(console.error);
+            } else if (status === 'error' || status === 'unsupported') {
+                // No model => use default
+                finalizeAndCache(defaultMessage);
+            }
         }
-    }, [status, ensureLLM]);
+        window.addEventListener('first-user-interaction', trigger);
+        // Safety fallback after 12s if event never fires (optional)
+        const fallback = setTimeout(trigger, 12000);
+        return () => {
+            window.removeEventListener('first-user-interaction', trigger);
+            clearTimeout(fallback);
+        };
+    }, [ensureLLM, status]);
 
+    // Once model actually ready, generate (only once globally)
     useEffect(() => {
-        if (llm && llm.requirementsMet && !responseArrived.current) {
-            const timeout = setTimeout(() => {
-                setBubbleText(
-                    initialMessages[Math.floor(Math.random() * initialMessages.length)]
-                );
-            }, 400);
-            return () => clearTimeout(timeout);
+        if (inMemoryBubbleMessage || responseArrived.current) return;
+        if (!llm || !llm.requirementsMet) return;
+        if (status !== 'ready') return;
+        // Already generating elsewhere?
+        if (generationPromise) {
+            generationPromise.then(msg => {
+                if (!responseArrived.current) {
+                    responseArrived.current = true;
+                    setBubbleText(msg);
+                    setShowButtons(true);
+                }
+            });
+            return;
         }
-    }, [llm?.requirementsMet]);
 
-    useEffect(() => {
-        if (llm && llm.requirementsMet === false) {
-            setBubbleText(defaultMessage);
-            setShowButtons(true);
-        }
-    }, [llm]);
-
-    // IMPORTANT: remove getEngine() check (worker mode keeps engine in worker)
-    useEffect(() => {
-        let cancelled = false;
-
-        const canQuery = llm && llm.requirementsMet && status === 'ready' && !responseArrived.current;
-
-        if (!canQuery) return;
-
-        const fetchLLM = async (attempt = 0) => {
-            if (isFetching.current) return;
-            isFetching.current = true;
+        generationPromise = (async () => {
             try {
                 llm.setSystemPrompt(choosePortfolioContextInstruction);
                 const { promise, abort } = llm.getResponseAbortable(
@@ -69,36 +99,28 @@ export const useLLMBubble = () => {
                 );
                 abortRef.current = abort;
                 const result = await promise;
-                if (!cancelled) {
-                    responseArrived.current = true;
-                    setBubbleText((result || "").trim() || defaultMessage);
-                    setShowButtons(true);
-                }
+                const finalText = (result || "").trim() || defaultMessage;
+                finalizeAndCache(finalText);
+                return finalText;
             } catch (e: any) {
-                if (!cancelled) {
-                    if (e?.name === 'AbortError') {
-                        // silent on abort
-                    } else if (attempt < 2) {
-                        setTimeout(() => fetchLLM(attempt + 1), 500);
-                    } else {
-                        responseArrived.current = true;
-                        setBubbleText(defaultMessage);
-                        setShowButtons(true);
-                        console.error("LLM response failed:", e);
-                    }
+                if (e?.name === 'AbortError') {
+                    // Keep silent; do not cache aborted attempt
+                    throw e;
                 }
+                // Fallback
+                finalizeAndCache(defaultMessage);
+                return defaultMessage;
             } finally {
-                isFetching.current = false;
+                // Allow GC after resolution
+                setTimeout(() => { generationPromise = null; }, 0);
             }
-        };
+        })();
 
-        fetchLLM();
-        return () => {
-            cancelled = true;
-            abortRef.current?.();
-        };
-    }, [llm?.initialized, llm?.requirementsMet]);
+        generationPromise.catch(() => { /* swallow; already handled */ });
 
+    }, [llm, status]);
+
+    // Abort generation if user opens full chat (keep original behavior)
     useEffect(() => {
         function onChatOpen() {
             abortRef.current?.();
@@ -106,6 +128,21 @@ export const useLLMBubble = () => {
         window.addEventListener('llm-chat-open', onChatOpen);
         return () => window.removeEventListener('llm-chat-open', onChatOpen);
     }, []);
+
+    function finalizeAndCache(text: string) {
+        if (responseArrived.current) return;
+        responseArrived.current = true;
+        inMemoryBubbleMessage = text;
+        setBubbleText(text);
+        setShowButtons(true);
+        try {
+            if (typeof window !== 'undefined') {
+                localStorage.setItem(CACHE_KEY, text);
+            }
+        } catch {
+            /* ignore storage write errors */
+        }
+    }
 
     return { bubbleText, showButtons };
 };
