@@ -10,7 +10,6 @@ export default defineConfig({
     react(),
     tailwindcss(),
     compression({ algorithm: 'brotliCompress', ext: '.br' }),
-    compression({ algorithm: 'gzip', ext: '.gz' }),
     Sitemap({
       hostname: 'http://localhost',
       dynamicRoutes: ['/', '/about', '/contact'],
