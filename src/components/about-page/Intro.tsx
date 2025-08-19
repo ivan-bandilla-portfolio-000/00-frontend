@@ -31,6 +31,7 @@ const Intro = () => {
                                 label: <>See Resume</>,
                                 props: { variant: "outline", className: "pointer-coarse:px-8 pointer-coarse:py-5 px-10 py-6 rounded-full text-base md:text-lg font-bold cursor-pointer" }
                             }}
+                            showProviderTabs={true}
                         />
                     </div>
                 }
