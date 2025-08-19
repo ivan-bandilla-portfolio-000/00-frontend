@@ -6,6 +6,6 @@ schemaBuilder.createTable('projects')
     .addColumn('description', lf.Type.STRING).addNullable(['description'])
     .addColumn('image', lf.Type.STRING).addNullable(['image'])
     .addColumn('avp', lf.Type.STRING).addNullable(['avp'])
-    .addColumn('source_code_link', lf.Type.STRING).addNullable(['source_code_link'])
+    .addColumn('project_link', lf.Type.STRING).addNullable(['project_link'])
     .addColumn('status_id', lf.Type.INTEGER).addNullable(['status_id'])
     .addPrimaryKey(['id'], true);

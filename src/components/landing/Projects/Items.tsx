@@ -1,6 +1,5 @@
 import { motion } from "motion/react";
 
-import { github } from "@/assets";
 // import projects from "@/constants/projects";
 import { fadeIn } from "@/utils/motion";
 import {
@@ -8,41 +7,66 @@ import {
 } from "@/components/ui/carousel"
 import type { Project } from "@/clientDB/@types/Project";
 import { getImageUrl, handleImageError } from "@/app/helpers/image";
+import { ExternalLink } from "lucide-react";
 
 interface ProjectCardProps extends Project {
     index: number;
 }
 
-const ProjectCard = ({ index, image, name, source_code_link }: ProjectCardProps) => (
-    <motion.div
-        className=" p-5 rounded-2xl lg:w-[480px] w-full h-[20svh] lg:h-auto select-none"
-        variants={fadeIn('up', 'spring', Math.log(index + 1) * 0.5, 0.75)}
-    >
-        <div className="relative w-full h-[12dvw]">
-            <img src={image}
-                alt={`${name} thumbnail`}
-                width={440} height={230}
-                loading="lazy"
-                className="object-cover w-full h-full rounded-2xl"
-                onError={(e) => {
-                    void handleImageError(e.currentTarget as HTMLImageElement, {
-                        fallbackOnFetchError: true,
-                    });
-                }}
-            />
-            {source_code_link ? (
-                <div className="absolute inset-0 flex justify-end m-3 card-img_hover">
-                    <div
-                        onClick={() => window.open(source_code_link, "_blank")}
-                        className="black-gradient w-10 h-10 rounded-full flex justify-center items-center cursor-pointer"
-                    >
-                        <img src={github} alt="github" loading="lazy" decoding="async" className="w-1/2 h-1/2 object-contain" />
+const ProjectCard = ({ index, image, name, project_link }: ProjectCardProps) => {
+    const isGitHub = (url?: string) => {
+        if (!url) return false;
+        try {
+            const u = new URL(url);
+            return /(^|\.)github\.com$/i.test(u.hostname) || /github\.com/i.test(url);
+        } catch {
+            return /github\.com/i.test(url);
+        }
+    };
+
+    return (
+        <motion.div
+            className=" p-5 rounded-2xl lg:w-[480px] w-full h-[20svh] lg:h-auto select-none"
+            variants={fadeIn('up', 'spring', Math.log(index + 1) * 0.5, 0.75)}
+        >
+            <div className="relative w-full h-[12dvw]">
+                <img src={image}
+                    alt={`${name} thumbnail`}
+                    width={440} height={230}
+                    loading="lazy"
+                    className="object-cover w-full h-full rounded-2xl"
+                    onError={(e) => {
+                        void handleImageError(e.currentTarget as HTMLImageElement, {
+                            fallbackOnFetchError: true,
+                        });
+                    }}
+                />
+                {project_link ? (
+                    <div className="absolute inset-0 flex justify-end m-3 card-img_hover">
+                        <div
+                            onClick={() => window.open(project_link, "_blank")}
+                            className="black-gradient w-10 h-10 rounded-full flex justify-center items-center cursor-pointer"
+                            role="button"
+                            aria-label={isGitHub(project_link) ? "Open GitHub" : "Open external link"}
+                        >
+                            {isGitHub(project_link) ? (
+                                <img
+                                    src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/github/github-original.svg"
+                                    alt="github"
+                                    loading="lazy"
+                                    decoding="async"
+                                    className="w-1/2 h-1/2 object-contain"
+                                />
+                            ) : (
+                                <ExternalLink className="w-1/2 h-1/2 text-white" />
+                            )}
+                        </div>
                     </div>
-                </div>
-            ) : ""}
-        </div>
-    </motion.div>
-);
+                ) : null}
+            </div>
+        </motion.div>
+    );
+};
 
 interface ItemsProps {
     projects: Project[];
@@ -61,7 +85,7 @@ const Items = ({ projects }: ItemsProps) => {
                             description={project.description}
                             tags={project.tags}
                             image={getImageUrl(project.image)}
-                            source_code_link={project.source_code_link}
+                            project_link={project.project_link}
                         />
                     </div>
                 </CarouselItem>

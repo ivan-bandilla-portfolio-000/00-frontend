@@ -20,7 +20,7 @@ export type ProjectCardProps = {
         description?: string;
         image?: string;
         avp?: string;
-        source_code_link?: string;
+        project_link?: string;
         tags: Tag[];
     };
     className?: string;
@@ -72,10 +72,10 @@ const ProjectsCard: React.FC<ProjectCardProps> = ({ project, className }) => {
                         ))}
                     </div>
                 )}
-                {project.source_code_link && (
+                {project.project_link && (
                     <div className="flex justify-end ">
                         <a
-                            href={project.source_code_link}
+                            href={project.project_link}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-block px-2 py-4 pointer-coarse:py-5 text-sm text-primary underline"

@@ -10,7 +10,7 @@ export interface ProjectSeed {
     description?: string;
     image?: string;
     avp?: string;
-    source_code_link?: string;
+    project_link?: string;
     tags: number[];
 }
 
@@ -19,14 +19,14 @@ export const projects: ProjectSeed[] = [
         name: 'Car Rent',
         description: 'Web-based platform for car rentals.',
         image: 'carrent',
-        source_code_link: 'https://github.com/',
+        project_link: 'https://github.com/',
         tags: [1, 2, 3],
     },
     {
         name: 'Car Rental',
         description: 'Web-based platform for car rentals.',
         image: 'carrent',
-        source_code_link: 'https://github.com/',
+        project_link: 'https://github.com/',
         tags: [1, 2, 3],
     },
 ];

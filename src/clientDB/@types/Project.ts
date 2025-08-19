@@ -8,7 +8,7 @@ export interface Project {
     description?: string;
     image?: string;
     avp?: string;
-    source_code_link?: string;
+    project_link?: string;
     status_id?: number;
     project_category_ids?: number[];
     status?: Status;

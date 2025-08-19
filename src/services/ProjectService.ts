@@ -18,7 +18,7 @@ type ProjectRow = {
     description: string | null;
     image: string | null;
     avp: string | null;
-    source_code_link: string | null;
+    project_link: string | null;
     status_id?: number | null;
     project_category_ids?: number[];
 };
@@ -137,7 +137,7 @@ export class ProjectService extends BaseService {
                 description
                 image
                 avp
-                source_code_link
+                project_link
                 status_id
                 project_category_id
                 tags
@@ -317,7 +317,7 @@ export class ProjectService extends BaseService {
                     .set(projectsTable['status_id'], project.status_id ?? null)
                     .set(projectsTable['image'], project.image ?? null)
                     .set(projectsTable['avp'], project.avp ?? null)
-                    .set(projectsTable['source_code_link'], project.source_code_link ?? null)
+                    .set(projectsTable['project_link'], project.project_link ?? null)
                     .where(projectsTable['id'].eq(existing.id))
                     .exec();
             } else {
@@ -331,7 +331,7 @@ export class ProjectService extends BaseService {
                             status_id: project.status_id ?? null,
                             image: project.image ?? null,
                             avp: project.avp ?? null,
-                            source_code_link: project.source_code_link ?? null,
+                            project_link: project.project_link ?? null,
                         }),
                     ])
                     .exec();
@@ -473,7 +473,7 @@ export class ProjectService extends BaseService {
                 description: project.description ?? undefined,
                 image: project.image ?? undefined,
                 avp: project.avp ?? undefined,
-                source_code_link: project.source_code_link ?? undefined,
+                project_link: project.project_link ?? undefined,
                 status_id: project.status_id ?? undefined,
                 project_category_ids: catIds,
                 categories: cats,

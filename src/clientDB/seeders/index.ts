@@ -40,7 +40,7 @@ async function seedProjects(db: lf.Database) {
                 description: project.description ?? null,
                 image: project.image ?? null,
                 avp: project.avp ?? null,
-                source_code_link: project.source_code_link ?? null,
+                project_link: project.project_link ?? null,
             }),
         ]).exec();
     }
