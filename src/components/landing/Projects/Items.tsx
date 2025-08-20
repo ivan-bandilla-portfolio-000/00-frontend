@@ -33,7 +33,6 @@ const ProjectCard = ({ index, image, name, project_link }: ProjectCardProps) => 
                 <img src={image}
                     alt={`${name} thumbnail`}
                     width={440} height={230}
-                    loading="lazy"
                     className="object-cover w-full h-full rounded-2xl"
                     onError={(e) => {
                         void handleImageError(e.currentTarget as HTMLImageElement, {
