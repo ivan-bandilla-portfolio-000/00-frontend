@@ -2,13 +2,12 @@
 
 import { useRef, useEffect } from "react";
 import CloudPdfViewer from "@cloudpdf/viewer";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/features/theming/components/theme-provider";
 
 const CloudPdf = ({ docID, darkMode }: { docID: string; darkMode?: boolean }) => {
     const viewer = useRef<HTMLDivElement | null>(null);
-    const { resolvedTheme } = useTheme();
-
-    const effectiveDark = darkMode ?? (resolvedTheme === "dark");
+    const { resolvedTheme } = useTheme()
+    const effectiveDark = darkMode ?? (resolvedTheme === "dark")
 
     useEffect(() => {
         (async () => {

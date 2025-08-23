@@ -10,11 +10,13 @@ type ThemeProviderProps = {
 
 type ThemeProviderState = {
     theme: Theme
+    resolvedTheme: "dark" | "light"
     setTheme: (theme: Theme) => void
 }
 
 const initialState: ThemeProviderState = {
     theme: "system",
+    resolvedTheme: "light",
     setTheme: () => null,
 }
 
@@ -34,6 +36,15 @@ export function ThemeProvider({
         }
     })
 
+    const [resolvedTheme, setResolvedTheme] = useState<"dark" | "light">(() => {
+        if (typeof window === "undefined") return defaultTheme === "dark" ? "dark" : "light"
+        const initial = (localStorage.getItem(storageKey) as Theme) || defaultTheme
+        if (initial === "system") {
+            return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+        }
+        return initial === "dark" ? "dark" : "light"
+    })
+
     useEffect(() => {
         const root = window.document.documentElement
         const apply = (t: Theme) => {
@@ -41,8 +52,10 @@ export function ThemeProvider({
             if (t === "system") {
                 const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches
                 root.classList.add(systemDark ? "dark" : "light")
+                setResolvedTheme(systemDark ? "dark" : "light")
             } else {
                 root.classList.add(t)
+                setResolvedTheme(t)
             }
         }
         apply(theme)
@@ -55,6 +68,7 @@ export function ThemeProvider({
         const handler = () => {
             root.classList.remove("light", "dark")
             root.classList.add(mql.matches ? "dark" : "light")
+            setResolvedTheme(mql.matches ? "dark" : "light")
         }
 
         if (typeof mql.addEventListener === "function") {
@@ -76,6 +90,7 @@ export function ThemeProvider({
 
     const value = {
         theme,
+        resolvedTheme,
         setTheme: (t: Theme) => {
             try {
                 localStorage.setItem(storageKey, t)
