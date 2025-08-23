@@ -4,6 +4,8 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import compression from 'vite-plugin-compression'
 import Sitemap from 'vite-plugin-sitemap'
+import utwm from 'unplugin-tailwindcss-mangle/vite'
+
 
 export default defineConfig({
   plugins: [
@@ -14,6 +16,7 @@ export default defineConfig({
       hostname: 'http://localhost',
       dynamicRoutes: ['/', '/about', '/contact'],
     }),
+    utwm(),
   ],
   resolve: {
     alias: {
