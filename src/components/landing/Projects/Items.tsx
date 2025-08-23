@@ -29,11 +29,12 @@ const ProjectCard = ({ index, image, name, project_link }: ProjectCardProps) => 
             className=" p-5 rounded-2xl lg:w-[480px] w-full h-[20svh] lg:h-auto select-none"
             variants={fadeIn('up', 'spring', Math.log(index + 1) * 0.5, 0.75)}
         >
-            <div className="relative w-full h-[12dvw]">
+            <div className="relative w-full lg:min-h-[12dvw]">
                 <img src={image}
                     alt={`${name} thumbnail`}
                     width={440} height={230}
                     className="object-cover w-full h-full rounded-2xl"
+                    loading="lazy"
                     onError={(e) => {
                         void handleImageError(e.currentTarget as HTMLImageElement, {
                             fallbackOnFetchError: true,
