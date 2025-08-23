@@ -14,4 +14,6 @@ export interface Project {
     status?: Status;
     categories?: ProjectCategory[];
     tags?: Tag[] | number[];
+    start_date?: string;
+    end_date?: string | null;
 }

@@ -96,7 +96,7 @@ const ExperienceCard = React.forwardRef<HTMLDivElement, ExperienceCardProps>(
             <motion.div
                 ref={ref}
                 className={cn(
-                    "w-full min-h-full space-y-4 rounded-lg bg-gray-100 dark:bg-stone-800 p-4 border max-w-96 transition-transform ease-in-out hover:shadow dark:hover:shadow-[0_8px_20px_rgba(245,158,11,0.12)] hover:-translate-y-0.5 motion-reduce:hover:translate-y-0",
+                    "w-full min-h-full space-y-4 rounded-lg bg-gray-100 dark:bg-stone-800 p-4 border max-w-96 transition-transform ease-in-out hover:shadow dark:hover:shadow-[0_8px_20px_rgba(245,158,11,0.12)]",
                 )}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}

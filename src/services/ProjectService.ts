@@ -1,6 +1,6 @@
 import { BaseService } from '@/services/BaseService';
 import type { Project } from "@/clientDB/@types/Project";
-import type { lf } from '@/clientDB/schema';
+import { lf } from '@/clientDB/schema';
 import { RateLimiter } from '@/features/rate-limiting/client/services/RateLimiter';
 
 // Add concrete row types to avoid "object" property errors
@@ -21,6 +21,8 @@ type ProjectRow = {
     project_link: string | null;
     status_id?: number | null;
     project_category_ids?: number[];
+    start_date: string;
+    end_date: string | null;
 };
 
 type ProjectTagRow = {
@@ -318,6 +320,8 @@ export class ProjectService extends BaseService {
                     .set(projectsTable['image'], project.image ?? null)
                     .set(projectsTable['avp'], project.avp ?? null)
                     .set(projectsTable['project_link'], project.project_link ?? null)
+                    .set(projectsTable['start_date'], project.start_date)
+                    .set(projectsTable['end_date'], project.end_date ?? null)
                     .where(projectsTable['id'].eq(existing.id))
                     .exec();
             } else {
@@ -332,6 +336,8 @@ export class ProjectService extends BaseService {
                             image: project.image ?? null,
                             avp: project.avp ?? null,
                             project_link: project.project_link ?? null,
+                            start_date: project.start_date,
+                            end_date: project.end_date ?? null,
                         }),
                     ])
                     .exec();
@@ -435,7 +441,7 @@ export class ProjectService extends BaseService {
     }
 
     // Only query IndexedDB for projects (with tags)
-    static async getProjects(db: lf.Database): Promise<Project[]> {
+    static async getProjects(db: lf.Database, opts?: { orderBy?: { column: string; desc?: boolean } }): Promise<Project[]> {
         const projectsTable = db.getSchema().table('projects');
         const tagsTable = db.getSchema().table('tags');
         const projectTagsTable = db.getSchema().table('project_tags');
@@ -443,8 +449,20 @@ export class ProjectService extends BaseService {
         const categoriesTable = db.getSchema().table('project_categories');
         const projCatsTable = db.getSchema().table('project_project_categories');
 
+        let baseQuery: any = db.select().from(projectsTable);
+        if (opts?.orderBy?.column) {
+            try {
+                const col = (projectsTable as any)[opts.orderBy.column];
+                if (col) {
+                    baseQuery = baseQuery.orderBy(col, opts.orderBy.desc ? lf.Order.DESC : lf.Order.ASC);
+                }
+            } catch {
+                // ignore invalid column names
+            }
+        }
+
         const [projects, allStatuses, allCategories] = await Promise.all([
-            db.select().from(projectsTable).exec() as Promise<ProjectRow[]>,
+            baseQuery.exec() as Promise<ProjectRow[]>,
             db.select().from(statusesTable).exec() as Promise<StatusRow[]>,
             db.select().from(categoriesTable).exec() as Promise<ProjectCategoryRow[]>,
         ]);
@@ -485,6 +503,8 @@ export class ProjectService extends BaseService {
                     icon: tag.icon ?? undefined,
                     type_id: tag.type_id ?? undefined,
                 })),
+                start_date: project.start_date ?? undefined,
+                end_date: project.end_date ?? undefined,
             });
         }
         return result;
