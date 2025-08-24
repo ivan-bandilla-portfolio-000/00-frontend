@@ -208,6 +208,7 @@ const Projects = () => {
                         {filtered.map((project, idx) => {
                             const normalized: ProjectCardProps["project"] = {
                                 name: project.name,
+                                role: project.role,
                                 description: project.description,
                                 image: project.image,
                                 avp: project.avp,

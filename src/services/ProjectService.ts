@@ -2,6 +2,7 @@ import { BaseService } from '@/services/BaseService';
 import type { Project } from "@/clientDB/@types/Project";
 import { lf } from '@/clientDB/schema';
 import { RateLimiter } from '@/features/rate-limiting/client/services/RateLimiter';
+import { RoleService, type RoleRow } from './RoleService';
 
 // Add concrete row types to avoid "object" property errors
 type TagRow = {
@@ -15,6 +16,7 @@ type TagRow = {
 type ProjectRow = {
     id: number;
     name: string;
+    role_id: number | null;
     description: string | null;
     image: string | null;
     avp: string | null;
@@ -166,25 +168,22 @@ export class ProjectService extends BaseService {
         let projects: any[] = [];
         let statuses: StatusRow[] = [];
         let categories: ProjectCategoryRow[] = [];
+        let roles: RoleRow[] = [];
 
-        // try {
-        //     const gqlRes = await this.getProjectsFromGraphQL();
-        //     tags = gqlRes.tags;
-        //     projects = gqlRes.projects;
-        //     statuses = gqlRes.statuses;
-        //     categories = gqlRes.categories;
-        // } catch (e) {
-        // console.warn('GraphQL fetch failed, falling back to REST API:', e);
-        const [tagsRes, projectsRes] = await Promise.all([
+        const [tagsRes, projectsRes, rolesRes] = await Promise.all([
             this.rateLimited('tags-endpoint', 5, 60_000, () =>
                 this.get<{ data: TagRow[] }>(`${ProjectService.BASE_API}/tags`)
             ),
             this.rateLimited('projects-endpoint', 5, 60_000, () =>
                 this.get<{ data: any[] }>(`${ProjectService.BASE_API}/projects`)
             ),
+            this.rateLimited('roles-endpoint', 5, 60_000, () =>
+                this.get<{ data: any[] }>(`${ProjectService.BASE_API}/roles`).catch(() => ({ data: { data: [] } }))
+            ),
         ]);
         tags = tagsRes.data.data;
         projects = projectsRes.data.data;
+        roles = rolesRes?.data?.data ?? [];
 
         try {
             const statusesRes = await this.rateLimited('statuses-endpoint', 7, 60_000, () =>
@@ -198,11 +197,11 @@ export class ProjectService extends BaseService {
             );
             categories = categoriesRes.data.data ?? [];
         } catch { categories = []; }
-        // }
 
         await ProjectService.dedupeTags(db);
 
         await Promise.all([
+            RoleService.saveRolesWithIds(db, roles),
             ProjectService.saveTags(db, tags),
             ProjectService.saveStatuses(db, statuses),
             ProjectService.saveCategories(db, categories),
@@ -306,15 +305,16 @@ export class ProjectService extends BaseService {
     static async saveProjects(db: lf.Database, projects: any[]): Promise<void> {
         const projectsTable = db.getSchema().table('projects');
         const existingProjects = await db.select().from(projectsTable).exec() as ProjectRow[];
-        const projectByName = new Map<string, ProjectRow>(
-            existingProjects.map((p) => [String(p.name), p])
-        );
+        const projectByName = new Map<string, ProjectRow>(existingProjects.map(p => [String(p.name), p]));
 
         for (const project of projects) {
+            // Prefer numeric role_id from API
+            const role_id: number | null =
+                typeof project.role_id === 'number' ? project.role_id : null;
+
             const existing = projectByName.get(project.name);
             if (existing) {
-                await db
-                    .update(projectsTable)
+                await db.update(projectsTable)
                     .set(projectsTable['description'], project.description ?? null)
                     .set(projectsTable['status_id'], project.status_id ?? null)
                     .set(projectsTable['image'], project.image ?? null)
@@ -322,69 +322,75 @@ export class ProjectService extends BaseService {
                     .set(projectsTable['project_link'], project.project_link ?? null)
                     .set(projectsTable['start_date'], project.start_date)
                     .set(projectsTable['end_date'], project.end_date ?? null)
+                    .set(projectsTable['role_id'], role_id)
                     .where(projectsTable['id'].eq(existing.id))
                     .exec();
             } else {
-                await db
-                    .insert()
-                    .into(projectsTable)
-                    .values([
-                        projectsTable.createRow({
-                            name: project.name,
-                            description: project.description ?? null,
-                            status_id: project.status_id ?? null,
-                            image: project.image ?? null,
-                            avp: project.avp ?? null,
-                            project_link: project.project_link ?? null,
-                            start_date: project.start_date,
-                            end_date: project.end_date ?? null,
-                        }),
-                    ])
-                    .exec();
+                await db.insert().into(projectsTable).values([
+                    projectsTable.createRow({
+                        name: project.name,
+                        description: project.description ?? null,
+                        status_id: project.status_id ?? null,
+                        image: project.image ?? null,
+                        avp: project.avp ?? null,
+                        project_link: project.project_link ?? null,
+                        start_date: project.start_date,
+                        end_date: project.end_date ?? null,
+                        role_id
+                    })
+                ]).exec();
             }
         }
     }
 
-    static async saveProjectTags(db: lf.Database, tags: TagRow[], projects: any[]): Promise<void> {
+
+    static async saveProjectTags(db: lf.Database, _tags: TagRow[], projects: any[]): Promise<void> {
         const tagsTable = db.getSchema().table('tags');
         const projectsTable = db.getSchema().table('projects');
         const projectTagsTable = db.getSchema().table('project_tags');
-        const norm = (s: string | undefined | null) => String(s ?? '').trim().toLowerCase();
 
         await db.delete().from(projectTagsTable).exec();
 
         const dbTags = await db.select().from(tagsTable).exec() as TagRow[];
         const dbProjects = await db.select().from(projectsTable).exec() as ProjectRow[];
 
-        const idxToLowerName = new Map<number, string>(
-            tags.map((t, i) => [i + 1, norm(t.name)])
+        const tagById = new Map(dbTags.map(t => [t.id, t]));
+        const tagByLowerName = new Map(
+            dbTags.map(t => [String(t.name ?? '').trim().toLowerCase(), t])
         );
 
         const assocRows: any[] = [];
+
         for (const project of projects) {
-            const dbProject = dbProjects.find((p) => p.name === project.name);
+            const dbProject = dbProjects.find(p => p.name === project.name);
             if (!dbProject) continue;
 
-            for (const tagIdx of project.tags ?? []) {
-                const lower = idxToLowerName.get(tagIdx);
-                if (!lower) continue;
+            const seen = new Set<number>();
 
-                const dbTag = dbTags.find((t) => norm(t.name) === lower);
-                if (!dbTag) continue;
+            for (const raw of project.tags ?? []) {
+                let tagId: number | null = null;
 
-                assocRows.push(projectTagsTable.createRow({
-                    project_id: dbProject.id,
-                    tag_id: dbTag.id,
-                }));
+                if (typeof raw === 'number') {
+                    if (tagById.has(raw)) tagId = raw;
+                } else if (raw && typeof raw === 'object' && 'id' in raw && typeof raw.id === 'number') {
+                    if (tagById.has(raw.id)) tagId = raw.id;
+                } else if (typeof raw === 'string') {
+                    const hit = tagByLowerName.get(raw.trim().toLowerCase());
+                    if (hit) tagId = hit.id;
+                }
+
+                if (tagId != null && !seen.has(tagId)) {
+                    seen.add(tagId);
+                    assocRows.push(projectTagsTable.createRow({
+                        project_id: dbProject.id,
+                        tag_id: tagId
+                    }));
+                }
             }
         }
 
         if (assocRows.length) {
-            await db
-                .insertOrReplace()
-                .into(projectTagsTable)
-                .values(assocRows)
-                .exec();
+            await db.insertOrReplace().into(projectTagsTable).values(assocRows).exec();
         }
     }
 
@@ -448,6 +454,7 @@ export class ProjectService extends BaseService {
         const statusesTable = db.getSchema().table('project_statuses');
         const categoriesTable = db.getSchema().table('project_categories');
         const projCatsTable = db.getSchema().table('project_project_categories');
+        const rolesTable = db.getSchema().table('roles');
 
         let baseQuery: any = db.select().from(projectsTable);
         if (opts?.orderBy?.column) {
@@ -456,9 +463,7 @@ export class ProjectService extends BaseService {
                 if (col) {
                     baseQuery = baseQuery.orderBy(col, opts.orderBy.desc ? lf.Order.DESC : lf.Order.ASC);
                 }
-            } catch {
-                // ignore invalid column names
-            }
+            } catch { /* ignore */ }
         }
 
         const [projects, allStatuses, allCategories] = await Promise.all([
@@ -468,6 +473,16 @@ export class ProjectService extends BaseService {
         ]);
         const statusById = new Map(allStatuses.map(s => [s.id, s]));
         const categoryById = new Map(allCategories.map(c => [c.id, c]));
+
+        // fetch roles
+        const roleIds = Array.from(new Set(projects.map(p => p.role_id).filter(id => id != null)));
+        let roleById = new Map<number, { id: number; name: string }>();
+        if (roleIds.length) {
+            const roleRows = await db.select().from(rolesTable)
+                .where(rolesTable['id'].in(roleIds))
+                .exec() as { id: number; name: string }[];
+            roleById = new Map(roleRows.map(r => [r.id, r]));
+        }
 
         const result: Project[] = [];
         for (const project of projects) {
@@ -505,8 +520,11 @@ export class ProjectService extends BaseService {
                 })),
                 start_date: project.start_date ?? undefined,
                 end_date: project.end_date ?? undefined,
-            });
+                role_id: project.role_id ?? null, // added
+                role: project.role_id != null ? roleById.get(project.role_id) : undefined,
+            } as any);
         }
+        // console.log(result);
         return result;
     }
 }

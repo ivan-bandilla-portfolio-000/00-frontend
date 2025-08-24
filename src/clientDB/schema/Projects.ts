@@ -3,6 +3,7 @@ import { schemaBuilder, lf } from './schemaBuilder';
 schemaBuilder.createTable('projects')
     .addColumn('id', lf.Type.INTEGER)
     .addColumn('name', lf.Type.STRING)
+    .addColumn('role_id', lf.Type.INTEGER).addNullable(['role_id'])
     .addColumn('description', lf.Type.STRING).addNullable(['description'])
     .addColumn('image', lf.Type.STRING).addNullable(['image'])
     .addColumn('avp', lf.Type.STRING).addNullable(['avp'])

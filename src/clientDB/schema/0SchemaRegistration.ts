@@ -9,3 +9,4 @@ import './ProjectStatuses';
 import './ProjectCategories';
 import './ProjectProjectCategories';
 import './ContactInfo';
+import './Roles';

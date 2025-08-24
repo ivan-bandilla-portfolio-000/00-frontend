@@ -14,24 +14,17 @@ import {
 import type { CarouselApi } from "@/components/ui/carousel";
 import { getImageUrl } from "@/app/helpers/image";
 import ExperienceDialog from "./ExperienceDialog";
+import type { ExperienceRow } from "@/services/ExperienceService";
 
-export type ExperienceItem = {
-    company: string;
-    role: string;
-    position?: string;
-    start: Date | string;
-    end?: Date | string;
-    description?: string;
-    tags?: (number | string)[];
-    type?: string;
-    hidden?: boolean;
+export type ExperienceUI = ExperienceRow & {
     thumbnail?: string[];
     alt?: string[];
+    tags?: (number | string)[];
 };
 
 type ExperienceCardProps = React.HTMLAttributes<HTMLDivElement> &
     MotionProps & {
-        item: ExperienceItem;
+        item: ExperienceUI; // use the UI type directly
         onSwap?: (isFirstVisible: boolean) => void;
     };
 
@@ -95,7 +88,8 @@ const ExperienceCard = React.forwardRef<HTMLDivElement, ExperienceCardProps>(
             });
         }, [carouselApi]);
 
-        const subtitle = [item.role, item.position].filter(Boolean).join(" • ");
+        const roleText = typeof item.role === 'string' ? item.role : item.role?.name;
+        const subtitle = [roleText, item.position].filter(Boolean).join(" • ");
         const dateRange = formatRange(item.start, item.end);
         const duration = computeDuration(item.start, item.end);
 

@@ -17,11 +17,11 @@ import {
 } from "@/components/ui/carousel";
 import { Badge } from "@/components/ui/badge";
 
-import type { ExperienceItem } from "./ExperienceCard";
+import type { ExperienceUI } from "./ExperienceCard";
 import { Button } from "../button";
 
 export interface ExperienceDialogProps {
-    item: ExperienceItem;
+    item: ExperienceUI;
     thumbnails: string[];
     alts: string[];
     dateRange: string;

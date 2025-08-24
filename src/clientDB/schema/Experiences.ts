@@ -3,7 +3,7 @@ import { schemaBuilder, lf } from './schemaBuilder';
 schemaBuilder.createTable('experiences')
     .addColumn('id', lf.Type.INTEGER)
     .addColumn('company', lf.Type.STRING)
-    .addColumn('role', lf.Type.STRING)
+    .addColumn('role_id', lf.Type.INTEGER).addNullable(['role_id'])
     .addColumn('position', lf.Type.STRING)
     .addColumn('start', lf.Type.DATE_TIME)
     .addColumn('end', lf.Type.DATE_TIME)

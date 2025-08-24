@@ -5,6 +5,8 @@ import type { Tag } from "./Tag";
 export interface Project {
     id?: number;
     name: string;
+    role_id: number;
+    role: { id: number; name: string } | null;
     description?: string;
     image?: string;
     avp?: string;
