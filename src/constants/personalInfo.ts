@@ -5,19 +5,19 @@ type RequireAtLeastOne<T, Keys extends keyof T = keyof T> =
 interface PersonalInfo {
     name: string;
     title: string;
-    email: string;
-    phone: string;
+    email?: string;
+    phone?: string;
     location: {
         city: string;
         state: string;
         zip: string;
         country: string;
     };
-    github: {
+    github?: {
         username: string;
         url: string;
     };
-    linkedin: {
+    linkedin?: {
         username: string;
         url: string;
     };
@@ -31,21 +31,11 @@ interface PersonalInfo {
 const personalInfo: PersonalInfo = {
     name: "Ivan Bandilla",
     title: "Junior Backend Developer",
-    email: "your.email@example.com",
-    phone: "123-456-7890",
     location: {
-        city: "Your City",
-        state: "Your State",
-        zip: "12345",
-        country: "Your Country"
-    },
-    github: {
-        username: "yourusername",
-        url: "https://github.com/yourusername"
-    },
-    linkedin: {
-        username: "yourlinkedinusername",
-        url: "https://www.linkedin.com/in/yourlinkedinusername"
+        city: "Calamba",
+        state: "Laguna",
+        zip: "4027",
+        country: "Philippines"
     },
     resume: {
         driveLink: 'https://drive.google.com/file/d/1rDkJ21vCOCThI5HO6A-2kpyX1gzXr1v3/preview',
