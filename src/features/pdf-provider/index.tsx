@@ -67,8 +67,8 @@ export const PdfViewerDialog: React.FC<PdfViewerProps> = ({
                 {showProviderTabs ? (
                     <Tabs defaultValue="cloud-pdf" className="h-full">
                         <TabsList className="mx-auto">
-                            <TabsTrigger value="cloud-pdf">Cloud PDF</TabsTrigger>
-                            <TabsTrigger value="iframe">Iframe</TabsTrigger>
+                            <TabsTrigger value="cloud-pdf" className="cursor-pointer">Cloud PDF</TabsTrigger>
+                            <TabsTrigger value="iframe" className="cursor-pointer">Iframe</TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="cloud-pdf" className="h-full">
@@ -133,8 +133,8 @@ export const FullPagePdf: React.FC<{
     return (
         <Tabs defaultValue="cloud-pdf" className="h-full">
             <TabsList className="p-2">
-                <TabsTrigger value="cloud-pdf">Cloud PDF</TabsTrigger>
-                <TabsTrigger value="iframe">Iframe</TabsTrigger>
+                <TabsTrigger value="cloud-pdf" className="cursor-pointer">Cloud PDF</TabsTrigger>
+                <TabsTrigger value="iframe" className="cursor-pointer">Iframe</TabsTrigger>
             </TabsList>
 
             <TabsContent value="cloud-pdf" className="h-full">
