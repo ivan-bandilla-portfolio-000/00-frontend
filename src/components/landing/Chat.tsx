@@ -53,7 +53,7 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
     showBubbleWhenNotReady = true
 }) => {
     // LLM context
-    const { llm, llmReady, status, ensureLLM } = useLLM();
+    const { llm, llmReady, status, ensureLLM, progress } = useLLM();
 
     const [position, setPosition] = useState({ x: 0, y: 0 });
     const [open, setOpen] = useState(false);
@@ -301,50 +301,98 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
                     }}
                 >
                     <PopoverTrigger asChild>
+                        <div className="relative w-14 h-14">
+                            {/* Background ring (subtle) + optional pulsating ring while loading */}
+                            {!llmReady && (
+                                <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 56 56" aria-hidden>
+                                    <defs>
+                                        {/* tiny blur to soften pulse (optional) */}
+                                        <filter id="f-soft" x="-20%" y="-20%" width="140%" height="140%">
+                                            <feGaussianBlur stdDeviation="0.4" result="b" />
+                                            <feMerge><feMergeNode in="b" /></feMerge>
+                                        </filter>
+                                    </defs>
+                                    <circle cx="28" cy="28" r="24" strokeWidth="4" stroke="rgba(0,0,0,0.06)" fill="none" />
 
-                        <Button
-                            type="button"
-                            aria-label="Open chat"
-                            className={` ${status === "unsupported" ? "opacity-50 cursor-not-allowed border-2 border-red-400 from-gray-200 to-gray-500  shadow-red-900/30" : "from-emerald-500 to-green-500 shadow-emerald-900/30"} ${!llmReady ? "opacity-70" : ""} w-14 h-14 rounded-full bg-gradient-to-br  flex items-center justify-center text-white font-semibold text-sm active:scale-95 shadow-lg transition select-none cursor-grab chat-drag-anywhere`}
-                            onClick={() => {
-                                // If model hasn't started loading yet, kick it off on user interaction
-                                if (!llmReady && status !== "unsupported" && !hasStartedLLM) {
-                                    ensureLLM();
-                                    setHasStartedLLM(true);
-                                }
-                            }}
-                            onTouchStart={(e) => {
-                                const t = e.touches?.[0];
-                                if (!t) return;
-                                touchStartRef.current = { x: t.clientX, y: t.clientY, moved: false };
-                            }}
-                            onTouchMove={(e) => {
-                                const t = e.touches?.[0];
-                                const s = touchStartRef.current;
-                                if (!t || !s) return;
-                                const dx = Math.abs(t.clientX - s.x);
-                                const dy = Math.abs(t.clientY - s.y);
-                                if (dx > TOUCH_MOVE_THRESHOLD || dy > TOUCH_MOVE_THRESHOLD) {
-                                    s.moved = true;
-                                }
-                            }}
-                            onTouchEnd={(_e) => {
-                                const s = touchStartRef.current;
-                                touchStartRef.current = null;
-                                if (!s) return;
-                                // treat as a tap only if the finger didn't move much
-                                if (!s.moved && status !== "unsupported") {
-                                    if (!llmReady && !hasStartedLLM) {
+                                    {/* pulsating ring while model is initializing */}
+                                    {hasStartedLLM && !llmReady && (
+                                        <circle
+                                            cx="28"
+                                            cy="28"
+                                            r="24"
+                                            strokeWidth="4"
+                                            stroke={status === "unsupported" ? "rgba(244,63,94,0.45)" : "rgba(16,185,129,0.45)"}
+                                            fill="none"
+                                            strokeLinecap="round"
+                                            className="animate-pulse"
+                                            filter="url(#f-soft)"
+                                        />
+                                    )}
+
+                                    {/* progress arc (ensures >=1% when started) */}
+                                    <circle
+                                        cx="28"
+                                        cy="28"
+                                        r="24"
+                                        strokeWidth="4"
+                                        strokeLinecap="round"
+                                        stroke={status === "unsupported" ? "#f43f5e" : "#10b981"}
+                                        fill="none"
+                                        strokeDasharray={Math.PI * 2 * 24}
+                                        strokeDashoffset={String(
+                                            Math.PI * 2 * 24 *
+                                            (1 - (hasStartedLLM ? Math.max(0.01, (progress ?? 0)) : 0))
+                                        )}
+                                        transform="rotate(-90 28 28)"
+                                        style={{ transition: "stroke-dashoffset 300ms linear, stroke 200ms" }}
+                                    />
+                                </svg>
+                            )}
+
+                            <Button
+                                type="button"
+                                aria-label="Open chat"
+                                className={` ${status === "unsupported" ? "opacity-50 cursor-not-allowed border-2 border-red-400 from-gray-200 to-gray-500  shadow-red-900/30" : "from-emerald-500 to-green-500 shadow-emerald-900/30"} ${!llmReady ? "opacity-70" : ""} w-14 h-14 rounded-full bg-gradient-to-br  flex items-center justify-center text-white font-semibold text-sm active:scale-95 shadow-lg transition select-none cursor-grab chat-drag-anywhere`}
+                                onClick={() => {
+                                    // If model hasn't started loading yet, kick it off on user interaction
+                                    if (!llmReady && status !== "unsupported" && !hasStartedLLM) {
                                         ensureLLM();
                                         setHasStartedLLM(true);
                                     }
-                                    setOpen(true);
-                                }
-                            }}
-                            title={buttonLabel}
-                        >
-                            <SparklesIcon className="" />
-                        </Button>
+                                }}
+                                onTouchStart={(e) => {
+                                    const t = e.touches?.[0];
+                                    if (!t) return;
+                                    touchStartRef.current = { x: t.clientX, y: t.clientY, moved: false };
+                                }}
+                                onTouchMove={(e) => {
+                                    const t = e.touches?.[0];
+                                    const s = touchStartRef.current;
+                                    if (!t || !s) return;
+                                    const dx = Math.abs(t.clientX - s.x);
+                                    const dy = Math.abs(t.clientY - s.y);
+                                    if (dx > TOUCH_MOVE_THRESHOLD || dy > TOUCH_MOVE_THRESHOLD) {
+                                        s.moved = true;
+                                    }
+                                }}
+                                onTouchEnd={(_e) => {
+                                    const s = touchStartRef.current;
+                                    touchStartRef.current = null;
+                                    if (!s) return;
+                                    // treat as a tap only if the finger didn't move much
+                                    if (!s.moved && status !== "unsupported") {
+                                        if (!llmReady && !hasStartedLLM) {
+                                            ensureLLM();
+                                            setHasStartedLLM(true);
+                                        }
+                                        setOpen(true);
+                                    }
+                                }}
+                                title={buttonLabel}
+                            >
+                                <SparklesIcon className="" />
+                            </Button>
+                        </div>
                     </PopoverTrigger>
                     <PopoverContent
                         side="top"
@@ -384,7 +432,6 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
                                 </div>
                             )}
 
-                            {/* Chat area */}
                             {/* Chat area */}
                             <div className="flex-1 overflow-y-auto p-3 space-y-2 text-sm text-neutral-800 dark:text-neutral-200">
                                 {messages.length === 0 && (
