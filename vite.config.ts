@@ -4,10 +4,32 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import compression from 'vite-plugin-compression'
 import Sitemap from 'vite-plugin-sitemap'
+import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
   plugins: [
     react(),
+    VitePWA({
+      strategies: 'injectManifest',
+      srcDir: 'src/services',          // where sw.ts lives
+      filename: 'sw.ts',
+      injectRegister: false,           // we register manually
+      registerType: 'autoUpdate',
+      devOptions: {
+        enabled: true, // enable service worker in dev
+        suppressWarnings: true,
+        type: 'module'
+      },
+      manifest: {
+        name: 'Portfolio',
+        short_name: 'Portfolio',
+        start_url: '/',
+        display: 'standalone',
+        background_color: '#ffffff',
+        theme_color: '#111111',
+        icons: [] // add icons later
+      }
+    }),
     tailwindcss(),
     compression({ algorithm: 'brotliCompress', ext: '.br' }),
     Sitemap({
