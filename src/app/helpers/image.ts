@@ -34,6 +34,9 @@ export const handleImageError = async (
     imageElement: HTMLImageElement,
     options: ImageHandlerOptions = {}
 ): Promise<void> => {
+    const delayMs = 300;
+    await sleep(delayMs);
+
     const {
         size = "600x400",
         text = "No Preview Available",
