@@ -9,9 +9,9 @@ import type { Project } from "@/clientDB/@types/Project";
 import { getImageUrl, handleImageError } from "@/app/helpers/image";
 import { ExternalLink } from "lucide-react";
 
-interface ProjectCardProps extends Project {
+type ProjectCardProps = Pick<Project, 'image' | 'name' | 'project_link' | 'description' | 'tags'> & {
     index: number;
-}
+};
 
 const ProjectCard = ({ index, image, name, project_link }: ProjectCardProps) => {
     const isGitHub = (url?: string) => {
