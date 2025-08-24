@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/carousel";
 import type { CarouselApi } from "@/components/ui/carousel";
 import { getImageUrl } from "@/app/helpers/image";
+import ExperienceDialog from "./ExperienceDialog";
 
 export type ExperienceItem = {
     company: string;
@@ -60,7 +61,13 @@ const computeDuration = (start: Date | string, end?: Date | string) => {
 
 const ExperienceCard = React.forwardRef<HTMLDivElement, ExperienceCardProps>(
     (props, ref) => {
-        const { item, className, ...rest } = props;
+        const { item, className, onClick, ...rest } = props;
+
+        const [open, setOpen] = React.useState(false);
+
+        const handleCardClick = () => {
+            setOpen(true);
+        };
 
         const thumbnails =
             item.thumbnail && item.thumbnail.length > 0
@@ -96,7 +103,7 @@ const ExperienceCard = React.forwardRef<HTMLDivElement, ExperienceCardProps>(
             <motion.div
                 ref={ref}
                 className={cn(
-                    "w-full min-h-full space-y-4 rounded-lg bg-gray-100 dark:bg-stone-800 p-4 border max-w-96 transition-transform ease-in-out hover:shadow dark:hover:shadow-[0_8px_20px_rgba(245,158,11,0.12)]",
+                    "flex flex-col w-full min-h-full space-y-4 rounded-lg bg-gray-100 dark:bg-stone-800 p-4 border max-w-96 transition-transform ease-in-out hover:shadow dark:hover:shadow-[0_8px_20px_rgba(245,158,11,0.12)] cursor-pointer",
                 )}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -108,7 +115,7 @@ const ExperienceCard = React.forwardRef<HTMLDivElement, ExperienceCardProps>(
                         <CarouselContent className="">
                             {thumbnails.map((src, index) => (
                                 <CarouselItem key={src} className="basis-full hover">
-                                    <div className="relative aspect-video w-full transition-all ease-in-out hover:scale-105 active:scale-105 border rounded-md ">
+                                    <div className="relative aspect-video w-full overflow-clip transition-all ease-in-out hover:scale-105 active:scale-105 border rounded-md ">
                                         <img
                                             src={src}
                                             alt={alts[index] || `${item.company} preview ${index + 1}`}
@@ -144,8 +151,11 @@ const ExperienceCard = React.forwardRef<HTMLDivElement, ExperienceCardProps>(
                     )}
                 </div>
 
-                <div className="space-y-3">
-                    <div className="">
+                <div
+                    onClick={handleCardClick}
+                    className="flex flex-col gap-y-3 flex-1"
+                >
+                    <div className="select-none">
                         <h2 className="line-clamp-1 font-medium text-lg lg:text-xl">{item.company}</h2>
                         {subtitle && (
                             <p className="text-base lg:text-base text-muted-foreground font-bold line-clamp-1">
@@ -183,6 +193,22 @@ const ExperienceCard = React.forwardRef<HTMLDivElement, ExperienceCardProps>(
                                 {item.type}
                             </span>
                         )} */}
+                    </div>
+
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        className="self-end-safe mt-auto"
+                    >
+                        <ExperienceDialog
+                            open={open}
+                            onOpenChange={setOpen}
+                            item={item}
+                            thumbnails={thumbnails}
+                            alts={alts}
+                            dateRange={dateRange}
+                            duration={duration}
+                            subtitle={subtitle}
+                        />
                     </div>
                 </div>
             </motion.div>
