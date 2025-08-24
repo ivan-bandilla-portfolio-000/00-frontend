@@ -218,7 +218,7 @@ const ProjectsCard: React.FC<ProjectCardProps> = ({ project, className }) => {
                                     onClick={(e) => e.stopPropagation()}
                                 >
                                     <Button className="cursor-pointer">
-                                        <span>Source Code</span>
+                                        <span>Project Link</span>
                                         <ExternalLink />
                                     </Button>
                                 </a>
