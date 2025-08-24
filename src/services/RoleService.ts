@@ -8,7 +8,7 @@ export class RoleService extends BaseService {
 
     static async fetchRolesFromApi(): Promise<RoleRow[]> {
         const res = await this.rateLimited('roles-endpoint', 5, 60_000, () =>
-            this.get<{ data: RoleRow[] }>(`${RoleService.BASE_API}/roles`)
+            this.get<{ data: RoleRow[] }>(`${RoleService.BASE_API}/personal-roles`)
         );
         return Array.isArray(res?.data?.data) ? res.data.data : [];
     }
