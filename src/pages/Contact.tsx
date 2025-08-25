@@ -227,8 +227,8 @@ const Contact = () => {
                                 nonceManager={NonceManager}
                             />
                         </CardContent>
-                        <CardFooter className="select-none -mt-4 @container">
-                            <div className="flex gap-2 items-stretch w-full @max-md:flex-col">
+                        <CardFooter className="select-none bg-inherit -mt-4 @container bottom-0 sticky">
+                            <div className="flex gap-2 items-stretch w-full @max-md:flex-col ">
                                 <Button
                                     variant="link"
                                     className="w-full order-1 @max-md:order-2 @md:flex-1 @md:w-auto h-fit text-left @max-md:text-center @max-md:justify-center justify-start items-center-safe @max-md:translate-y-0 -translate-y-2 group shrink-1"
