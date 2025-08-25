@@ -4,8 +4,11 @@ import { precacheAndRoute } from 'workbox-precaching';
 import { registerRoute } from 'workbox-routing';
 import { NetworkFirst, CacheFirst } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
+import { environment } from '../../src/app/helpers/config';
 
 declare let self: ServiceWorkerGlobalScope;
+
+(self as any).__WB_DISABLE_DEV_LOGS = environment('local');
 
 clientsClaim();
 self.skipWaiting();

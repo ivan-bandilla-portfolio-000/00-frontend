@@ -9,6 +9,7 @@ export function getConfig(key: keyof typeof config) {
     return config[key];
 }
 
-export function environment(env: string) {
-    return APP_ENV === env;
+export function environment(env: string): boolean {
+
+    return APP_ENV == env;
 }
