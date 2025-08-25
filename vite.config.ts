@@ -26,12 +26,12 @@ export default defineConfig({
         type: 'module'
       },
       manifest: {
-        name: 'Portfolio',
-        short_name: 'Portfolio',
+        name: 'Ivan Bandilla Portfolio',
+        short_name: 'I Bandilla Portfolio',
         start_url: '/',
         display: 'standalone',
-        background_color: '#ffffff',
-        theme_color: '#111111',
+        background_color: '#f5f5f5',
+        theme_color: '#72e3ad',
         icons: [] // add icons later
       }
     }),
