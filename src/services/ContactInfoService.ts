@@ -7,6 +7,10 @@ type ContactInfoRow = {
     last_name: string,
     prefix: string | null,
     title: string | null,
+    city: string | null;
+    state: string | null;
+    zip: string | null;
+    country: string | null;
     email: string | null;
     phone: string | null;
     linkedin_username: string | null;
@@ -20,6 +24,7 @@ export type ContactInfo = {
     last_name: string,
     prefix?: string | null,
     title?: string | null,
+    location?: { city?: string; state?: string; zip?: string; country?: string } | null;
     email?: string;
     phone?: string;
     linkedin: { username?: string; url?: string };
@@ -32,6 +37,7 @@ type GqlContactInfo = {
     last_name?: string | null;
     prefix?: string | null;
     title?: string | null;
+    location?: { city?: string; state?: string; zip?: string; country?: string } | null;
     email?: string | null;
     phone?: string | null;
     linkedin_username?: string | null;
@@ -45,6 +51,7 @@ type RestContactInfo = {
     last_name?: string | null;
     prefix?: string | null;
     title?: string | null;
+    location?: { city?: string; state?: string; zip?: string; country?: string } | null;
     email?: string | null;
     phone?: string | null;
     // Some REST mocks use nested, others use flat "linkedin_username"
@@ -80,6 +87,13 @@ export class ContactInfoService extends BaseService {
             (item as any)?.github_url ??
             (item as any)?.github?.url;
 
+        // prefer nested location object; fall back to flat fields
+        const locObj = (item as any)?.location;
+        const city = locObj?.city ?? (item as any)?.city ?? null;
+        const state = locObj?.state ?? (item as any)?.state ?? null;
+        const zip = locObj?.zip ?? (item as any)?.zip ?? null;
+        const country = locObj?.country ?? (item as any)?.country ?? null;
+
         return {
             first_name: s((item as any)?.first_name),
             last_name: s((item as any)?.last_name),
@@ -89,6 +103,12 @@ export class ContactInfoService extends BaseService {
             phone: o((item as any)?.phone),
             linkedin: { username: o(liUser), url: o(liUrl) },
             github: { username: o(ghUser), url: o(ghUrl) },
+            location: {
+                city: o(city),
+                state: o(state),
+                zip: o(zip),
+                country: o(country),
+            }
         };
     }
 
@@ -118,12 +138,18 @@ export class ContactInfoService extends BaseService {
             phone: r.phone ?? undefined,
             linkedin: { username: r.linkedin_username ?? undefined, url: r.linkedin_url ?? undefined },
             github: { username: r.github_username ?? undefined, url: r.github_url ?? undefined },
+            // convert flat DB columns into nested object for consumers
+            location: {
+                city: r.city ?? undefined,
+                state: r.state ?? undefined,
+                zip: r.zip ?? undefined,
+                country: r.country ?? undefined,
+            }
         };
     }
 
     static async fetchAndSave(db: lf.Database): Promise<void> {
         const info = await this.fetchFromApi();
-        console.log('Fetched contact info:', info);
         await this.save(db, info);
     }
 
@@ -163,6 +189,12 @@ export class ContactInfoService extends BaseService {
     static async save(db: lf.Database, info: ContactInfo): Promise<void> {
         const table = db.getSchema().table('contact_info');
         await db.delete().from(table).exec();
+
+        const city = info.location?.city ?? null;
+        const state = info.location?.state ?? null;
+        const zip = info.location?.zip ?? null;
+        const country = info.location?.country ?? null;
+
         await db.insert().into(table).values([
             table.createRow({
                 first_name: info.first_name,
@@ -175,6 +207,11 @@ export class ContactInfoService extends BaseService {
                 linkedin_url: info.linkedin?.url ?? null,
                 github_username: info.github?.username ?? null,
                 github_url: info.github?.url ?? null,
+                // persist flat columns in schema
+                city,
+                state,
+                zip,
+                country,
             })
         ]).exec();
     }

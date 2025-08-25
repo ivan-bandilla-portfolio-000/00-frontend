@@ -7,12 +7,6 @@ interface PersonalInfo {
     title: string;
     email?: string;
     phone?: string;
-    location: {
-        city: string;
-        state: string;
-        zip: string;
-        country: string;
-    };
     github?: {
         username: string;
         url: string;
@@ -31,12 +25,6 @@ interface PersonalInfo {
 const personalInfo: PersonalInfo = {
     name: "Ivan Bandilla",
     title: "Junior Backend Developer",
-    location: {
-        city: "Calamba",
-        state: "Laguna",
-        zip: "4027",
-        country: "Philippines"
-    },
     resume: {
         driveLink: 'https://drive.google.com/file/d/1rDkJ21vCOCThI5HO6A-2kpyX1gzXr1v3/preview',
         cloudPdfDocID: 'eee2079d-b0b6-4267-9812-b6b9eadb9c60',

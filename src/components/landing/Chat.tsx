@@ -4,9 +4,14 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useLLM } from "@/contexts/LLMContext";
-import { aboutMeInstruction } from "@/features/webllm/constants/webLLM";
 import personalInfo from "@/constants/personalInfo";
 import { Sparkles as SparklesIcon } from "lucide-react";
+import { useClientDB } from "@/clientDB/context";
+import { buildAboutMeInstruction } from "@/features/webllm/utils/aboutMePromptBuilder";
+import { ProjectService } from "@/services/ProjectService";
+import { ContactInfoService } from "@/services/ContactInfoService";
+import { ExperienceService } from "@/services/ExperienceService";
+import { TechStackService } from "@/services/TechStackService";
 
 const LS_KEY = "chatWidgetBubbleState_v3";
 const HISTORY_KEY = 'chatWidgetHistory_v1';
@@ -53,7 +58,10 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
     showBubbleWhenNotReady = true
 }) => {
     // LLM context
-    const { llm, llmReady, status, ensureLLM, progress } = useLLM();
+    const { llm, llmReady, status, ensureLLM, progress, setSystemPrompt } = useLLM();
+    const db = useClientDB(); // must provide a hook or instance
+    const [systemPrompt, setSystemPromptState] = useState<string>('');
+    const contextLoadedRef = useRef(false);
 
     const [position, setPosition] = useState({ x: 0, y: 0 });
     const [open, setOpen] = useState(false);
@@ -230,6 +238,50 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
         window.removeEventListener("pointermove", onResizing);
     };
 
+    useEffect(() => {
+        if (!db || contextLoadedRef.current) return;
+        (async () => {
+            try {
+                const [contact, experiences, techStack, projects] = await Promise.all([
+                    ContactInfoService.ensureAndGet(db),
+                    ExperienceService.ensureAndGetExperiences(db),
+                    TechStackService.ensureAndGetTechStack(db),
+                    ProjectService.ensureAndGetProjects(db)
+                ]);
+                const prompt = buildAboutMeInstruction({
+                    contact,
+                    experiences,
+                    techStack,
+                    projects
+                });
+                setSystemPromptState(prompt);
+                // If model already initialized, update it immediately
+                if (llmReady) {
+                    setSystemPrompt(prompt);
+                }
+            } catch (e) {
+                console.warn('Failed building system prompt:', e);
+            } finally {
+                contextLoadedRef.current = true;
+            }
+        })();
+    }, [db, llmReady, setSystemPrompt]);
+
+    // When starting LLM for first time, pass prompt if ready
+    useEffect(() => {
+        if (preloadOnMount && !llmReady && !hasStartedLLM) {
+            ensureLLM(systemPrompt || undefined);
+            setHasStartedLLM(true);
+        }
+    }, [preloadOnMount, llmReady, hasStartedLLM, ensureLLM, systemPrompt]);
+
+    useEffect(() => {
+        if (open && !llmReady && !hasStartedLLM) {
+            ensureLLM(systemPrompt || undefined);
+            setHasStartedLLM(true);
+        }
+    }, [open, llmReady, hasStartedLLM, ensureLLM, systemPrompt]);
+
     // Send / stream handler
     const handleSend = async () => {
         if (streaming || !input.trim() || !llm) return;
@@ -243,8 +295,9 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
         { id: aid, role: 'assistant', content: '' }
         ]);
         setInput("");
+
         try {
-            llm.setSystemPrompt(aboutMeInstruction);
+            if (systemPrompt) llm.setSystemPrompt(systemPrompt);
             setStreaming(true);
             let accum = "";
             const { promise, abort } = llm.getResponseAbortable(
@@ -256,7 +309,6 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
                 }
             );
             abortRef.current = () => abort();
-
             await promise;
         } catch (e: any) {
             setMessages(prev =>
@@ -265,11 +317,10 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
                     content: e?.name === 'AbortError' ? "(stopped)" : "Error getting response."
                 } : m)
             );
-            console.warn(e);
         } finally {
             setStreaming(false);
             scrollToBottom();
-            persistHistory(prev => prev); // flush
+            persistHistory(prev => prev);
         }
     };
 

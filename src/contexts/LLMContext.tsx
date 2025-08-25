@@ -10,7 +10,8 @@ export interface LLMContextValue {
   llmReady: boolean;
   status: LLMStatus;
   progress: number;
-  ensureLLM: () => Promise<void>;
+  ensureLLM: (systemPromptOverride?: string) => Promise<void>;
+  setSystemPrompt: (p: string) => void;
 }
 
 export const LLMContext = createContext<LLMContextValue | null>(null);
@@ -29,19 +30,20 @@ export const LLMProvider: FC<{ children: React.ReactNode }> = ({ children }) => 
   const loadingRef = useRef<Promise<void> | null>(null);
   const progressHookedRef = useRef(false);
 
-  const ensureLLM = useCallback(async () => {
+  const ensureLLM = useCallback(async (systemPromptOverride?: string) => {
     const capturedStatus = status;
 
     if (llmReady || status === 'unsupported') return;
     if (loadingRef.current) return loadingRef.current;
 
-
     const service = getOrCreateSharedLLM({
       modelId: defaultModel.model_id,
       smallModelId: defaultModel.model_id,
       useWorker: true,
-      systemPrompt: 'You are a helpful assistant.'
+      systemPrompt: systemPromptOverride || 'You are a helpful assistant.'
     });
+
+    if (systemPromptOverride) service.setSystemPrompt(systemPromptOverride);
 
     if (!progressHookedRef.current) {
       service.onProgress(p => setProgress(p.progress));
@@ -71,8 +73,12 @@ export const LLMProvider: FC<{ children: React.ReactNode }> = ({ children }) => 
     await initPromise;
   }, [llmReady, status]);
 
+  const setSystemPrompt = useCallback((p: string) => {
+    llm?.setSystemPrompt(p);
+  }, [llm]);
+
   return (
-    <LLMContext.Provider value={{ llm, llmReady, status, progress, ensureLLM }}>
+    <LLMContext.Provider value={{ llm, llmReady, status, progress, ensureLLM, setSystemPrompt }}>
       {children}
     </LLMContext.Provider>
   );
