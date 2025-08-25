@@ -11,6 +11,11 @@ export default defineConfig({
     react(),
     VitePWA({
       strategies: 'injectManifest',
+      injectManifest: {
+        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10 MiB
+        // ignore large files
+        globIgnores: ['**/LLM.webworker-*.js', '**/vendor-webllm-*.js']
+      },
       srcDir: 'src/services',          // where sw.ts lives
       filename: 'sw.ts',
       injectRegister: false,           // we register manually
