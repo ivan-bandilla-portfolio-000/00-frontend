@@ -170,20 +170,22 @@ export class ProjectService extends BaseService {
         let categories: ProjectCategoryRow[] = [];
         let roles: RoleRow[] = [];
 
-        const [tagsRes, projectsRes, rolesRes] = await Promise.all([
+        const [tagsRes, projectsRes] = await Promise.all([
             this.rateLimited('tags-endpoint', 5, 60_000, () =>
                 this.get<{ data: TagRow[] }>(`${ProjectService.BASE_API}/tags`)
             ),
             this.rateLimited('projects-endpoint', 5, 60_000, () =>
                 this.get<{ data: any[] }>(`${ProjectService.BASE_API}/projects`)
-            ),
-            this.rateLimited('roles-endpoint', 5, 60_000, () =>
-                this.get<{ data: any[] }>(`${ProjectService.BASE_API}/roles`).catch(() => ({ data: { data: [] } }))
-            ),
+            )
         ]);
         tags = tagsRes.data.data;
         projects = projectsRes.data.data;
-        roles = rolesRes?.data?.data ?? [];
+
+        try {
+            roles = await RoleService.fetchRolesFromApi();
+        } catch {
+            roles = [];
+        }
 
         try {
             const statusesRes = await this.rateLimited('statuses-endpoint', 7, 60_000, () =>
