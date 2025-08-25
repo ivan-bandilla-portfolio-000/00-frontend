@@ -37,8 +37,6 @@ export type ProjectCardProps = {
 };
 
 const ProjectsCard: React.FC<ProjectCardProps> = ({ project, className }) => {
-    // console.log(project);
-
     const [hovered, setHovered] = React.useState(false);
     const [videoReady, setVideoReady] = React.useState(false);
     const [inView, setInView] = React.useState(false);

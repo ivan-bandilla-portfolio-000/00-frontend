@@ -165,7 +165,6 @@ const RichEditor: React.FC<RichEditorProps> = ({
             <ErrorBoundary
                 fallback={null}
                 onError={() => {
-                    console.log('Editor error boundary triggered, marking as failed');
                     setEditorFailed(true);
                 }}
             >
@@ -303,7 +302,6 @@ const ContactForm = ({
 
         timeoutRef.current = setTimeout(() => {
             if (!isEditorReady && enableRichEditor && mountedRef.current) {
-                console.log('Editor failed to load after timeout, staying with textarea');
                 setEditorFailed(true);
             }
         }, editorLoadTimeoutRef.current);

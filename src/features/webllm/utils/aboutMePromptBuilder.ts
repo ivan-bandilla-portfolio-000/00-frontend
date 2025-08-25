@@ -3,6 +3,7 @@ import type { ExperienceRow } from '@/services/ExperienceService';
 import type { TechStackRow } from '@/services/TechStackService';
 import type { Project } from '@/clientDB/@types/Project';
 import { aboutMeBaseTemplate } from '../constants/webLLM';
+import { environment } from '@/app/helpers/config';
 
 interface BuildArgs {
     contact?: ContactInfo | null;
@@ -99,7 +100,7 @@ export function buildAboutMeInstruction({
 
     prompt = prompt.replace(/{{[A-Z_]+}}/g, 'None provided');
 
-    console.log('Built About Me prompt:', prompt);
+    environment('local') && console.log('Built About Me prompt:', prompt);
     return prompt;
 }
 

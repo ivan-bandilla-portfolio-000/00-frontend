@@ -69,8 +69,6 @@ export function useContactFormSubmission({
 
             // Get content from either editor or fallback textarea
             const getMessageContent = () => {
-                console.log('is ready ', isEditorReady)
-                console.log('content', editorRef?.current?.getText?.())
                 if (isEditorReady && editorRef.current?.getText) {
                     return editorRef.current.getText();
                 }
@@ -132,8 +130,6 @@ export function useContactFormSubmission({
                 await formService.useNonce(nonce);
                 setNonce(null);
 
-                console.log("Form Data:", formObj);
-
                 setStatus(getRequestStatusById("processing")!);
 
                 const contactFormReq = new ContactFormService()
@@ -155,7 +151,6 @@ export function useContactFormSubmission({
                 }
 
                 nonceManager.create().then(setNonce);
-                console.log("Form submitted successfully:", response);
             }
         } catch (error) {
             console.error("Error submitting contact form:", error);

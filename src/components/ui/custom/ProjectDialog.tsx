@@ -54,7 +54,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
         (async () => {
             try {
                 const meta = await ProjectMetaService.getMeta(clientDb);
-                console.log(meta);
+
                 if (cancelled) return;
                 setStatus(project.status_id != null ? (meta.statuses as any).find((s: any) => s.id === project.status_id) : undefined);
                 const cats = (project.project_category_ids ?? [])

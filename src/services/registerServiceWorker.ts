@@ -4,7 +4,6 @@ export function registerServiceWorker() {
     const updateSW = registerSW({
         onRegistered(reg: ServiceWorkerRegistration | undefined) {
             if (reg) {
-                console.log('[PWA] Service worker registered:', reg);
                 if (reg.active) {
                     reg.active.postMessage({ type: 'CHECK_EXPIRE' });
                 } else {

@@ -539,7 +539,6 @@ export class ProjectService extends BaseService {
                 role: project.role_id != null ? roleById.get(project.role_id) : undefined,
             } as any);
         }
-        // console.log(result);
         return result;
     }
 }
