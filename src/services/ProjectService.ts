@@ -35,6 +35,7 @@ type ProjectTagRow = {
 type StatusRow = {
     id: number;
     name: string;
+    color?: string | null;
 };
 
 type ProjectCategoryRow = {
@@ -132,6 +133,7 @@ export class ProjectService extends BaseService {
             }
             project_statuses {
                 name
+                color
             }
             project_categories {
                 name
@@ -281,10 +283,18 @@ export class ProjectService extends BaseService {
         for (const s of statuses) {
             const key = s.name.toLowerCase();
             const has = byName.get(key);
-            if (has) continue;
-            await db.insert().into(table).values([
-                table.createRow({ name: s.name })
-            ]).exec();
+            try {
+                if (has) {
+                    await db.update(table)
+                        .set(table['color'], s.color ?? null)
+                        .where(table['id'].eq(has.id))
+                        .exec();
+                } else {
+                    await db.insert().into(table).values([
+                        table.createRow({ name: s.name, color: s.color ?? null })
+                    ]).exec();
+                }
+            } catch { }
         }
     }
 
@@ -416,24 +426,27 @@ export class ProjectService extends BaseService {
 
             const idSet = new Set<number>();
 
-            // Prefer explicit ids if present
-            if (Array.isArray(p.project_category_ids)) {
-                for (const id of p.project_category_ids) if (catById.has(id)) idSet.add(id);
-            }
-
-            // Accept categories as strings or objects
-            if (Array.isArray(p.categories)) {
-                for (const c of p.categories) {
-                    if (typeof c === 'number' && catById.has(c)) {
-                        idSet.add(c);
-                    } else if (typeof c === 'string') {
-                        const hit = catByName.get(c.toLowerCase());
-                        if (hit) idSet.add(hit.id);
-                    } else if (c && typeof c === 'object' && 'id' in c && typeof c.id === 'number') {
-                        if (catById.has(c.id)) idSet.add(c.id);
-                    }
+            // Helper to add IDs from various shapes (number | [number] | string | object)
+            const addIdsFrom = (val: any) => {
+                if (val == null) return;
+                if (Array.isArray(val)) {
+                    for (const item of val) addIdsFrom(item);
+                } else if (typeof val === 'number') {
+                    if (catById.has(val)) idSet.add(val);
+                } else if (typeof val === 'string') {
+                    const hit = catByName.get(val.toLowerCase());
+                    if (hit) idSet.add(hit.id);
+                } else if (val && typeof val === 'object' && 'id' in val && typeof val.id === 'number') {
+                    if (catById.has(val.id)) idSet.add(val.id);
                 }
-            }
+            };
+
+            // Accept both project_category_ids (plural) and project_category_id (singular)
+            addIdsFrom(p.project_category_ids);
+            addIdsFrom(p.project_category_id);
+
+            // Also accept explicit categories array (strings/objects/ids)
+            addIdsFrom(p.categories);
 
             for (const cid of idSet) {
                 assocRows.push(joinTable.createRow({

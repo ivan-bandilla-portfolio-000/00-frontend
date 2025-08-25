@@ -11,6 +11,8 @@ import { getImageUrl, handleImageError } from "@/app/helpers/image";
 import type { Tag } from "./ProjectsCard";
 import { Button } from "../button";
 import { ExternalLink } from "lucide-react";
+import { ProjectMetaService, type MetaCategory, type MetaStatus } from "@/services/ProjectMetaService";
+import { useClientDB } from "@/clientDB/context";
 
 export type ProjectDialogProps = {
     project: {
@@ -20,6 +22,8 @@ export type ProjectDialogProps = {
         image?: string;
         avp?: string;
         project_link?: string;
+        status_id?: number;
+        project_category_ids?: number[];
         tags: Tag[];
     };
     playbackTime: number;
@@ -40,6 +44,29 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
     const videoRef = React.useRef<HTMLVideoElement | null>(null);
     const mediaWrapRef = React.useRef<HTMLDivElement | null>(null);
     const suppressSyncRef = React.useRef(false);
+    const clientDb = useClientDB();
+    const [status, setStatus] = React.useState<MetaStatus | undefined>();
+    const [categories, setCategories] = React.useState<MetaCategory[]>([]);
+
+    React.useEffect(() => {
+        if (!clientDb) return;
+        let cancelled = false;
+        (async () => {
+            try {
+                const meta = await ProjectMetaService.getMeta(clientDb);
+                console.log(meta);
+                if (cancelled) return;
+                setStatus(project.status_id != null ? (meta.statuses as any).find((s: any) => s.id === project.status_id) : undefined);
+                const cats = (project.project_category_ids ?? [])
+                    .map(id => (meta.categories as any).find((c: any) => c.id === id))
+                    .filter(Boolean) as MetaCategory[];
+                setCategories(cats);
+            } catch (e) {
+                // ignore
+            }
+        })();
+        return () => { cancelled = true; };
+    }, [clientDb, project.status_id, project.project_category_ids]);
 
     // Track play/pause to keep video visible after user interaction
     React.useEffect(() => {
@@ -113,6 +140,34 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
                     </hgroup>
                 </DialogTitle>
             </DialogHeader>
+
+            <div className="px-6 mt-1 gap-2">
+                <b className="font-medium">Status:</b>{' '}
+                {status && (
+                    <Badge
+                        variant={null}
+                        className="text-sm uppercase"
+                        style={(status as any).color ? { background: (status as any).color, color: '#fff' } : undefined}
+                    >
+                        {(status as any).name ?? (status as any).label ?? ''}
+                    </Badge>
+                )}
+            </div>
+
+            {categories.length > 0 && (
+                <div className="px-6 mt-1 flex gap-2 flex-wrap">
+                    <b className="font-medium">Categories:</b>{' '}
+                    {categories.map(c => (
+                        <Badge
+                            className="text-sm capitalize font-bold"
+                            variant="outline"
+                            key={c.id}
+                        >
+                            {c.name}
+                        </Badge>
+                    ))}
+                </div>
+            )}
 
             <div className="flex flex-col gap-y-6">
                 {(project.image || project.avp) && (

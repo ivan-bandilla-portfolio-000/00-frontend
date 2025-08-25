@@ -1,7 +1,7 @@
 import type { lf } from "@/clientDB/schema";
 
 export type MetaTag = { id: number; name: string; color?: string | null; icon?: string | null; type_id?: number | null };
-export type MetaStatus = { id: number; name: string };
+export type MetaStatus = { id: number; name: string, color: string | null };
 export type MetaCategory = { id: number; name: string };
 
 export class ProjectMetaService {

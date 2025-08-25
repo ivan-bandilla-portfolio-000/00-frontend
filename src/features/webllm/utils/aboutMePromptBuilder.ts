@@ -14,7 +14,7 @@ interface BuildArgs {
 
 function listOrPlaceholder(items: string[] | undefined, placeholder = 'None provided'): string {
     if (!items || !items.length) return placeholder;
-    return items.map(i => `- ${i}`).join('\n');
+    return items.map(i => i.startsWith('- ') ? i : `- ${i}`).join('\n');
 }
 
 function getLocationString(contact?: ContactInfo | null): string {
@@ -44,9 +44,22 @@ export function buildAboutMeInstruction({
 
     const fullName = [contact?.prefix, contact?.first_name, contact?.last_name].filter(Boolean).join(' ').trim() || 'An unnamed professional';
     const titlePrefix = [contact?.prefix, contact?.title].filter(Boolean).join(' / ') || 'Not specified';
-
-    // Derive location if any field hints (not provided in services; allow override via title field pattern)
     const location = getLocationString(contact);
+
+    const contactLines: string[] = [];
+    if (contact) {
+        if (contact.email) contactLines.push(`Email: ${contact.email}`);
+        if (contact.phone) contactLines.push(`Phone: ${contact.phone}`);
+        if (contact.github?.username || contact.github?.url) {
+            const gh = contact.github?.username ?? contact.github?.url;
+            contactLines.push(`GitHub: ${gh}`);
+        }
+        if (contact.linkedin?.username || contact.linkedin?.url) {
+            const li = contact.linkedin?.username ?? contact.linkedin?.url;
+            contactLines.push(`LinkedIn: ${li}`);
+        }
+    }
+    contactLines.push(`Contact Form: Available on the site contact page ${window.location.origin}/contact`);
 
     // Experiences summary
     const expLines: string[] = [];
@@ -54,12 +67,12 @@ export function buildAboutMeInstruction({
         for (const e of experiences) {
             const range = formatDateRange(e.start, e.end);
             const roleName = e.role?.name || e.position;
-            expLines.push(`- ${roleName} at ${e.company} (${range})${e.description ? `: ${truncate(e.description, 120)}` : ''}`);
+            expLines.push(`${roleName} at ${e.company} (${range})${e.description ? `: ${e.description}` : ''}`);
         }
     }
 
     // Tech stack
-    const techLines = techStack?.map(t => `- ${t.content}${t.icon ? ` (${t.icon})` : ''}`) ?? [];
+    const techLines = techStack?.map(t => `- ${t.content}`) ?? [];
 
     // Projects section
     const projLines: string[] = [];
@@ -71,7 +84,7 @@ export function buildAboutMeInstruction({
                 }
                 return String(t);
             }).filter(Boolean);
-            projLines.push(`- ${p.name}${tags.length ? ` [${tags.join(', ')}]` : ''}${p.description ? `: ${truncate(p.description, 140)}` : ''}`);
+            projLines.push(`${p.name}${tags.length ? ` [${tags.join(', ')}]` : ''}${p.description ? `: ${p.description}` : ''}`);
         }
     }
 
@@ -79,17 +92,15 @@ export function buildAboutMeInstruction({
         .replace('{{FULL_NAME}}', fullName)
         .replace('{{LOCATION}}', location)
         .replace('{{TITLE_PREFIX}}', titlePrefix)
+        .replace('{{CONTACT_SECTION}}', listOrPlaceholder(contactLines))
         .replace('{{TECH_STACK_LIST}}', listOrPlaceholder(techLines))
         .replace('{{EXPERIENCES_SECTION}}', listOrPlaceholder(expLines))
         .replace('{{PROJECTS_SECTION}}', listOrPlaceholder(projLines))
 
+    prompt = prompt.replace(/{{[A-Z_]+}}/g, 'None provided');
+
     console.log('Built About Me prompt:', prompt);
     return prompt;
-}
-
-function truncate(s: string, max: number): string {
-    if (s.length <= max) return s;
-    return s.slice(0, max - 1).trimEnd() + '…';
 }
 
 function formatDateRange(start: Date, end?: Date | null) {

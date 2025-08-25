@@ -29,6 +29,8 @@ export type ProjectCardProps = {
         image?: string;
         avp?: string;
         project_link?: string;
+        status_id?: number;
+        project_category_ids?: number[];
         tags: Tag[];
     };
     className?: string;

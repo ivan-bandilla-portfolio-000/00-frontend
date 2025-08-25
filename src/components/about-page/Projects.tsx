@@ -213,6 +213,8 @@ const Projects = () => {
                                 image: project.image,
                                 avp: project.avp,
                                 project_link: project.project_link,
+                                status_id: project.status_id,
+                                project_category_ids: project.project_category_ids ?? undefined,
                                 tags: Array.isArray(project.tags) &&
                                     (project.tags.length === 0 || typeof (project.tags[0] as any)?.id === "number")
                                     ? (project.tags as any) : [],
