@@ -4,6 +4,7 @@ import TopBar from '@/components/TopBar';
 import { ThemeProvider } from "@/features/theming/components/theme-provider";
 import { ClientDBProvider } from '@/clientDB/context';
 // import { useClientDB } from '@/clientDB/context';
+import { pageview } from '@/features/analytics';
 
 import ErrorBoundary from '@/components/errors/ErrorBoundary';
 import { LLMProvider } from '@/contexts/LLMContext';
@@ -82,6 +83,10 @@ function App() {
       const el = document.getElementById(id);
       if (el) el.scrollIntoView({ behavior: 'smooth' });
     }
+
+    // send a GA page_view for SPA navigation (if GA initialized)
+    const path = location.pathname + location.search + location.hash;
+    pageview(path);
   }, [location]);
 
   return (
