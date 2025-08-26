@@ -28,9 +28,24 @@ export async function initializeTrackingFromEnv(): Promise<void> {
 
         if (DISCORD_PROXY && fingerprint) {
             try {
-                const safeInfo = {
-                    fingerprint,
-                    ...ipInfo,
+                const ipObj = ipInfo || {};
+                const fields = [
+                    { name: 'Fingerprint', value: String(fingerprint), inline: false },
+                    ...Object.entries(ipObj).map(([k, v]) => ({
+                        name: k,
+                        value: String(v ?? ''),
+                        inline: true,
+                    })),
+                ];
+
+                const discordPayload = {
+                    embeds: [
+                        {
+                            title: 'New visitor',
+                            fields,
+                            timestamp: new Date().toISOString(),
+                        },
+                    ],
                 };
 
                 await fetch(DISCORD_PROXY, {
@@ -39,7 +54,7 @@ export async function initializeTrackingFromEnv(): Promise<void> {
                         'Content-Type': 'application/json',
                         ...(DISCORD_PROXY_KEY ? { 'X-API-KEY': DISCORD_PROXY_KEY } : {}),
                     },
-                    body: JSON.stringify(safeInfo),
+                    body: JSON.stringify(discordPayload),
                 });
             } catch (e) {
                 // ignore network/errors from the proxy to avoid breaking the app
