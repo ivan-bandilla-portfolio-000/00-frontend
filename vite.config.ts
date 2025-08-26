@@ -35,16 +35,16 @@ export default defineConfig({
         background_color: '#f5f5f5',
         theme_color: '#72e3ad',
         "icons": [
-          { "src": "/assets/icons/manifest-icon-192.maskable.webp", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-          { "src": "/assets/icons/manifest-icon-192.maskable.webp", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
-          { "src": "/assets/icons/manifest-icon-512.maskable.webp", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-          { "src": "/assets/icons/manifest-icon-512.maskable.webp", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+          { "src": "/assets/icons/manifest-icon-192.maskable.webp", "sizes": "192x192", "type": "image/webp", "purpose": "any" },
+          { "src": "/assets/icons/manifest-icon-192.maskable.webp", "sizes": "192x192", "type": "image/webp", "purpose": "maskable" },
+          { "src": "/assets/icons/manifest-icon-512.maskable.webp", "sizes": "512x512", "type": "image/webp", "purpose": "any" },
+          { "src": "/assets/icons/manifest-icon-512.maskable.webp", "sizes": "512x512", "type": "image/webp", "purpose": "maskable" }
         ],
         screenshots: [
           {
-            src: '/assets/screenshot_wide.webp',
+            src: 'webp',
             sizes: '1920x953',
-            type: 'image/png',
+            type: 'image/webp',
             form_factor: 'wide'
           },
           {
@@ -52,7 +52,30 @@ export default defineConfig({
             sizes: '480x1030',
             type: 'image/jpeg'
           }
-        ]
+        ],
+        shortcuts: [
+          {
+            name: 'Open Home',
+            short_name: 'Home',
+            description: 'Open the portfolio home',
+            url: '/',
+            icons: [{ src: '/assets/icons/manifest-icon-192.maskable.webp', sizes: '192x192', type: 'image/webp', purpose: 'maskable' }]
+          },
+          {
+            name: 'About',
+            short_name: 'About',
+            description: 'Learn more about me',
+            url: '/about',
+            icons: [{ src: '/assets/icons/manifest-icon-192.maskable.webp', sizes: '192x192', type: 'image/webp' }]
+          },
+          {
+            name: 'Contact',
+            short_name: 'Contact',
+            description: 'Get in touch',
+            url: '/contact',
+            icons: [{ src: '/assets/icons/manifest-icon-192.maskable.webp', sizes: '192x192', type: 'image/webp' }]
+          }
+        ],
       }
     }),
     tailwindcss(),
