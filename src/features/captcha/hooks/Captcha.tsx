@@ -1,28 +1,55 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
-const Captcha = (siteKey: string) => {
-    const [isRecaptchaReady, setIsRecaptchaReady] = useState(false);
+declare global {
+    interface Window {
+        grecaptcha?: {
+            ready: (cb: () => void) => void;
+            execute: (siteKey: string, opts: { action: string }) => Promise<string>;
+        };
+    }
+}
+
+const useRecaptcha = (siteKey: string) => {
+    const [ready, setReady] = useState(false);
 
     useEffect(() => {
+        if (!siteKey) return;
         if (window.grecaptcha) {
-            setIsRecaptchaReady(true);
-        } else {
-            const script = document.createElement('script');
-            script.src = `https://www.google.com/recaptcha/api.js?render=${siteKey}`;
-            script.async = true;
-            document.head.appendChild(script);
-            script.onload = () => setIsRecaptchaReady(true);
+            setReady(true);
+            return;
         }
+
+        const id = 'recaptcha-v3-script';
+        if (document.getElementById(id)) return;
+
+        const script = document.createElement('script');
+        script.id = id;
+        script.src = `https://www.google.com/recaptcha/api.js?render=${siteKey}`;
+        script.async = true;
+        script.onload = () => {
+            if (window.grecaptcha) setReady(true);
+        };
+        document.head.appendChild(script);
     }, [siteKey]);
 
-    const executeRecaptcha = useCallback(async (action: string) => {
-        if (isRecaptchaReady && window.grecaptcha) {
-            return await window.grecaptcha.execute(siteKey, { action });
-        }
-        return null;
-    }, [isRecaptchaReady, siteKey]);
+    const execute = useCallback(async (action: string): Promise<string | null> => {
+        if (!siteKey) throw new Error('reCAPTCHA site key required');
+        if (!window.grecaptcha) return null;
 
-    return executeRecaptcha;
+        return new Promise((resolve) => {
+            window.grecaptcha!.ready(() => {
+                // grecaptcha.execute returns a Promise<string>
+                try {
+                    const promise = window.grecaptcha!.execute(siteKey, { action }) as Promise<string>;
+                    promise.then(token => resolve(token)).catch(() => resolve(null));
+                } catch {
+                    resolve(null);
+                }
+            });
+        });
+    }, [siteKey]);
+
+    return { execute, ready };
 };
 
-export default Captcha;
+export default useRecaptcha;

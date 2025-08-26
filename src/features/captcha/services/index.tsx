@@ -1,3 +1,3 @@
-import CaptchaWidget from "@/features/captcha/services/CaptchaWidget";
+// import CaptchaWidget from "@/features/captcha/services/CaptchaWidget";
 
-export { CaptchaWidget };
+// export { CaptchaWidget };

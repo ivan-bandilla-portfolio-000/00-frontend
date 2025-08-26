@@ -1,4 +1,5 @@
 import { getRequestStatusById } from "@/constants/requestStatuses";
+import useRecaptcha from "@/features/captcha/hooks/Captcha";
 import { RateLimiter } from "@/features/rate-limiting/client/services/RateLimiter";
 import { ContactFormService } from "@/services/ContactFormService";
 import { useCallback, type RefObject } from "react";
@@ -63,6 +64,9 @@ export function useContactFormSubmission({
     fallbackContent,
     setFallbackContent,
 }: UseContactFormSubmissionProps) {
+    const siteKey = (import.meta.env as any).VITE_RECAPTCHA_SITE_KEY || (import.meta.env as any).RECAPTCHA_SITE_KEY;
+    const { execute, ready: _ready } = useRecaptcha(siteKey);
+
     return useCallback(async (data: MessageInputs, nonce: string | null) => {
         try {
             await RateLimiter.throwIfLimited('contact-form', 3, 60000);
@@ -126,6 +130,25 @@ export function useContactFormSubmission({
                 formObj.originalContent = originalContent;
             }
 
+            if (siteKey && execute) {
+                try {
+                    const token = await execute('contact_submit');
+                    if (!token) {
+                        setError("emailContent", { type: "manual", message: "reCAPTCHA verification failed. Please try again." });
+                        callbacks?.onStop?.();
+                        setStatus(getRequestStatusById("ready")!);
+                        return;
+                    }
+                    formObj.recaptchaToken = token;
+                } catch (err) {
+                    console.error("reCAPTCHA execute error:", err);
+                    setError("emailContent", { type: "manual", message: "reCAPTCHA failed. Please try again." });
+                    callbacks?.onStop?.();
+                    setStatus(getRequestStatusById("ready")!);
+                    return;
+                }
+            }
+
             if (nonce) {
                 await formService.useNonce(nonce);
                 setNonce(null);
@@ -172,6 +195,8 @@ export function useContactFormSubmission({
         MIN_LENGTH,
         isEditorReady,
         fallbackContent,
-        setFallbackContent
+        setFallbackContent,
+        execute,
+        siteKey
     ]);
 }
