@@ -137,9 +137,23 @@ export async function initTracking(opts: InitOptions = {}) {
         const payload: Record<string, any> = {};
         if (fingerprint) payload.fingerprint = fingerprint;
         if (ipInfo) {
-            if (ipInfo.country) payload.country = ipInfo.country;
-            if (ipInfo.region) payload.region = ipInfo.region;
-            if (ipInfo.city) payload.city = ipInfo.city;
+            const ipFields = [
+                'ip',
+                'asn',
+                'as_name',
+                'as_domain',
+                'country_code',
+                'country',
+                'continent_code',
+                'continent',
+                'region',
+                'city',
+            ] as const;
+
+            for (const key of ipFields) {
+                const val = (ipInfo as any)[key];
+                if (val != null) payload[key] = val;
+            }
         }
         try {
             event('identify', payload);
