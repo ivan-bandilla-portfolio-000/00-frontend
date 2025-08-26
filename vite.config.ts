@@ -35,14 +35,14 @@ export default defineConfig({
         background_color: '#f5f5f5',
         theme_color: '#72e3ad',
         "icons": [
-          { "src": "/assets/icons/manifest-icon-192.maskable.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-          { "src": "/assets/icons/manifest-icon-192.maskable.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
-          { "src": "/assets/icons/manifest-icon-512.maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-          { "src": "/assets/icons/manifest-icon-512.maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+          { "src": "/assets/icons/manifest-icon-192.maskable.webp", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+          { "src": "/assets/icons/manifest-icon-192.maskable.webp", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+          { "src": "/assets/icons/manifest-icon-512.maskable.webp", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+          { "src": "/assets/icons/manifest-icon-512.maskable.webp", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
         ],
         screenshots: [
           {
-            src: '/assets/screenshot_wide.png',
+            src: '/assets/screenshot_wide.webp',
             sizes: '1920x953',
             type: 'image/png',
             form_factor: 'wide'
