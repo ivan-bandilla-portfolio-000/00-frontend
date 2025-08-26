@@ -38,7 +38,7 @@ export const LLMProvider: FC<{ children: React.ReactNode }> = ({ children }) => 
 
     const service = getOrCreateSharedLLM({
       modelId: defaultModel.model_id,
-      smallModelId: defaultModel.model_id,
+      smallModelId: defaultModel.small_model_id,
       useWorker: true,
       systemPrompt: systemPromptOverride || 'You are a helpful assistant.'
     });

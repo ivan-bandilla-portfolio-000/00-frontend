@@ -1,8 +1,9 @@
 'use client';
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { motion, AnimatePresence, easeInOut } from 'framer-motion';
-import { Menu, X, ArrowRight, Search } from 'lucide-react';
+import { Menu, X, ArrowRight, Search, SquareArrowDown } from 'lucide-react';
 import { Link } from 'react-router';
+import { Button } from '../ui/button';
 
 const LazyModeToggle = lazy(() =>
     import('@/features/theming/components/mode-toggle').then(m => ({ default: m.ModeToggle }))
@@ -71,6 +72,56 @@ const HeaderMobile: React.FC<HeaderProps> = ({
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+
+    // PWA install prompt state
+    const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+    const [canInstall, setCanInstall] = useState(false);
+
+    useEffect(() => {
+        const onBeforeInstall = (e: any) => {
+            console.log('beforeinstallprompt received', e);
+            e.preventDefault?.();
+            setDeferredPrompt(e);
+            setCanInstall(true);
+        };
+        const onAppInstalled = () => {
+            console.log('appinstalled event');
+            setDeferredPrompt(null);
+            setCanInstall(false);
+        };
+
+        window.addEventListener('beforeinstallprompt', onBeforeInstall as EventListener);
+        window.addEventListener('appinstalled', onAppInstalled);
+
+        // iOS fallback: show an install affordance if not in standalone mode
+        const ua = navigator.userAgent || '';
+        const isIos = /iphone|ipad|ipod/.test(ua.toLowerCase());
+        const isInStandalone = ('standalone' in window.navigator && (window.navigator as any).standalone) || false;
+        if (isIos && !isInStandalone) setCanInstall(true);
+
+        return () => {
+            window.removeEventListener('beforeinstallprompt', onBeforeInstall as EventListener);
+            window.removeEventListener('appinstalled', onAppInstalled);
+        };
+    }, []);
+
+    const handleInstallClick = async () => {
+        if (deferredPrompt) {
+            try {
+                await (deferredPrompt as any).prompt();
+                await (deferredPrompt as any).userChoice;
+            } catch (err) {
+                console.error('PWA install prompt error', err);
+            } finally {
+                setDeferredPrompt(null);
+                setCanInstall(false);
+            }
+        } else {
+            // iOS fallback instructions
+            alert('To install this app on iOS: tap Share → Add to Home Screen.');
+        }
+    };
+
 
     useEffect(() => {
         const handleScroll = () => setIsScrolled(window.scrollY > 10);
@@ -211,6 +262,7 @@ const HeaderMobile: React.FC<HeaderProps> = ({
                             exit={{ opacity: 0 }}
                             onClick={() => setIsMobileMenuOpen(false)}
                         />
+
                         <motion.div
                             className="border-border bg-background fixed top-14 inset-x-0 mx-2 z-50 rounded-2xl border shadow-2xl lg:hidden"
                             variants={mobileMenuVariants}
@@ -219,6 +271,23 @@ const HeaderMobile: React.FC<HeaderProps> = ({
                             exit="closed"
                         >
                             <div className="space-y-6 p-5">
+
+                                {canInstall && (
+                                    <motion.div variants={mobileItemVariants}>
+                                        <Button
+                                            variant="link"
+                                            onClick={() => {
+                                                handleInstallClick();
+                                                setIsMobileMenuOpen(false);
+                                            }}
+                                            aria-label="Install app"
+                                            className="flex-inline"
+                                        >
+                                            <SquareArrowDown /> <span>Install App</span>
+                                        </Button>
+                                    </motion.div>
+                                )}
+
                                 <div className="space-y-1">
                                     {navItems.map(item => (
                                         <motion.div key={item.name} variants={mobileItemVariants}>

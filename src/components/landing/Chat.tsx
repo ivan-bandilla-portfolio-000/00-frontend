@@ -43,7 +43,16 @@ type ChatMessage = {
     content: string;
 };
 
+function estimateTokens(text: string) {
+    let t = 0;
+    for (let i = 0; i < text.length; i++) {
+        const c = text.charCodeAt(i);
+        t += c < 128 ? (c >= 65 && c <= 122 ? 0.25 : 0.5) : 1.5;
+    }
+    return t;
+}
 
+const MAX_CONTEXT_TOKENS = 800;
 
 const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
     llmReady: _externalReady,
@@ -147,7 +156,9 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
     const persistHistory = useCallback((next: ChatMessage[] | ((p: ChatMessage[]) => ChatMessage[])) => {
         setMessages(prev => {
             const updated = typeof next === 'function' ? next(prev) : next;
-            localStorage.setItem(HISTORY_KEY, JSON.stringify(updated.slice(-200)));
+            localStorage.setItem(HISTORY_KEY,
+                JSON.stringify(updated.slice(-200).map(({ role, content, id }) => ({ id, role, content })))
+            );
             return updated;
         });
     }, []);
@@ -159,12 +170,6 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
     };
 
     useEffect(scrollToBottom, [messages, streaming]);
-
-    const buildPrompt = (userInput: string) => {
-        // For small context: include last 4 turns (user+assistant)
-        const recent = messages.slice(-8).map(m => `${m.role === 'user' ? 'User' : 'You'}: ${m.content}`).join('\n');
-        return recent ? `${recent}\nUser: ${userInput}` : userInput;
-    };
 
     // Optional preload
     useEffect(() => {
@@ -282,14 +287,28 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
         }
     }, [open, llmReady, hasStartedLLM, ensureLLM, systemPrompt]);
 
+    const buildMessages = (userInput: string): { role: "user" | "assistant"; content: string }[] => {
+        const base: { role: "user" | "assistant"; content: string }[] = [];
+        let acc = 0;
+        for (let i = messages.length - 1; i >= 0; i--) {
+            const m = messages[i];
+            const cost = estimateTokens(m.content);
+            if (acc + cost > MAX_CONTEXT_TOKENS) break;
+            base.push(m);
+            acc += cost;
+        }
+        base.reverse();
+        return [...base, { role: "user", content: userInput }];
+    };
+
     // Send / stream handler
     const handleSend = async () => {
         if (streaming || !input.trim() || !llm) return;
         const userText = input.trim();
-        const fullPrompt = buildPrompt(userText);
         const uid = Date.now().toString(36) + Math.random().toString(36).slice(2);
         const aid = uid + '-a';
 
+        // Optimistic UI
         persistHistory(prev => [...prev,
         { id: uid, role: 'user', content: userText },
         { id: aid, role: 'assistant', content: '' }
@@ -299,9 +318,12 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
         try {
             if (systemPrompt) llm.setSystemPrompt(systemPrompt);
             setStreaming(true);
+
+            const convoMessages = buildMessages(userText);
+
             let accum = "";
-            const { promise, abort } = llm.getResponseAbortable(
-                fullPrompt,
+            const { promise, abort } = llm.getResponseAbortableFromMessages(
+                convoMessages,
                 true,
                 (chunk: string) => {
                     accum += chunk;

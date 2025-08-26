@@ -21,18 +21,38 @@ export default defineConfig({
       injectRegister: false,           // we register manually
       registerType: 'autoUpdate',
       devOptions: {
-        enabled: true, // enable service worker in dev
-        suppressWarnings: true,
+        enabled: false, // enable service worker in dev
+        suppressWarnings: false,
         type: 'module'
       },
       manifest: {
+        id: '/',
         name: 'Ivan Bandilla Portfolio',
-        short_name: 'I Bandilla Portfolio',
+        short_name: 'IB Portfolio',
         start_url: '/',
         display: 'standalone',
+        display_override: ['window-controls-overlay'],
         background_color: '#f5f5f5',
         theme_color: '#72e3ad',
-        icons: [] // add icons later
+        "icons": [
+          { "src": "/assets/icons/manifest-icon-192.maskable.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+          { "src": "/assets/icons/manifest-icon-192.maskable.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+          { "src": "/assets/icons/manifest-icon-512.maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+          { "src": "/assets/icons/manifest-icon-512.maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+        ],
+        screenshots: [
+          {
+            src: '/assets/screenshot_wide.png',
+            sizes: '1920x953',
+            type: 'image/png',
+            form_factor: 'wide'
+          },
+          {
+            src: '/assets/screenshot_narrow.jpg',
+            sizes: '480x1030',
+            type: 'image/jpeg'
+          }
+        ]
       }
     }),
     tailwindcss(),

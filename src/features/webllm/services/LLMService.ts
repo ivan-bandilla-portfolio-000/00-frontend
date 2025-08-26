@@ -17,6 +17,8 @@ export interface GenerateOptions {
     stop?: string[];
 }
 
+interface ChatMessageLike { role: "system" | "user" | "assistant"; content: string; }
+
 interface InternalTask {
     id: string;
     prompt: string;
@@ -26,6 +28,7 @@ interface InternalTask {
     reject: (e: any) => void;
     controller: AbortController;
     opts?: GenerateOptions;
+    messages?: ChatMessageLike[];
 }
 
 export interface LLMServiceOptions {
@@ -107,6 +110,25 @@ export class LLMService {
 
     async init() {
         if (this._initialized || this.failed) return;
+
+        // Probe WebGPU adapter limits and adapt to avoid the "requested exceeds limit" failure
+        try {
+            const limits = await this.probeWebGPULimits();
+            if (limits) {
+                const wantStorageMB = 1024;          // what the runtime may request
+                const wantWorkgroup = 32768;         // what the runtime may request
+                if (limits.maxStorageBufferBindingSize < wantStorageMB * 1024 * 1024 ||
+                    limits.maxComputeWorkgroupStorageSize < wantWorkgroup) {
+                    console.warn("[LLM] GPU limits too low, disabling worker/GPU init", limits);
+                    this._statusMessage = "[LLM] GPU limits low - forcing CPU/main-thread fallback";
+                    // Force not using the worker/GPU path so tryInitChain will try main-thread / smaller model
+                    this.useWorker = false;
+                }
+            }
+        } catch (err) {
+            console.warn("[LLM] Failed to probe WebGPU limits:", err);
+        }
+
         await this.tryInitChain();
 
         if (this._initialized) {
@@ -154,6 +176,21 @@ export class LLMService {
         this.failed = true;
     }
 
+    private async probeWebGPULimits(): Promise<{ maxStorageBufferBindingSize: number; maxComputeWorkgroupStorageSize: number } | null> {
+        if (!('gpu' in navigator)) return null;
+        try {
+            const adapter = await (navigator as any).gpu.requestAdapter();
+            if (!adapter) return null;
+            const limits = (adapter as any).limits || {};
+            return {
+                maxStorageBufferBindingSize: limits.maxStorageBufferBindingSize ?? 0,
+                maxComputeWorkgroupStorageSize: limits.maxComputeWorkgroupStorageSize ?? 0
+            };
+        } catch (e) {
+            return null;
+        }
+    }
+
     private async loadEngine(modelId: string, worker: boolean) {
         const initProgressCallback: MLCEngineConfig["initProgressCallback"] = (p: any) => {
             const progress = typeof p === "number" ? p : p?.progress ?? 0;
@@ -188,18 +225,43 @@ export class LLMService {
         this.queue.forEach(t => t.controller.abort());
     }
 
-    private enqueue(prompt: string, stream: boolean, onStream?: StreamCb, opts?: GenerateOptions) {
+    getResponseAbortableFromMessages(
+        messages: ChatMessageLike[],
+        stream = false,
+        onStream?: StreamCb,
+        opts?: GenerateOptions,
+    ) {
+        return this.enqueue("", stream, onStream, opts, messages);
+    }
+
+    private enqueue(
+        prompt: string,
+        stream: boolean,
+        onStream?: StreamCb,
+        opts?: GenerateOptions,
+        messages?: ChatMessageLike[],
+    ) {
         if (!this.engine || !this._initialized || this.failed) {
             return {
                 promise: Promise.reject(new Error("LLM not ready")),
                 abort: () => { },
-                signal: new AbortController().signal
+                signal: new AbortController().signal,
             };
         }
         const controller = new AbortController();
         const id = Date.now().toString(36) + Math.random().toString(36).slice(2);
         const promise = new Promise<string>((resolve, reject) => {
-            const task: InternalTask = { id, prompt, stream, onStream, resolve, reject, controller, opts };
+            const task: InternalTask = {
+                id,
+                prompt,
+                stream,
+                onStream,
+                resolve,
+                reject,
+                controller,
+                opts,
+                messages,
+            };
             this.queue.push(task);
             this.process();
         });
@@ -228,10 +290,16 @@ export class LLMService {
 
     private async exec(t: InternalTask): Promise<string> {
         if (t.controller.signal.aborted) throw new DOMException("Aborted", "AbortError");
-        const messages = [
-            { role: "system", content: this.systemPrompt },
-            { role: "user", content: t.prompt }
-        ];
+        // Use provided messages (prepend system), else fallback to single-turn
+        let messages: { role: "system" | "user" | "assistant"; content: string }[];
+        if (t.messages && t.messages.length) {
+            messages = [{ role: "system", content: this.systemPrompt }, ...t.messages];
+        } else {
+            messages = [
+                { role: "system", content: this.systemPrompt },
+                { role: "user", content: t.prompt },
+            ];
+        }
         if (t.stream) {
             let reply = "";
             const iterable = await this.engine!.chat.completions.create({
