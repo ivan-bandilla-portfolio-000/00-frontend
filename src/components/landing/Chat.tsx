@@ -523,10 +523,11 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
                                     >
                                         <div
                                             className={
-                                                "max-w-[80%] rounded-lg px-3 py-2 shadow-sm whitespace-pre-wrap " +
+                                                `max-w-[80%] rounded-lg px-3 py-2 shadow-sm whitespace-pre-wrap` +
                                                 (m.role === 'user'
-                                                    ? "bg-primary text-white"
+                                                    ? "bg-primary text-white select-all"
                                                     : "bg-neutral-200 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-50")
+                                                + (m.role === 'assistant' && streaming ? "select-none cursor-wait" : "")
                                             }
                                         >
                                             {m.content || (m.role === 'assistant' && streaming ? "…" : "")}
@@ -534,7 +535,7 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
                                     </div>
                                 ))}
                                 {streaming && (
-                                    <div className="flex justify-start">
+                                    <div className="flex justify-start cursor-wait select-none">
                                         <div className="max-w-[80%] rounded-lg px-3 py-2 bg-neutral-200 dark:bg-neutral-700 animate-pulse text-neutral-400 text-xs">
                                             typing…
                                         </div>
@@ -567,7 +568,7 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
                                     }}
                                     disabled={!llmReady || streaming || modelBusy}
                                     placeholder="Ask me something about me... (Enter to send, Shift+Enter for newline)"
-                                    className="flex-1 resize-none rounded-md bg-background px-3 py-2 text-sm "
+                                    className={`flex-1 resize-none rounded-md bg-background px-3 py-2 text-sm ${!llmReady || streaming || modelBusy ? "cursor-wait pointer-events-none" : ""}`}
                                 />
                                 <div className="flex gap-2 items-center-safe">
                                     {streaming && (
@@ -585,7 +586,7 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
                                     <Button
                                         type="submit"
                                         disabled={!llmReady || streaming || !input.trim() || modelBusy}
-                                        className="py-4 px-6"
+                                        className={`py-4 px-6 ${!llmReady || streaming || modelBusy ? "cursor-wait pointer-events-none" : ""}`}
                                     >
                                         {streaming ? "..." : (modelBusy ? "Busy" : "Send")}
                                     </Button>
