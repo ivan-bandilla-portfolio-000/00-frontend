@@ -16,11 +16,62 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v3
 
+            - name: Wait for CodeQL run to finish for this commit
+              env:
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                set -e
+                owner_repo="$GITHUB_REPOSITORY"
+                owner="${owner_repo%/*}"
+                repo="${owner_repo#*/}"
+                sha="$GITHUB_SHA"
+
+                sudo apt-get update -y
+                sudo apt-get install -y jq
+
+                attempts=40   # ~40 * 15s = 600s (10 minutes)
+                interval=15
+                count=0
+
+                while [ $count -lt $attempts ]; do
+                  resp=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/$owner/$repo/actions/runs?head_sha=$sha")
+                  run_entry=$(echo "$resp" | jq -r '.workflow_runs[] | select(.name=="CodeQL") | @base64' | head -n1 || true)
+
+                  if [ -n "$run_entry" ]; then
+                    decoded=$(echo "$run_entry" | base64 --decode)
+                    status=$(echo "$decoded" | jq -r '.status')
+                    conclusion=$(echo "$decoded" | jq -r '.conclusion')
+                    echo "Found CodeQL run: status=$status conclusion=$conclusion"
+                    if [ "$status" = "completed" ]; then
+                      if [ "$conclusion" = "success" ]; then
+                        echo "CodeQL succeeded for commit $sha"
+                        break
+                      else
+                        echo "CodeQL finished with conclusion: $conclusion"
+                        exit 1
+                      fi
+                    fi
+                  else
+                    echo "No CodeQL run found for commit $sha yet"
+                  fi
+
+                  count=$((count+1))
+                  sleep $interval
+                done
+
+                if [ $count -ge $attempts ]; then
+                  echo "Timed out waiting for CodeQL run to complete"
+                  exit 1
+                fi
+
             - name: Install dependencies
               run: npm ci
 
             - name: Install Vercel CLI
               run: npm install --global vercel
+
+            - name: Pull Vercel Project Settings
+              run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
 
             - name: Pull Vercel Environment Information
               run: vercel env pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
