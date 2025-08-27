@@ -64,6 +64,13 @@ self.addEventListener('message', (e) => {
     if (type === 'TRY_DELETE_IF_NO_CLIENTS') tryDeleteIfNoClients();
     if (type === 'CHECK_EXPIRE') checkAndExpire();
     if (type === 'RESET_DB_TIMER') setCreatedAt(Date.now());
+
+    // allow controlled activation from the app:
+    if (type === 'SKIP_WAITING') {
+        // when client sends this, the waiting SW will call skipWaiting()
+        // and then the client can reload if desired
+        self.skipWaiting();
+    }
 });
 
 self.addEventListener('fetch', () => { checkAndExpire(); });

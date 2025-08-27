@@ -42,7 +42,7 @@ export default defineConfig({
         ],
         screenshots: [
           {
-            src: 'webp',
+            src: '/assets/screenshot_wide.webp',
             sizes: '1920x953',
             type: 'image/webp',
             form_factor: 'wide'
