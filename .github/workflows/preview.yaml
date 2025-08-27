@@ -16,11 +16,11 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v3
 
-            - name: Wait for CodeQL run to finish for this commit
+            - name: Wait for CodeQL workflow run for this commit
               env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: |
-                set -e
+                set -euo pipefail
                 owner_repo="$GITHUB_REPOSITORY"
                 owner="${owner_repo%/*}"
                 repo="${owner_repo#*/}"
@@ -29,13 +29,31 @@ jobs:
                 sudo apt-get update -y
                 sudo apt-get install -y jq
 
+                # find the workflow id for any workflow whose name/path contains "codeql" (case-insensitive)
+                workflows_resp=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/$owner/$repo/actions/workflows?per_page=100")
+                workflow_id=$(echo "$workflows_resp" | jq -r '.workflows[] | select((.name // "" | ascii_downcase | test("codeql")) or (.path // "" | ascii_downcase | test("codeql"))) | .id' | head -n1 || true)
+
+                if [ -z "$workflow_id" ]; then
+                  echo "No CodeQL workflow found in repository workflows list. Dumping workflows for debug:"
+                  echo "$workflows_resp" | jq -r '.workflows[] | "\(.id) \(.name) \(.path)"'
+                  exit 1
+                fi
+
+                echo "Using CodeQL workflow id: $workflow_id"
+
                 attempts=40   # ~40 * 15s = 600s (10 minutes)
                 interval=15
                 count=0
 
                 while [ $count -lt $attempts ]; do
-                  resp=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/$owner/$repo/actions/runs?head_sha=$sha")
-                  run_entry=$(echo "$resp" | jq -r '.workflow_runs[] | select(.name=="CodeQL") | @base64' | head -n1 || true)
+                  resp=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/$owner/$repo/actions/workflows/$workflow_id/runs?head_sha=$sha&per_page=100")
+                  # debug: list runs for this workflow & sha
+                  if [ $count -eq 0 ]; then
+                    echo "Workflow runs for workflow_id $workflow_id and sha $sha:"
+                    echo "$resp" | jq -r '.workflow_runs[] | "\(.id) \(.head_sha) \(.status) \(.conclusion) \(.html_url) \(.name)"' || true
+                  fi
+
+                  run_entry=$(echo "$resp" | jq -r '.workflow_runs[0] // empty | @base64' || true)
 
                   if [ -n "$run_entry" ]; then
                     decoded=$(echo "$run_entry" | base64 --decode)
@@ -52,7 +70,7 @@ jobs:
                       fi
                     fi
                   else
-                    echo "No CodeQL run found for commit $sha yet"
+                    echo "No CodeQL run found for commit $sha yet (workflow id: $workflow_id)"
                   fi
 
                   count=$((count+1))
