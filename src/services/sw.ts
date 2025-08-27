@@ -1,24 +1,129 @@
 /// <reference lib="webworker" />
 import { clientsClaim } from 'workbox-core';
-import { precacheAndRoute } from 'workbox-precaching';
+import { precacheAndRoute, createHandlerBoundToURL } from 'workbox-precaching';
 import { registerRoute } from 'workbox-routing';
-import { NetworkFirst, CacheFirst } from 'workbox-strategies';
+import { NetworkFirst, CacheFirst, StaleWhileRevalidate } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
+import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 import { environment } from '../../src/app/helpers/config';
 
 declare let self: ServiceWorkerGlobalScope;
 
 (self as any).__WB_DISABLE_DEV_LOGS = environment('local');
 
-clientsClaim();
-self.skipWaiting();
+// clientsClaim();
+// self.skipWaiting();
+
+const RUNTIME_VERSION = 'v1';
 
 // Injected by VitePWA (injectManifest)
 precacheAndRoute(self.__WB_MANIFEST || []);
 
+// SPA navigation fallback so offline entry serves index.html
+try {
+    const handler = createHandlerBoundToURL('/index.html');
+
+    registerRoute(
+        ({ request }) => request.mode === 'navigate',
+        async (args) => {
+            try {
+                // network-first so user gets updates when online
+                const navResp = await new NetworkFirst({
+                    cacheName: 'pages',
+                    networkTimeoutSeconds: 3,
+                }).handle(args);
+                return navResp || (await handler(args));
+            } catch {
+                // fallback to precached shell
+                return handler(args);
+            }
+        }
+    );
+} catch (err) {
+    console.warn('Navigation route registration failed in SW:', err);
+}
+
+registerRoute(
+    ({ request, url }) =>
+        request.destination === 'script' &&
+        url.origin === self.location.origin &&
+        (/LLM\.webworker-|vendor-webllm-/.test(url.pathname)),
+    new CacheFirst({
+        cacheName: 'llm-assets-v1',
+        plugins: [
+            new CacheableResponsePlugin({ statuses: [0, 200] }),
+            new ExpirationPlugin({ maxEntries: 10, maxAgeSeconds: 7 * 24 * 3600 })
+        ]
+    })
+);
+
 // Image cache
 registerRoute(
     ({ request }) => request.destination === 'image',
+    new CacheFirst({
+        cacheName: 'images-v1',
+        plugins: [new ExpirationPlugin({ maxEntries: 60, maxAgeSeconds: 24 * 3600 })]
+    })
+);
+
+// Cache JS/CSS/fonts (runtime): CacheFirst so once fetched they become available offline
+registerRoute(
+    ({ request, url }) =>
+        (request.destination === 'script' || request.destination === 'style' || request.destination === 'font') &&
+        url.origin === self.location.origin,
+    new CacheFirst({
+        cacheName: 'static-resources-v1',
+        plugins: [new ExpirationPlugin({ maxEntries: 80, maxAgeSeconds: 7 * 24 * 3600 })]
+    })
+);
+
+// Cache dynamic /assets JS chunks (CacheFirst so once fetched they serve offline)
+registerRoute(
+    ({ request, url }) =>
+        request.destination === 'script' &&
+        url.origin === self.location.origin &&
+        url.pathname.startsWith('/assets/'),
+    new CacheFirst({
+        cacheName: 'js-chunks-v1',
+        plugins: [
+            new CacheableResponsePlugin({ statuses: [0, 200] }),
+            new ExpirationPlugin({ maxEntries: 80, maxAgeSeconds: 30 * 24 * 3600 }) // 30 days
+        ]
+    })
+);
+
+// Cache Google Fonts stylesheets & font files (cross-origin)
+registerRoute(
+    ({ url }) => url.hostname === 'fonts.googleapis.com',
+    new StaleWhileRevalidate({
+        cacheName: `google-fonts-styles-${RUNTIME_VERSION}`,
+        plugins: [
+            new CacheableResponsePlugin({ statuses: [0, 200] }),
+            new ExpirationPlugin({ maxEntries: 30, maxAgeSeconds: 60 * 24 * 3600 })
+        ]
+    })
+);
+
+// Cache Google Fonts webfont files
+registerRoute(
+    ({ url, request }) =>
+        url.hostname === 'fonts.gstatic.com' && request.destination === 'font',
+    new CacheFirst({
+        cacheName: `google-fonts-webfonts-${RUNTIME_VERSION}`,
+        plugins: [
+            new CacheableResponsePlugin({ statuses: [0, 200] }),
+            new ExpirationPlugin({ maxEntries: 40, maxAgeSeconds: 365 * 24 * 3600 })
+        ]
+    })
+);
+
+// Image cache (exclude manifest icons & screenshots already precached)
+const PRECACHED_ICON_REGEX = /\/assets\/icons\/manifest-icon-|\/assets\/screenshot_/i;
+registerRoute(
+    ({ request, url }) =>
+        request.destination === 'image' &&
+        url.origin === self.location.origin &&
+        !PRECACHED_ICON_REGEX.test(url.pathname),
     new CacheFirst({
         cacheName: 'images-v1',
         plugins: [new ExpirationPlugin({ maxEntries: 60, maxAgeSeconds: 24 * 3600 })]
@@ -42,8 +147,10 @@ const META_STORE = 'kv';
 const CREATED_KEY = 'dbCreatedAt';
 const MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
-self.addEventListener('activate', (e) => {
-    e.waitUntil((async () => {
+self.addEventListener('activate', (event) => {
+    event.waitUntil((async () => {
+        // Claim now (optional); do NOT skipWaiting earlier.
+        clientsClaim();
         await ensureCreatedAt();
         await checkAndExpire();
     })());
@@ -51,7 +158,7 @@ self.addEventListener('activate', (e) => {
 
 async function tryDeleteIfNoClients() {
     // small delay to allow the closing client to truly go away (reduce race)
-    await new Promise((r) => setTimeout(r, 500));
+    await new Promise((r) => setTimeout(r, 30_000));
     const windowClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
     if (windowClients.length === 0) {
         await deleteDb(DB_NAME);
@@ -72,8 +179,6 @@ self.addEventListener('message', (e) => {
         self.skipWaiting();
     }
 });
-
-self.addEventListener('fetch', () => { checkAndExpire(); });
 
 // Helpers
 function openMetaDb(): Promise<IDBDatabase> {

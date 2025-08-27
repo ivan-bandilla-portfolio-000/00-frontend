@@ -11,6 +11,11 @@ export default defineConfig({
     react(),
     VitePWA({
       strategies: 'injectManifest',
+      includeAssets: [
+        '**/*.bin',
+        '**/*.gltf',
+        '**/*.glb'
+      ],
       injectManifest: {
         maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10 MiB
         // ignore large files
@@ -19,7 +24,7 @@ export default defineConfig({
       srcDir: 'src/services',          // where sw.ts lives
       filename: 'sw.ts',
       injectRegister: false,           // we register manually
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       devOptions: {
         enabled: false, // enable service worker in dev
         suppressWarnings: false,
