@@ -11,6 +11,15 @@ declare let self: ServiceWorkerGlobalScope;
 
 (self as any).__WB_DISABLE_DEV_LOGS = environment('local');
 
+self.addEventListener('activate', (event) => {
+    event.waitUntil((async () => {
+        // Claim now (optional); do NOT skipWaiting earlier.
+        clientsClaim();
+        await ensureCreatedAt();
+        await checkAndExpire();
+    })());
+});
+
 // clientsClaim();
 // self.skipWaiting();
 
@@ -146,15 +155,6 @@ const META_DB = 'portfolio_meta';
 const META_STORE = 'kv';
 const CREATED_KEY = 'dbCreatedAt';
 const MAX_AGE_MS = 24 * 60 * 60 * 1000;
-
-self.addEventListener('activate', (event) => {
-    event.waitUntil((async () => {
-        // Claim now (optional); do NOT skipWaiting earlier.
-        clientsClaim();
-        await ensureCreatedAt();
-        await checkAndExpire();
-    })());
-});
 
 async function tryDeleteIfNoClients() {
     // small delay to allow the closing client to truly go away (reduce race)

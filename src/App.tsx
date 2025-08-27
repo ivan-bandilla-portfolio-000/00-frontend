@@ -7,7 +7,6 @@ import { ClientDBProvider } from '@/clientDB/context';
 import { pageview } from '@/features/analytics';
 
 import ErrorBoundary from '@/components/errors/ErrorBoundary';
-import { LLMProvider } from '@/contexts/LLMContext';
 import SimpleLoader from './components/SimpleLoader';
 import NProgressRouteListener from './components/NProgress';
 // import { PortfolioDataService } from '@/services/PortfolioDataService';
@@ -18,6 +17,8 @@ const ChatWidget = lazy(() => import('@/components/landing/Chat'));
 const Home = lazy(() => import('@/pages/Home'));
 const Contact = lazy(() => import('@/pages/Contact'));
 const About = lazy(() => import('@/pages/About'));
+const LazyLLMProvider = lazy(() => import('@/contexts/LLMContext').then(m => ({ default: m.LLMProvider })));
+
 
 // function DataBootstrapper() {
 //   const db = useClientDB();
@@ -77,6 +78,8 @@ function Layout() {
 function App() {
   const location = useLocation();
 
+  const [llmEnabled, setLlmEnabled] = useState(false);
+
   useEffect(() => {
     if (location.hash) {
       const id = location.hash.slice(1);
@@ -89,46 +92,67 @@ function App() {
     pageview(path);
   }, [location]);
 
+  // enable LLMProvider after first interaction (or idle timeout)
+  useEffect(() => {
+    const enable = () => setLlmEnabled(true);
+    window.addEventListener('first-user-interaction', enable, { once: true });
+    const t = setTimeout(enable, 8000); // fallback
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener('first-user-interaction', enable);
+    };
+  }, []);
+
+  const children = (
+    <>
+      <Suspense fallback={null}>
+        <Toaster richColors closeButton />
+      </Suspense>
+      <NProgressRouteListener />
+      <Routes>
+        <Route element={<Layout />}>
+          <Route
+            index
+            element={
+              <ErrorBoundary>
+                <Suspense fallback={<SimpleLoader />}>
+                  <main><Home /></main>
+                </Suspense>
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="contact"
+            element={
+              <Suspense fallback={<SimpleLoader />}>
+                <main><Contact /></main>
+              </Suspense>
+            }
+          />
+          <Route
+            path="about"
+            element={
+              <Suspense fallback={<SimpleLoader />}>
+                <main><About /></main>
+              </Suspense>
+            }
+          />
+        </Route>
+      </Routes>
+    </>
+  );
+
   return (
     <ClientDBProvider>
       {/* <DataBootstrapper /> */}
       <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-        <LLMProvider>
-          <Suspense fallback={null}>
-            <Toaster richColors closeButton />
+        {llmEnabled ? (
+          <Suspense fallback={children}>
+            <LazyLLMProvider>{children}</LazyLLMProvider>
           </Suspense>
-          <NProgressRouteListener />
-          <Routes>
-            <Route element={<Layout />}>
-              <Route
-                index
-                element={
-                  <ErrorBoundary>
-                    <Suspense fallback={<SimpleLoader />}>
-                      <main><Home /></main>
-                    </Suspense>
-                  </ErrorBoundary>
-                }
-              />
-              <Route
-                path="contact"
-                element={
-                  <Suspense fallback={<SimpleLoader />}>
-                    <main><Contact /></main>
-                  </Suspense>
-                }
-              />
-              <Route
-                path="about"
-                element={
-                  <Suspense fallback={<SimpleLoader />}>
-                    <main><About /></main>
-                  </Suspense>
-                }
-              />
-            </Route>
-          </Routes>
-        </LLMProvider>
+        ) : (
+          children
+        )}
       </ThemeProvider>
     </ClientDBProvider>
   );
