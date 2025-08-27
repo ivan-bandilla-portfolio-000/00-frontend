@@ -26,7 +26,7 @@ const personalInfo: PersonalInfo = {
     name: "Ivan Bandilla",
     title: "Junior Backend Developer",
     resume: {
-        driveLink: 'https://drive.google.com/file/d/1rDkJ21vCOCThI5HO6A-2kpyX1gzXr1v3/preview',
+        driveLink: 'https://drive.google.com/file/d/1L6LU89wk6oz52ZlwPZykCaztjz0inEWH/preview',
         cloudPdfDocID: 'eee2079d-b0b6-4267-9812-b6b9eadb9c60',
     }
 } as const;
