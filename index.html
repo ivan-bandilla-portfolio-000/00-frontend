@@ -169,10 +169,38 @@
   <link rel="apple-touch-startup-image" href="/assets/splash/apple-splash-dark-1136-640.webp"
     media="(prefers-color-scheme: dark) and (device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscapevice-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
 
+
+
+
 </head>
 
 <body class="">
   <div id="root"></div>
+
+  <!-- Modern browsers: use native <dialog> inside noscript -->
+  <!--[if !IE]><!-->
+  <noscript>
+    <dialog open aria-labelledby="noscript-title"
+      style="max-width:32rem;margin:1.5rem auto;padding:1.25rem;border-radius:8px;box-shadow:0 6px 24px rgba(0,0,0,0.12);">
+      <h2 id="noscript-title" style="margin:0 0 .5rem;font-size:1.125rem;">JavaScript required</h2>
+      <p style="margin:0 0 .75rem;">This site is a single-page application and requires JavaScript to function. Please
+        enable JavaScript in your browser.</p>
+      <p style="margin:0;"><a href="/" style="color:inherit;text-decoration:underline;">Go to home</a></p>
+    </dialog>
+  </noscript>
+  <!--<![endif]-->
+
+  <!-- Fallback for IE: simple message -->
+  <!--[if IE]>
+  <noscript>
+    <div role="dialog" aria-labelledby="noscript-title-ie"
+      style="max-width:32rem;margin:1.5rem auto;padding:1rem;border-radius:6px;border:1px solid #ddd;background:#fff;">
+      <h2 id="noscript-title-ie" style="margin:0 0 .5rem;font-size:1.0625rem;">JavaScript recommended</h2>
+      <p style="margin:0;">For best experience in Internet Explorer please enable JavaScript or use a modern browser.</p>
+    </div>
+  </noscript>
+  <![endif]-->
+
   <script type="module" src="/src/main.tsx"></script>
 </body>
 
