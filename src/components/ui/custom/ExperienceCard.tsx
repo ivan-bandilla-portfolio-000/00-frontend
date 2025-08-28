@@ -90,8 +90,6 @@ const ExperienceCard = React.forwardRef<HTMLDivElement, ExperienceCardProps>(
         }, [carouselApi]);
 
         const roleText = typeof item.role === 'string' ? item.role : item.role?.name;
-        // keep string subtitle for dialog/other uses
-        const subtitle = [roleText, item.position].filter(Boolean).join(" • ");
         const subtitleParts = [roleText, item.position].filter(Boolean);
         // single JSX subtitle node (uses RoleSpan)
         const subtitleNode = (
@@ -101,7 +99,6 @@ const ExperienceCard = React.forwardRef<HTMLDivElement, ExperienceCardProps>(
                 {item.position && <span>{item.position}</span>}
             </>
         );
-        const roleNode = roleText ? <span className="capitalize">{roleText}</span> : null;
         const dateRange = formatRange(item.start, item.end);
         const duration = computeDuration(item.start, item.end);
 
