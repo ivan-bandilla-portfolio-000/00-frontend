@@ -65,7 +65,7 @@ const Projects = () => {
                 <div className='flex items-center gap-2'>
                     <h2 className="font-black poppins-text text-2xl lg:text-5xl">Projects.</h2>
                     <LinkWithIcon
-                        href="/projects"
+                        href="/about"
                         content="View All"
                         className='text-[0.75em]'
                         icon={<ArrowUpRight className='w-4' />}
