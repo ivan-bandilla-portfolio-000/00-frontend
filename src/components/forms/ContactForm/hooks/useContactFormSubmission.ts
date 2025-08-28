@@ -1,4 +1,5 @@
 import { getRequestStatusById } from "@/constants/requestStatuses";
+import { event as gaEvent } from "@/features/analytics";
 import useRecaptcha from "@/features/captcha/hooks/Captcha";
 import { RateLimiter } from "@/features/rate-limiting/client/services/RateLimiter";
 import { ContactFormService } from "@/services/ContactFormService";
@@ -165,6 +166,13 @@ export function useContactFormSubmission({
                 sessionStorage.setItem("contactFormEmail", data.email);
                 formService.showSuccessMessage(resData.message);
                 formService.clearForm(formRef?.current as HTMLFormElement);
+
+                gaEvent('contact_form_submission', {
+                    success: true,
+                    content_length: censoredContent.length,
+                    censored: originalContent !== censoredContent,
+                    recaptcha: !!formObj.recaptchaToken,
+                });
 
                 // Clear content appropriately
                 if (isEditorReady) {

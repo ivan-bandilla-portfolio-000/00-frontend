@@ -7,6 +7,7 @@ import { useLLM } from "@/contexts/LLMContext";
 import personalInfo from "@/constants/personalInfo";
 import { Sparkles as SparklesIcon } from "lucide-react";
 import { useClientDB } from "@/clientDB/context";
+import { event as gaEvent } from "@/features/analytics";
 import { buildAboutMeInstruction } from "@/features/webllm/utils/aboutMePromptBuilder";
 import { ProjectService } from "@/services/ProjectService";
 import { ContactInfoService } from "@/services/ContactInfoService";
@@ -99,6 +100,20 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
         startH: number;
         resizing: boolean;
     } | null>(null);
+
+    // Track first attempt once per session
+    const trackFirstAttempt = (source: string) => {
+        try {
+            const KEY = 'chat_first_attempt_v1';
+            if (!sessionStorage.getItem(KEY)) {
+                sessionStorage.setItem(KEY, '1');
+                gaEvent('chat_first_interaction', {
+                    source,
+                    timestamp: new Date().toISOString()
+                });
+            }
+        } catch { /* ignore */ }
+    };
 
     // Load saved position + size
     useEffect(() => {
@@ -308,6 +323,17 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
         const uid = Date.now().toString(36) + Math.random().toString(36).slice(2);
         const aid = uid + '-a';
 
+        // Record usage event (no PII)
+        try {
+            gaEvent('chat_message_sent', {
+                input_length: userText.length,
+                input_tokens_estimate: estimateTokens(userText),
+                conversation_messages: messages.length,
+                has_system_prompt: !!systemPrompt,
+                timestamp: new Date().toISOString()
+            });
+        } catch { /* ignore analytics errors */ }
+
         // Optimistic UI
         persistHistory(prev => [...prev,
         { id: uid, role: 'user', content: userText },
@@ -333,6 +359,16 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
             abortRef.current = () => abort();
             await promise;
         } catch (e: any) {
+
+            try {
+                gaEvent('chat_message_failed', {
+                    error: String(e),
+                    input_length: userText.length,
+                    conversation_messages: messages.length,
+                    timestamp: new Date().toISOString()
+                });
+            } catch { /* ignore */ }
+
             setMessages(prev =>
                 prev.map(m => m.id === aid ? {
                     ...m,
@@ -369,7 +405,12 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
                     open={open}
                     onOpenChange={(v) => {
                         setOpen(v);
-                        if (v) window.dispatchEvent(new Event('llm-chat-open'));
+                        if (v) {
+                            // mark first attempt and open event
+                            trackFirstAttempt('open');
+                            try { gaEvent('chat_open', { timestamp: new Date().toISOString() }); } catch { }
+                            window.dispatchEvent(new Event('llm-chat-open'));
+                        }
                         if (!v) { persist(); }
                     }}
                 >
@@ -427,6 +468,9 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
                                 aria-label="Open chat"
                                 className={` ${status === "unsupported" ? "opacity-50 cursor-not-allowed border-2 border-red-400 from-gray-200 to-gray-500  shadow-red-900/30" : "from-emerald-500 to-green-500 shadow-emerald-900/30"} ${!llmReady ? "opacity-70" : ""} w-14 h-14 rounded-full bg-gradient-to-br  flex items-center justify-center text-white font-semibold text-sm active:scale-95 shadow-lg transition select-none cursor-grab chat-drag-anywhere`}
                                 onClick={() => {
+                                    // Track first attempt from click
+                                    trackFirstAttempt('click');
+
                                     // If model hasn't started loading yet, kick it off on user interaction
                                     if (!llmReady && status !== "unsupported" && !hasStartedLLM) {
                                         ensureLLM();
@@ -454,6 +498,9 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
                                     if (!s) return;
                                     // treat as a tap only if the finger didn't move much
                                     if (!s.moved && status !== "unsupported") {
+                                        // Track first attempt from touch
+                                        trackFirstAttempt('touch');
+
                                         if (!llmReady && !hasStartedLLM) {
                                             ensureLLM();
                                             setHasStartedLLM(true);
@@ -523,7 +570,7 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
                                     >
                                         <div
                                             className={
-                                                `max-w-[80%] rounded-lg px-3 py-2 shadow-sm whitespace-pre-wrap` +
+                                                `max-w-[80%] rounded-lg px-3 py-2 shadow-sm whitespace-pre-wrap ` +
                                                 (m.role === 'user'
                                                     ? "bg-primary text-white select-all"
                                                     : "bg-neutral-200 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-50")
@@ -576,6 +623,9 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
                                             type="button"
                                             variant="outline"
                                             onClick={() => {
+                                                // analytics: user stopped streaming response
+                                                try { gaEvent('chat_message_aborted', { timestamp: new Date().toISOString() }); } catch { }
+
                                                 abortRef.current?.();
                                             }}
                                             className="py-4 px-4"

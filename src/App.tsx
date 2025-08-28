@@ -17,7 +17,7 @@ const ChatWidget = lazy(() => import('@/components/landing/Chat'));
 const Home = lazy(() => import('@/pages/Home'));
 const Contact = lazy(() => import('@/pages/Contact'));
 const About = lazy(() => import('@/pages/About'));
-const LazyLLMProvider = lazy(() => import('@/contexts/LLMContext').then(m => ({ default: m.LLMProvider })));
+import { LLMProvider as WebLlmProvider } from '@/contexts/LLMContext';
 
 
 // function DataBootstrapper() {
@@ -148,7 +148,7 @@ function App() {
       <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
         {llmEnabled ? (
           <Suspense fallback={children}>
-            <LazyLLMProvider>{children}</LazyLLMProvider>
+            <WebLlmProvider>{children}</WebLlmProvider>
           </Suspense>
         ) : (
           children

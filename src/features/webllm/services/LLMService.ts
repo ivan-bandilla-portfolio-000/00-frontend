@@ -8,6 +8,8 @@ import {
 } from "@mlc-ai/web-llm";
 import { toast } from "sonner";
 
+import { event as gaEvent } from "@/features/analytics";
+
 type StreamCb = (chunk: string) => void;
 
 export interface GenerateOptions {
@@ -59,33 +61,47 @@ export class LLMService {
     public readonly requirementsMet: boolean;
     private progressListeners = new Set<(e: ProgressEvent) => void>();
 
+    static lastRequirementsFailureReasons: string[] = [];
+
     constructor(opts: LLMServiceOptions) {
         this.modelId = opts.modelId;
         this.smallModelId = opts.smallModelId;
         this.useWorker = opts.useWorker ?? true;
         this.systemPrompt = opts.systemPrompt || "You are a helpful assistant.";
         this.requirementsMet = LLMService.checkRequirements();
+
+        if (!this.requirementsMet) {
+            try {
+                gaEvent('llm_init_unsupported', {
+                    reasons: LLMService.lastRequirementsFailureReasons,
+                    timestamp: new Date().toISOString(),
+                });
+            } catch { /* ignore analytics errors */ }
+        }
     }
 
     static checkRequirements(): boolean {
+        const reasons: string[] = [];
         // WebGPU presence
         const webgpu = 'gpu' in navigator;
         if (!webgpu) {
+            reasons.push('no_webgpu');
             console.warn("[LLM] WebGPU not available");
-            return false;
         }
-        // Heuristics (adjust thresholds if needed)
+        // Heuristics
         const mem = (navigator as any).deviceMemory;
         if (mem && mem < 4) {
+            reasons.push(`low_memory_${mem}`);
             console.warn("[LLM] Insufficient memory");
-            return false;
         }
         const cores = navigator.hardwareConcurrency;
         if (cores && cores < 4) {
+            reasons.push(`low_cpu_cores_${cores}`);
             console.warn("[LLM] Insufficient CPU cores");
-            return false;
         }
-        return true;
+
+        this.lastRequirementsFailureReasons = reasons;
+        return reasons.length === 0;
     }
 
     public get initialized() {
@@ -111,6 +127,8 @@ export class LLMService {
     async init() {
         if (this._initialized || this.failed) return;
 
+        const start = performance.now();
+
         // Probe WebGPU adapter limits and adapt to avoid the "requested exceeds limit" failure
         try {
             const limits = await this.probeWebGPULimits();
@@ -123,6 +141,21 @@ export class LLMService {
                     this._statusMessage = "[LLM] GPU limits low - forcing CPU/main-thread fallback";
                     // Force not using the worker/GPU path so tryInitChain will try main-thread / smaller model
                     this.useWorker = false;
+
+                    try {
+                        gaEvent('llm_probe_gpu_limits_low', {
+                            limits,
+                            forced_worker_disabled: true,
+                            timestamp: new Date().toISOString()
+                        });
+                    } catch { /* ignore */ }
+                } else {
+                    try {
+                        gaEvent('llm_probe_gpu_limits_ok', {
+                            limits,
+                            timestamp: new Date().toISOString()
+                        });
+                    } catch { /* ignore */ }
                 }
             }
         } catch (err) {
@@ -132,6 +165,16 @@ export class LLMService {
         await this.tryInitChain();
 
         if (this._initialized) {
+            const duration = Math.round(performance.now() - start);
+            try {
+                gaEvent('llm_init_success', {
+                    model: this.modelId,
+                    usedWorker: this.useWorker,
+                    duration_ms: duration,
+                    timestamp: new Date().toISOString(),
+                });
+            } catch { /* ignore */ }
+
             setTimeout(() => {
                 toast.success("LLM initialized successfully", {
                     position: "bottom-center",
@@ -147,6 +190,16 @@ export class LLMService {
             return;
         } catch (e) {
             console.warn("[LLM] Primary init failed:", e);
+
+            try {
+                gaEvent('llm_init_model_load_failed', {
+                    stage: 'primary',
+                    model: this.modelId,
+                    worker: this.useWorker,
+                    error: String(e),
+                    timestamp: new Date().toISOString()
+                });
+            } catch { /* ignore */ }
         }
         if (!this.fallbackTried) {
             this.fallbackTried = true;
@@ -154,9 +207,26 @@ export class LLMService {
                 console.warn("[LLM] Fallback: main-thread load of primary model");
                 await this.loadEngine(this.modelId, false);
                 this._initialized = true;
+                try {
+                    gaEvent('llm_init_model_load_succeeded', {
+                        stage: 'fallback_main_thread',
+                        model: this.modelId,
+                        worker: false,
+                        timestamp: new Date().toISOString()
+                    });
+                } catch { /* ignore */ }
                 return;
             } catch (e) {
                 console.warn("[LLM] Main-thread primary failed:", e);
+                try {
+                    gaEvent('llm_init_model_load_failed', {
+                        stage: 'fallback_main_thread',
+                        model: this.modelId,
+                        worker: false,
+                        error: String(e),
+                        timestamp: new Date().toISOString()
+                    });
+                } catch { /* ignore */ }
             }
         }
         if (this.smallModelId && !this.smallTried) {
@@ -166,14 +236,40 @@ export class LLMService {
                 await this.loadEngine(this.smallModelId, false);
                 this.modelId = this.smallModelId;
                 this._initialized = true;
+                try {
+                    gaEvent('llm_init_model_load_succeeded', {
+                        stage: 'small_model',
+                        model: this.smallModelId,
+                        worker: false,
+                        timestamp: new Date().toISOString()
+                    });
+                } catch { /* ignore */ }
                 return;
             } catch (e) {
                 console.warn("[LLM] Smaller model failed:", e);
+                try {
+                    gaEvent('llm_init_model_load_failed', {
+                        stage: 'small_model',
+                        model: this.smallModelId,
+                        worker: false,
+                        error: String(e),
+                        timestamp: new Date().toISOString()
+                    });
+                } catch { /* ignore */ }
             }
         }
 
 
         this.failed = true;
+
+        try {
+            gaEvent('llm_init_failed_final', {
+                model_attempted: this.modelId,
+                small_model_available: !!this.smallModelId,
+                requirements_reasons: LLMService.lastRequirementsFailureReasons,
+                timestamp: new Date().toISOString()
+            });
+        } catch { /* ignore */ }
     }
 
     private async probeWebGPULimits(): Promise<{ maxStorageBufferBindingSize: number; maxComputeWorkgroupStorageSize: number } | null> {
@@ -281,6 +377,9 @@ export class LLMService {
             // Detect device lost / hung to trigger fallback to smaller model (future enhancement)
             if (/device[_ ]lost|device[_ ]hung|dxgi_error_device_hung/i.test(String(e))) {
                 console.warn("[LLM] Device lost detected");
+                try { gaEvent('llm_runtime_device_lost', { error: String(e), timestamp: new Date().toISOString() }); } catch { }
+            } else {
+                try { gaEvent('llm_runtime_error', { error: String(e), timestamp: new Date().toISOString() }); } catch { }
             }
         } finally {
             this.busy = false;
