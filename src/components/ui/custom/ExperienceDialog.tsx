@@ -26,7 +26,7 @@ export interface ExperienceDialogProps {
     alts: string[];
     dateRange: string;
     duration: string;
-    subtitle?: string;
+    subtitle?: React.ReactNode;
     trigger?: ReactNode;
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
@@ -71,7 +71,7 @@ const ExperienceDialog: React.FC<ExperienceDialogProps> = ({
                             <time>{dateRange}</time>
                             <span className="text-muted-foreground">({duration})</span>
                             {item.type && (
-                                <Badge variant="secondary" className="uppercase">
+                                <Badge variant="outline" className="uppercase text-sm">
                                     {item.type}
                                 </Badge>
                             )}

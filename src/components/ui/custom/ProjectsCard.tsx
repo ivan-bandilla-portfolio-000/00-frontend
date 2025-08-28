@@ -39,12 +39,44 @@ export type ProjectCardProps = {
 const ProjectsCard: React.FC<ProjectCardProps> = ({ project, className }) => {
     const [hovered, setHovered] = React.useState(false);
     const [videoReady, setVideoReady] = React.useState(false);
+    const [videoPainted, setVideoPainted] = React.useState(false);
     const [inView, setInView] = React.useState(false);
     const [playbackTime, setPlaybackTime] = React.useState(0);
     const videoRef = React.useRef<HTMLVideoElement | null>(null);
     const mediaWrapRef = React.useRef<HTMLDivElement | null>(null);
     const resetTimerRef = React.useRef<number | null>(null);
     const [dialogOpen, setDialogOpen] = React.useState(false);
+
+    React.useEffect(() => {
+        setVideoReady(false);
+        setVideoPainted(false);
+    }, [project.avp]);
+
+    const markFirstFrame = React.useCallback(() => {
+        const v = videoRef.current as any;
+        if (!v) return;
+        // If browser supports requestVideoFrameCallback, use it (fast, reliable)
+        if (typeof v.requestVideoFrameCallback === "function") {
+            try {
+                v.requestVideoFrameCallback(() => {
+                    setVideoPainted(true);
+                });
+            } catch {
+                setVideoPainted(true);
+            }
+            return;
+        }
+        // Fallback: try a muted play/pause to force decode; then mark painted
+        v.play()
+            .then(() => {
+                try { v.pause(); } catch { }
+                setVideoPainted(true);
+            })
+            .catch(() => {
+                // If autoplay is blocked, still mark painted after a tiny delay when loaded
+                setTimeout(() => setVideoPainted(true), 60);
+            });
+    }, []);
 
     React.useEffect(() => {
         const el = mediaWrapRef.current;
@@ -145,7 +177,9 @@ const ProjectsCard: React.FC<ProjectCardProps> = ({ project, className }) => {
                         alt={project.name}
                         className={cn(
                             "h-full w-full object-cover transition-opacity duration-300",
-                            project.avp ? "group-hover:opacity-0" : ""
+                            // hide only when hovered AND the video has actually painted a first frame
+                            project.avp && hovered && videoPainted ? "opacity-0" : "opacity-100",
+                            "z-0"
                         )}
                         loading="lazy"
                         decoding="async"
@@ -162,22 +196,34 @@ const ProjectsCard: React.FC<ProjectCardProps> = ({ project, className }) => {
                             ref={videoRef}
                             poster={getImageUrl(project.image)}
                             className={cn(
-                                "absolute inset-0 h-full w-full object-cover transition-opacity duration-500",
-                                hovered && videoReady ? "cursor-auto" : "cursor-progress",
-                                hovered ? "opacity-100" : "opacity-0"
+                                "absolute inset-0 h-full w-full object-cover transition-opacity duration-500 z-10",
+                                // show video only after first frame painted
+                                hovered && videoPainted ? "opacity-100 cursor-auto" : "opacity-0 cursor-progress"
                             )}
                             playsInline
                             muted
                             loop
-                            preload="metadata"
+                            preload="auto"
                             controlsList="nodownload noremoteplayback"
                             src={getImageUrl(project.avp)}
-                            onLoadedData={() => setVideoReady(true)}
-                            onCanPlay={() => setVideoReady(true)}
+                            onLoadedData={() => {
+                                setVideoReady(true);
+                                markFirstFrame();
+                            }}
+                            onCanPlay={() => {
+                                setVideoReady(true);
+                                markFirstFrame();
+                            }}
                             onError={(e) => {
                                 setVideoReady(false);
                                 (e.currentTarget as HTMLVideoElement).classList.add("hidden");
                                 console.warn("Video failed to load:", project.avp);
+                            }}
+                            // help Chrome composite the video layer to avoid flicker; disable pointer events until visible
+                            style={{
+                                willChange: "opacity",
+                                transform: "translateZ(0)",
+                                pointerEvents: hovered && videoPainted ? "auto" : "none",
                             }}
                         />
                     )}
@@ -187,7 +233,7 @@ const ProjectsCard: React.FC<ProjectCardProps> = ({ project, className }) => {
                         <hgroup>
                             <h2 className="line-clamp-1 font-medium text-lg lg:text-xl leading-tight">{project.name}</h2>
                             <p
-                                className="text-base text-muted-foreground ms-1 leading-tight -mt-1"
+                                className="text-base text-muted-foreground capitalize ms-1 leading-tight -mt-1"
                             >
                                 {project.role?.name}</p>
                         </hgroup>
