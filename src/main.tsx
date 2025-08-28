@@ -3,6 +3,12 @@ import { createRoot } from 'react-dom/client'
 import './styles/css/index.css'
 import App from './App.tsx'
 import { BrowserRouter } from 'react-router';
+import { registerServiceWorker } from '@/services/registerServiceWorker';
+import { initializeTrackingFromEnv } from '@/features/analytics/trackingClient';
+
+initializeTrackingFromEnv();
+
+registerServiceWorker();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

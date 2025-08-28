@@ -17,7 +17,7 @@ type InternalOrExternalNavLink = {
 export type NavLink = AnchorNavLink | InternalOrExternalNavLink;
 
 const topbarNavLinks: NavLink[] = [
-    { title: 'Hero', baseUrl: '/', id: 'hero', type: 'anchor' },
+    { title: 'Home', baseUrl: '/', id: 'hero', type: 'anchor' },
     { title: 'Projects', baseUrl: '/', id: 'projects', type: 'anchor' },
     { title: 'About', url: '/about', type: 'internal' },
     { title: 'Contact', url: '/contact', type: 'internal' },

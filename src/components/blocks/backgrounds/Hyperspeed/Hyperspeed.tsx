@@ -2,7 +2,7 @@
   Installed from https://reactbits.dev/ts/tailwind/
 */
 
-import { useEffect, useRef, FC, forwardRef, useImperativeHandle } from "react";
+import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import * as THREE from "three";
 import {
   BloomEffect,
@@ -808,6 +808,7 @@ class Road {
     this.uTime = { value: 0 };
   }
 
+  // @ts-ignore
   createPlane(side: number, width: number, isRoad: boolean) {
     const options = this.options;
     const segments = 100;

@@ -1,12 +1,36 @@
-@import url('https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&display=swap');
+/* @import url('https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap');
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap"); */
+
+@import url('https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@900&display=swap');
 
 @import "tailwindcss";
-@plugin 'tailwindcss-rfs';
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
+
+@theme {
+    /* Font sizes */
+    --text-xs: clamp(0.5rem, 0.75rem + 0.01dvw + 0.01dvh, 100dvw);
+    --text-sm: clamp(0.625rem, 0.875rem + 0.03dvw + 0.03dvh, 100dvw);
+    --text-base: clamp(0.75rem, 1rem + 0.05dvw + 0.05dvh, 100dvw);
+    --text-lg: clamp(0.875rem, 1.125rem + 0.08dvw + 0.08dvh, 100dvw);
+    --text-xl: clamp(1rem, 1.25rem + 0.1dvw + 0.1dvh, 100dvw);
+    --text-2xl: clamp(1.125rem, 1.5rem + 0.15dvw + 0.15dvh, 100dvw);
+    --text-3xl: clamp(1.5rem, 1.875rem + 0.25dvw + 0.25dvh, 100dvw);
+    --text-4xl: clamp(1.75rem, 2.25rem + 0.18dvw + 0.15dvh, 100dvw);
+    --text-5xl: clamp(2.25rem, 3rem + 0.75dvw + 0.5dvh, 100dvw);
+    --text-6xl: clamp(3rem, 3.75rem + 1dvw + 0.5dvh, 100dvw);
+    --text-7xl: clamp(3.5rem, 4.5rem + 1.5dvw + 1dvh, 100dvw);
+    --text-8xl: clamp(6rem, 6.75rem + 2dvw + 1.5dvh, 100dvw);
+    --text-9xl: clamp(7rem, 8rem + 2.5dvw + 2dvh, 100dvw);
+
+    /* Media breakpoints */
+    --breakpoint-3xl: 112rem;
+    --breakpoint-3xl: 128rem;
+}
 
 @theme inline {
     --radius-sm: calc(var(--radius) - 4px);
@@ -131,7 +155,7 @@
 
 .dark {
     --background: oklch(0.1822 0 0);
-    --foreground: oklch(0.9288 0.0126 255.5078);
+    --foreground: oklch(92.386% 0.01887 83.026);
     --card: oklch(0.2046 0 0);
     --card-foreground: oklch(0.9288 0.0126 255.5078);
     --popover: oklch(0.2603 0 0);
@@ -215,5 +239,15 @@
 
     .poppins-text {
         font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+    }
+}
+
+@theme inline {
+    --animate-scroll: scroll var(--animation-duration, 40s) var(--animation-direction, forwards) linear infinite;
+
+    @keyframes scroll {
+        to {
+            transform: translate(calc(-50% - 0.5rem));
+        }
     }
 }

@@ -1,9 +1,28 @@
 @import "./core.css";
 
+@import 'nprogress/nprogress.css';
+
+#nprogress .bar {
+    background: var(--primary);
+    height: 3px;
+}
+
+#nprogress .peg {
+    box-shadow: 0 0 10px var(--primary), 0 0 5px var(--primary);
+}
+
+
 body {
 
-    .text-primary {
+    .text-primary-dark {
         color: #2e7d32;
+        color: oklch(0.5234 0.1347 144.17);
+    }
+
+    @media print {
+        .print\:hidden {
+            display: none;
+        }
     }
 }
 

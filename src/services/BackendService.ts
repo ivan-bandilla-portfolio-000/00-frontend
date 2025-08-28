@@ -1,8 +1,15 @@
-import { BaseService } from './baseService';
+import { BaseService } from '@/services/BaseService';
 
 const API_BASE = import.meta.env.VITE_PORTFOLIO_API_BASE;
 
 export class BackendService extends BaseService {
+    API_BASE: string;
+
+    constructor() {
+        super();
+        this.API_BASE = API_BASE;
+    }
+
     /**
      * Ensure CSRF cookie is set (for Laravel Sanctum/session).
      */

@@ -1,29 +1,37 @@
-import { Suspense, useState, useCallback } from 'react';
+import { Suspense, useState, useCallback, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Preload } from '@react-three/drei';
 import { useInView } from 'react-intersection-observer';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import CanvasLoader from '@/components/Loader';
+import CanvasLoader from '@/components/CanvasLoader';
 import Robot from './Robot';
-// import SpeechBubbleOverlay from './SpeechBubbleOverlay'; // Remove direct import
+import { useLLM } from '@/contexts/LLMContext';
+
 
 const RobotCanvas = () => {
     const isMobile = useIsMobile();
     const { ref, inView } = useInView({ threshold: 0.1 });
     const [robotLoaded, setRobotLoaded] = useState(false);
     const [SpeechBubbleOverlay, setSpeechBubbleOverlay] = useState<React.ComponentType | null>(null);
+    const { ensureLLM } = useLLM(); // optional: status if you want to check
 
-    // Callback to set robot loaded
+    useEffect(() => {
+        if (inView) {
+            ensureLLM();
+        }
+    }, [inView, ensureLLM]);
+
     const handleRobotLoaded = useCallback(() => {
         setRobotLoaded(true);
-        // Lazy load the overlay component
-        import('./SpeechBubbleOverlay').then(module => {
+        import('../../features/webllm/landing-page-robot/components/SpeechBubbleOverlay').then(module => {
             setSpeechBubbleOverlay(() => module.default);
         });
     }, []);
 
     return (
-        <div ref={ref} style={{ position: "relative", width: "100vw", height: "100vh" }}>
+        <div ref={ref}
+            className='relative w-full h-[50svh] lg:h-[100cqh] overflow-clip'
+        >
             {robotLoaded && SpeechBubbleOverlay && <SpeechBubbleOverlay />}
 
             <Canvas
@@ -31,7 +39,7 @@ const RobotCanvas = () => {
                 shadows
                 camera={{ position: [20, 3, 5], fov: 25 }}
                 gl={{ preserveDrawingBuffer: true }}
-                style={{ height: "100vh" }}
+                style={{ height: "100%", transform: 'inherit' }}
             >
                 <Suspense fallback={<CanvasLoader />}>
                     <OrbitControls
