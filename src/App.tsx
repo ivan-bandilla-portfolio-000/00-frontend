@@ -17,6 +17,7 @@ const ChatWidget = lazy(() => import('@/components/landing/Chat'));
 const Home = lazy(() => import('@/pages/Home'));
 const Contact = lazy(() => import('@/pages/Contact'));
 const About = lazy(() => import('@/pages/About'));
+const NotFound = lazy(() => import('@/pages/errors/404'));
 import { LLMProvider as WebLlmProvider } from '@/contexts/LLMContext';
 
 
@@ -134,6 +135,14 @@ function App() {
             element={
               <Suspense fallback={<SimpleLoader />}>
                 <main><About /></main>
+              </Suspense>
+            }
+          />
+          <Route
+            path="*"
+            element={
+              <Suspense fallback={<SimpleLoader />}>
+                <NotFound />
               </Suspense>
             }
           />

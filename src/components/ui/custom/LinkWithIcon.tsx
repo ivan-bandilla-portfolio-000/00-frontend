@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from 'react-router';
 import IconLink from "@/components/ui/custom/IconLink";
 
 type LinkWithIconProps =
@@ -7,9 +8,9 @@ type LinkWithIconProps =
 
 const LinkWithIcon = ({ href, content, icon, className = "", type }: LinkWithIconProps) => (
     <i className={`flex relative -bottom-1 hover:underline group/link-icon ${className}`}>
-        <a className={`font-normal text-[1em]`} href={href} target={type === "external" ? "_blank" : "_self"} rel={type === "external" ? "noopener noreferrer" : undefined}>
+        <Link className={`font-normal text-[1em]`} to={href} target={type === "external" ? "_blank" : "_self"} rel={type === "external" ? "noopener noreferrer" : undefined}>
             {content}
-        </a>
+        </Link>
         <IconLink icon={icon} type={type} />
     </i>
 );

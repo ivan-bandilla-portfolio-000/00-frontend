@@ -133,7 +133,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
                     <hgroup className="">
                         <span className="font-medium text-lg lg:text-xl leading-tight">{project.name}</span>
                         {' ('}
-                        <span className="text-base text-muted-foreground ms-1 text-nowrap leading-tight -mt-1">
+                        <span className="text-base text-muted-foreground capitalize ms-1 text-nowrap leading-tight -mt-1">
                             {project.role?.name}
                         </span>
                         {' ) '}
@@ -145,9 +145,9 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
                 <b className="font-medium">Status:</b>{' '}
                 {status && (
                     <Badge
-                        variant={null}
+                        variant="outline"
                         className="text-sm uppercase"
-                        style={(status as any).color ? { background: (status as any).color, color: '#fff' } : undefined}
+                        style={(status as any).color ? { backgroundColor: `${(status as any).color}`, color: '#fff' } : undefined}
                     >
                         {(status as any).name ?? (status as any).label ?? ''}
                     </Badge>
@@ -221,7 +221,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
                                 ref={videoRef}
                                 key={project.avp}
                                 poster={project.image ? getImageUrl(project.image) : undefined}
-                                className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${(videoReady && (hovered || showControls || isPlaying)) ? "opacity-100" : "opacity-0"
+                                className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${(videoReady && (hovered || showControls || isPlaying)) ? "group-hover:opacity-100" : "opacity-0"
                                     } ${videoReady ? (showControls ? "cursor-default" : "cursor-pointer") : "cursor-progress"}`}
                                 playsInline
                                 muted

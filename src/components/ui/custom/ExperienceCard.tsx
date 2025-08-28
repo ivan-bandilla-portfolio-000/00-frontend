@@ -15,6 +15,7 @@ import type { CarouselApi } from "@/components/ui/carousel";
 import { getImageUrl } from "@/app/helpers/image";
 import ExperienceDialog from "./ExperienceDialog";
 import type { ExperienceRow } from "@/services/ExperienceService";
+import RoleSpan from "./RoleSpan";
 
 export type ExperienceUI = ExperienceRow & {
     thumbnail?: string[];
@@ -89,7 +90,15 @@ const ExperienceCard = React.forwardRef<HTMLDivElement, ExperienceCardProps>(
         }, [carouselApi]);
 
         const roleText = typeof item.role === 'string' ? item.role : item.role?.name;
-        const subtitle = [roleText, item.position].filter(Boolean).join(" • ");
+        const subtitleParts = [roleText, item.position].filter(Boolean);
+        // single JSX subtitle node (uses RoleSpan)
+        const subtitleNode = (
+            <>
+                {roleText && <RoleSpan role={roleText} />}
+                {roleText && item.position && <span className="mx-1">•</span>}
+                {item.position && <span>{item.position}</span>}
+            </>
+        );
         const dateRange = formatRange(item.start, item.end);
         const duration = computeDuration(item.start, item.end);
 
@@ -151,9 +160,9 @@ const ExperienceCard = React.forwardRef<HTMLDivElement, ExperienceCardProps>(
                 >
                     <div className="select-none">
                         <h2 className="line-clamp-1 font-medium text-lg lg:text-xl">{item.company}</h2>
-                        {subtitle && (
+                        {subtitleParts.length > 0 && (
                             <p className="text-base lg:text-base text-muted-foreground font-bold line-clamp-1">
-                                {subtitle}
+                                {subtitleNode}
                             </p>
                         )}
                         {item.description && (
@@ -201,7 +210,7 @@ const ExperienceCard = React.forwardRef<HTMLDivElement, ExperienceCardProps>(
                             alts={alts}
                             dateRange={dateRange}
                             duration={duration}
-                            subtitle={subtitle}
+                            subtitle={subtitleNode}
                         />
                     </div>
                 </div>
