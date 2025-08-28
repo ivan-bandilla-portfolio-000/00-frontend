@@ -320,8 +320,16 @@ const ChatFloatingWidget: React.FC<ChatFloatingWidgetProps> = ({
     const handleSend = async () => {
         if (streaming || !input.trim() || !llm) return;
         const userText = input.trim();
-        const uid = Date.now().toString(36) + Math.random().toString(36).slice(2);
-        const aid = uid + '-a';
+        const uid = (() => {
+            try {
+                const bytes = crypto.getRandomValues(new Uint8Array(8)); // 8 bytes -> 16 hex chars
+                return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+            } catch {
+                // Very old/no-crypto environments: fallback (rare). Keep fallback as last resort.
+                return Date.now().toString(36) + Math.random().toString(36).slice(2);
+            }
+        })();
+        const aid = `${uid}-a`;
 
         // Record usage event (no PII)
         try {
