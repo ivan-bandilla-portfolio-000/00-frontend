@@ -73,7 +73,7 @@ const Projects = () => {
                 </div>
                 <div className="flex flex-wrap lg:flex-nowrap justify-center-safe lg:justify-start gap-18 mt-16 ">
                     <div className="flex flex-col order-2 lg:order-1 flex-1 gap-8">
-                        <hgroup>
+                        <hgroup className=' max-w-[80svw]'>
                             <AnimatePresence mode="wait">
                                 <motion.h3
                                     key={current}
@@ -81,7 +81,7 @@ const Projects = () => {
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -10 }}
                                     transition={{ duration: 0.3 }}
-                                    className='text-xl lg:text-3xl font-bold select-none'
+                                    className='text-xl lg:text-3xl text-pretty font-bold select-none'
                                 >
                                     {projects[current]?.name}
                                 </motion.h3>
@@ -93,7 +93,7 @@ const Projects = () => {
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -10 }}
                                     transition={{ duration: 0.3, delay: 0.05 }}
-                                    className='mt-2 text-base lg:text-lg text-pretty text-gray-600 dark:text-gray-300 select-none'
+                                    className='mt-2 text-base lg:text-lg text-pretty text-gray-600 dark:text-gray-300 select-none line-clamp-6'
                                 >
                                     {projects[current]?.description}
                                 </motion.p>
@@ -107,7 +107,7 @@ const Projects = () => {
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -10 }}
                                 transition={{ duration: 0.5, delay: 0.1 }}
-                                className="flex justify-self-end w-full gap-2"
+                                className="flex justify-self-end w-full gap-2 max-w-[80svw] flex-wrap"
                             >
                                 {projects[current]?.tags
                                     ?.filter((t): t is Tag => typeof t !== 'number')
