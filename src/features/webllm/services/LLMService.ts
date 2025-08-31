@@ -60,6 +60,8 @@ export class LLMService {
     private _statusMessage: string | null = null;
     public readonly requirementsMet: boolean;
     private progressListeners = new Set<(e: ProgressEvent) => void>();
+    private preferSmallModel = false;
+    private thinkModeEnabled = false;
 
     static lastRequirementsFailureReasons: string[] = [];
 
@@ -69,6 +71,15 @@ export class LLMService {
         this.useWorker = opts.useWorker ?? true;
         this.systemPrompt = opts.systemPrompt || "You are a helpful assistant.";
         this.requirementsMet = LLMService.checkRequirements();
+
+        // If deviceMemory is available, prefer the smaller model on <= 8 GB
+        const mem = (navigator as any).deviceMemory;
+        if (typeof mem === "number") {
+            this.preferSmallModel = mem <= 8;
+            if (this.preferSmallModel) {
+                console.info("[LLM] Low RAM detected (deviceMemory <= 8GB) - will try smaller model first if available");
+            }
+        }
 
         if (!this.requirementsMet) {
             try {
@@ -184,6 +195,37 @@ export class LLMService {
     }
 
     private async tryInitChain() {
+        // If RAM heuristic says prefer smaller model, try it first (on main thread)
+        if (this.preferSmallModel && this.smallModelId && !this.smallTried) {
+            this.smallTried = true;
+            try {
+                console.warn("[LLM] Preferring smaller model due to low RAM:", this.smallModelId);
+                await this.loadEngine(this.smallModelId, false);
+                this.modelId = this.smallModelId;
+                this._initialized = true;
+                try {
+                    gaEvent('llm_init_model_load_succeeded', {
+                        stage: 'prefer_small_model',
+                        model: this.smallModelId,
+                        worker: false,
+                        timestamp: new Date().toISOString()
+                    });
+                } catch { /* ignore */ }
+                return;
+            } catch (e) {
+                console.warn("[LLM] Preferred smaller model failed, falling back to normal init chain:", e);
+                try {
+                    gaEvent('llm_init_model_load_failed', {
+                        stage: 'prefer_small_model',
+                        model: this.smallModelId,
+                        worker: false,
+                        error: String(e),
+                        timestamp: new Date().toISOString()
+                    });
+                } catch { /* ignore */ }
+            }
+        }
+
         try {
             await this.loadEngine(this.modelId, this.useWorker);
             this._initialized = true;
@@ -390,17 +432,126 @@ export class LLMService {
     private async exec(t: InternalTask): Promise<string> {
         if (t.controller.signal.aborted) throw new DOMException("Aborted", "AbortError");
         // Use provided messages (prepend system), else fallback to single-turn
-        let messages: { role: "system" | "user" | "assistant"; content: string }[];
+        let messages: { role: "system" | "user" | "assistant"; content: string }[] = [];
+
+        // helper to parse inline commands like "\think", "/think", "\no_think", "/nothink"
+        const cmdRe = /^\s*[\\\/](no[_-]?think|nothink|think)\b\s*(.*)$/i;
+        const modelSupportsThink = /qwen|deepseek/i.test(this.modelId || "");
+
+        const stripThinkFromString = (s: string) =>
+            (s || "").replace(/<think\b[^>]*>[\s\S]*?<\/think>/ig, "").replace(/<think\b[^>]*>/ig, "").replace(/<\/think>/ig, "");
+
+        // If chat messages provided, find the last user message and check for a toggle command
         if (t.messages && t.messages.length) {
-            messages = [{ role: "system", content: this.systemPrompt }, ...t.messages];
+            // clone messages to avoid mutating caller array
+            // If the model supports <think> and think-mode is disabled, add an explicit system instruction to forbid it
+            const systemContent = (modelSupportsThink && !this.thinkModeEnabled)
+                ? `${this.systemPrompt}\nDo NOT output or reveal internal chain-of-thought. Do not emit or display <think> or </think> tags; respond plainly to the user's message.`
+                : this.systemPrompt;
+            messages = [{ role: "system", content: systemContent }, ...t.messages.map(m => ({ ...m }))];
+            for (let i = messages.length - 1; i >= 0; i--) {
+                if (messages[i].role === "user") {
+                    const m = messages[i].content || "";
+                    const match = m.match(cmdRe);
+                    if (match) {
+                        const cmd = match[1].toLowerCase();
+                        const rest = match[2] ?? "";
+                        if (cmd === "think") this.thinkModeEnabled = true;
+                        else this.thinkModeEnabled = false;
+                        // replace content with remainder after command
+                        messages[i].content = rest.trim();
+                    }
+                    break;
+                }
+            }
+            // if think-mode should be applied, prefix user messages that don't already include <think>
+            if (modelSupportsThink && this.thinkModeEnabled) {
+                for (let i = 0; i < messages.length; i++) {
+                    if (messages[i].role === "user") {
+                        const c = messages[i].content || "";
+                        if (!c.trim().toLowerCase().startsWith("<think>")) {
+                            messages[i].content = `<think> ${c}`.trim();
+                        }
+                    }
+                }
+            }
         } else {
+            // single-turn prompt path
+            let prompt = t.prompt || "";
+            const match = prompt.match(cmdRe);
+            if (match) {
+                const cmd = match[1].toLowerCase();
+                const rest = match[2] ?? "";
+                if (cmd === "think") this.thinkModeEnabled = true;
+                else this.thinkModeEnabled = false;
+                prompt = rest.trim();
+            }
+            // If model supports think but think-mode disabled, add explicit system instruction to forbid <think>
+            const systemContent = (modelSupportsThink && !this.thinkModeEnabled)
+                ? `${this.systemPrompt}\nDo NOT output or reveal internal chain-of-thought. Do not emit or display <think> or </think> tags; respond plainly to the user's message.`
+                : this.systemPrompt;
+            if (modelSupportsThink && this.thinkModeEnabled && !prompt.trim().toLowerCase().startsWith("<think>")) {
+                prompt = `<think> ${prompt}`.trim();
+            }
             messages = [
-                { role: "system", content: this.systemPrompt },
-                { role: "user", content: t.prompt },
+                { role: "system", content: systemContent },
+                { role: "user", content: prompt },
             ];
         }
         if (t.stream) {
             let reply = "";
+            // stateful streaming filter to drop content inside <think> ... </think> across chunk boundaries
+            let inThinkTag = false;
+            const filterStreamChunk = (chunkStr: string) => {
+                if (!chunkStr) return "";
+                let out = "";
+                let remaining = chunkStr;
+                while (remaining) {
+                    if (inThinkTag) {
+                        const closeIdx = remaining.search(/<\/think>/i);
+                        if (closeIdx === -1) {
+                            // still inside think, drop whole remaining
+                            remaining = "";
+                            break;
+                        } else {
+                            // drop up to and including closing tag
+                            remaining = remaining.slice(closeIdx + remaining.match(/<\/think>/i)![0].length);
+                            inThinkTag = false;
+                            continue;
+                        }
+                    } else {
+                        const openMatch = remaining.match(/<think\b[^>]*>/i);
+                        if (!openMatch) {
+                            // no open tag, emit all
+                            out += remaining;
+                            remaining = "";
+                            break;
+                        } else {
+                            const idx = openMatch.index!;
+                            out += remaining.slice(0, idx);
+                            // advance past opening tag
+                            remaining = remaining.slice(idx + openMatch[0].length);
+                            // check if closing exists in same chunk
+                            const closeIdx = remaining.search(/<\/think>/i);
+                            if (closeIdx === -1) {
+                                // enter think mode, drop rest until we find closing in later chunks
+                                inThinkTag = true;
+                                remaining = "";
+                                break;
+                            } else {
+                                // remove content up to closing tag, then continue after it
+                                remaining = remaining.slice(closeIdx + remaining.match(/<\/think>/i)![0].length);
+                                inThinkTag = false;
+                                continue;
+                            }
+                        }
+                    }
+                }
+                // also remove any stray standalone tags
+                out = out.replace(/<\/?think\b[^>]*>/ig, "");
+                return out;
+            };
+
             const iterable = await this.engine!.chat.completions.create({
                 messages,
                 stream: true,
@@ -413,8 +564,10 @@ export class LLMService {
                 if (t.controller.signal.aborted) throw new DOMException("Aborted", "AbortError");
                 const delta = chunk.choices?.[0]?.delta?.content || "";
                 if (delta) {
-                    reply += delta;
-                    t.onStream?.(delta);
+                    // filter out think-tagged content for the stream if think-mode disabled
+                    const toEmit = (modelSupportsThink && !this.thinkModeEnabled) ? filterStreamChunk(delta) : delta;
+                    reply += toEmit;
+                    if (toEmit) t.onStream?.(toEmit);
                 }
             }
             return reply;
@@ -428,7 +581,11 @@ export class LLMService {
                 stop: t.opts?.stop
             } as any);
             if (t.controller.signal.aborted) throw new DOMException("Aborted", "AbortError");
-            return res.choices?.[0]?.message?.content ?? "";
+            let text = res.choices?.[0]?.message?.content ?? "";
+            if (modelSupportsThink && !this.thinkModeEnabled) {
+                text = stripThinkFromString(text);
+            }
+            return text;
         }
     }
 }

@@ -4,6 +4,10 @@ env:
     VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
     VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
+permissions:
+    contents: read
+    actions: read
+
 on:
     push:
         branches:
@@ -27,6 +31,69 @@ jobs:
 
             - name: Pull Vercel Environment Information
               run: vercel env pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+            - name: Wait for CodeQL and test workflows to complete
+              env:
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                set -euo pipefail
+                owner_repo="$GITHUB_REPOSITORY"
+                owner="${owner_repo%/*}"
+                repo="${owner_repo#*/}"
+                sha="$GITHUB_SHA"
+
+                sudo apt-get update -y
+                sudo apt-get install -y jq
+
+                # match workflows whose name/path contains these keywords (case-insensitive)
+                patterns="codeql|test|ci|lint|security|e2e|integration"
+                workflows_resp=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/$owner/$repo/actions/workflows?per_page=200")
+                workflow_ids=$(echo "$workflows_resp" | jq -r --arg patterns "$patterns" '.workflows[] | select((.name // "" | ascii_downcase | test($patterns)) or (.path // "" | ascii_downcase | test($patterns))) | .id' | sort -u)
+
+                if [ -z "$workflow_ids" ]; then
+                  echo "No matching workflows found; skipping wait."
+                  exit 0
+                fi
+
+                echo "Waiting for workflows: $workflow_ids"
+
+                for id in $workflow_ids; do
+                  echo "Waiting for workflow id: $id"
+                  attempts=40   # ~40 * 15s = 600s (10 minutes)
+                  interval=15
+                  count=0
+
+                  while [ $count -lt $attempts ]; do
+                    resp=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/$owner/$repo/actions/workflows/$id/runs?head_sha=$sha&per_page=100")
+                    run_entry=$(echo "$resp" | jq -r '.workflow_runs[0] // empty | @base64' || true)
+
+                    if [ -n "$run_entry" ]; then
+                      decoded=$(echo "$run_entry" | base64 --decode)
+                      status=$(echo "$decoded" | jq -r '.status')
+                      conclusion=$(echo "$decoded" | jq -r '.conclusion')
+                      echo "Found run for workflow $id: status=$status conclusion=$conclusion"
+                      if [ "$status" = "completed" ]; then
+                        if [ "$conclusion" = "success" ]; then
+                          echo "Workflow $id succeeded for commit $sha"
+                          break
+                        else
+                          echo "Workflow $id finished with conclusion: $conclusion"
+                          exit 1
+                        fi
+                      fi
+                    else
+                      echo "No run found yet for workflow $id (sha: $sha)"
+                    fi
+
+                    count=$((count+1))
+                    sleep $interval
+                  done
+
+                  if [ $count -ge $attempts ]; then
+                    echo "Timed out waiting for workflow $id to complete"
+                    exit 1
+                  fi
+                done
 
             - name: Build Project Artifacts
               run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}

@@ -1,6 +1,4 @@
 import { createContext, useCallback, useRef, useContext, useState, type FC } from 'react';
-import { getOrCreateSharedLLM, ensureSharedLLMInitialized } from '@/features/webllm/services/LLMService';
-import { defaultModel } from '@/features/webllm/constants/webLLM';
 import type { LLMService } from '@/features/webllm/services/LLMService';
 
 type LLMStatus = 'idle' | 'loading' | 'ready' | 'error' | 'unsupported';
@@ -35,6 +33,11 @@ export const LLMProvider: FC<{ children: React.ReactNode }> = ({ children }) => 
 
     if (llmReady || status === 'unsupported') return;
     if (loadingRef.current) return loadingRef.current;
+
+    const [{ getOrCreateSharedLLM, ensureSharedLLMInitialized }, { defaultModel }] = await Promise.all([
+      import('@/features/webllm/services/LLMService'),
+      import('@/features/webllm/constants/webLLM')
+    ]);
 
     const service = getOrCreateSharedLLM({
       modelId: defaultModel.model_id,
