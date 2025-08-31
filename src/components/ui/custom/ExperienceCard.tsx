@@ -18,7 +18,7 @@ import type { ExperienceRow } from "@/services/ExperienceService";
 import RoleSpan from "./RoleSpan";
 
 export type ExperienceUI = ExperienceRow & {
-    thumbnails?: { thumbnail: string; alt?: string }[];
+    thumbnails?: { thumbnail: string; alt?: string }[] | null;
     alt?: string[];
     tags?: (number | string)[];
 };
