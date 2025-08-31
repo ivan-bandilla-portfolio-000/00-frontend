@@ -41,7 +41,7 @@ Generate a single, direct question that meets all of the following criteria:
 
 12. Return only the plain question. No formatting. No explanation. No extra content.
 
-
+IMPORTANT: Under no circumstance output chain-of-thought, analysis, step-by-step reasoning, or prefatory text. Output EXACTLY one plain question (a single sentence that ends with a question mark) and NOTHING ELSE. Keep the question short — ideally 6-12 words. If you cannot comply, output nothing or a single terse fallback question.
 `;
 // Examples (for structure only):
 // - Do you work in software development?
