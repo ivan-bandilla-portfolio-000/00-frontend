@@ -95,7 +95,7 @@ export const useLLMBubble = () => {
                     "",
                     false,
                     undefined,
-                    { max_tokens: 40, temperature: 0.7 }
+                    { max_tokens: 40, temperature: 0.0, top_p: 1.0, stop: ["\n"] }
                 );
                 abortRef.current = abort;
                 const result = await promise;
