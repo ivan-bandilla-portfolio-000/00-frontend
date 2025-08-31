@@ -38,7 +38,7 @@ const CopiableLink: React.FC<CopiableLinkProps> = ({
 
     return (
         <span className="inline-flex items-center gap-2 text-[1.1em]">
-            <a {...getLinkProps()} className="underline">
+            <a {...getLinkProps()} className="underline  break-all">
                 {children}
             </a>
             <Toggle
