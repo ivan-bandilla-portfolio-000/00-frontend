@@ -8,6 +8,7 @@ schemaBuilder.createTable('experiences')
     .addColumn('start', lf.Type.DATE_TIME)
     .addColumn('end', lf.Type.DATE_TIME)
     .addColumn('description', lf.Type.STRING).addNullable(['description'])
+    .addColumn('thumbnails', lf.Type.STRING).addNullable(['thumbnails'])
     .addColumn('type', lf.Type.STRING)
     .addColumn('hidden', lf.Type.BOOLEAN)
     .addPrimaryKey(['id'], true);

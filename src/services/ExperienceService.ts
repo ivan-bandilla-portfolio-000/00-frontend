@@ -13,6 +13,7 @@ export type ExperienceRow = {
     type: string;
     hidden: boolean;
     role?: { id: number; name: string } | null;
+    thumbnails?: { thumbnail: string; alt?: string }[] | null;
 };
 
 export class ExperienceService extends BaseService {
@@ -35,6 +36,7 @@ export class ExperienceService extends BaseService {
         const rows = items.map(item => {
             const roleName: string | undefined = item.role || item.role_name;
             const role_id = roleName ? (roleIdMap.get(roleName.toLowerCase()) ?? null) : null;
+            console.log("Mapping experience item:", item, "to role_id:", role_id);
             return experiencesTable.createRow({
                 company: item.company,
                 role_id,
@@ -42,6 +44,7 @@ export class ExperienceService extends BaseService {
                 start: new Date(item.start),
                 end: new Date(item.end),
                 description: item.description ?? null,
+                thumbnails: item.thumbnails ? JSON.stringify(item.thumbnails) : null,
                 type: item.type,
                 hidden: !!item.hidden,
             });
@@ -77,6 +80,7 @@ export class ExperienceService extends BaseService {
             description: e.description,
             type: e.type,
             hidden: e.hidden,
+            thumbnails: e.thumbnails ? JSON.parse(e.thumbnails) : null,
             role: e.role_id != null ? rolesById.get(e.role_id) ?? null : null
         }));
     }
@@ -87,6 +91,7 @@ export class ExperienceService extends BaseService {
 
         if (existing.length === 0) {
             const rows = await ExperienceService.fetchExperiencesFromApi();
+            console.log("Fetched experiences from API:", rows);
             await ExperienceService.saveExperiences(db, rows);
         }
 

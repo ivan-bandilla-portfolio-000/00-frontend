@@ -18,7 +18,7 @@ import type { ExperienceRow } from "@/services/ExperienceService";
 import RoleSpan from "./RoleSpan";
 
 export type ExperienceUI = ExperienceRow & {
-    thumbnail?: string[];
+    thumbnails?: { thumbnail: string; alt?: string }[] | null;
     alt?: string[];
     tags?: (number | string)[];
 };
@@ -63,14 +63,16 @@ const ExperienceCard = React.forwardRef<HTMLDivElement, ExperienceCardProps>(
             setOpen(true);
         };
 
+        console.log("ExperienceCard item:", item);
+
         const thumbnails =
-            item.thumbnail && item.thumbnail.length > 0
-                ? item.thumbnail
+            item.thumbnails && item.thumbnails.length > 0
+                ? item.thumbnails.map(t => t.thumbnail)
                 : [getImageUrl()];
 
         const alts =
-            item.alt && item.alt.length === thumbnails.length
-                ? item.alt
+            item.thumbnails && item.thumbnails.length > 0
+                ? item.thumbnails.map((t, i) => t.alt ?? `${item.company} preview ${i + 1}`)
                 : [
                     `${item.company} workplace preview`,
                     `${item.company} project preview`,
