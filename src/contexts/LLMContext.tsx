@@ -1,5 +1,4 @@
 import { createContext, useCallback, useRef, useContext, useState, type FC } from 'react';
-import { defaultModel } from '@/features/webllm/constants/webLLM';
 import type { LLMService } from '@/features/webllm/services/LLMService';
 
 type LLMStatus = 'idle' | 'loading' | 'ready' | 'error' | 'unsupported';
