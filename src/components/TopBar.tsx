@@ -298,7 +298,7 @@ const TopBar = () => {
                     className="relative"
                 >
                     <span
-                        className={`nunito-text font-black transition-opacity duration-500 ${heroHasBeenVisibleOnce && !isHeroInViewport ? 'opacity-100' : 'opacity-0'
+                        className={`poppins-text font-black transition-opacity duration-500 ${heroHasBeenVisibleOnce && !isHeroInViewport ? 'opacity-100' : 'opacity-0'
                             }`}
                     >
                         {heroHasBeenVisibleOnce && !isHeroInViewport && personalInfo.name}

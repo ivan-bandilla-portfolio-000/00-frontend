@@ -200,7 +200,7 @@ const Contact = () => {
             <div className="flex flex-col lg:flex-row lg:h-[80svh] gap-16 pointer-events-none">
                 <Card className="flex-[0.90] opacity-[95%] gap-10 py-10 lg:px-6 pointer-events-auto">
                     <CardHeader>
-                        <CardTitle className="nunito-text text-4xl font-black">Other Contact</CardTitle>
+                        <CardTitle className="poppins-text text-4xl font-black">Other Contact</CardTitle>
                         {/* <CardDescription>Card Description</CardDescription> */}
                     </CardHeader>
                     <CardContent className="px-8 text-sm space-y-2">
@@ -209,7 +209,7 @@ const Contact = () => {
                 </Card>
                 <Card className="flex-[1.1] opacity-[98%] gap-10 py-10 lg:px-6 overflow-y-auto pointer-events-auto" >
                     <CardHeader className="select-none opacity-100 ">
-                        <CardTitle className="nunito-text text-4xl font-black">Direct Message</CardTitle>
+                        <CardTitle className="poppins-text text-4xl font-black">Direct Message</CardTitle>
                         {/* <CardDescription>Card Description</CardDescription> */}
                     </CardHeader>
                     <Suspense fallback={<SectionLoader />}>
