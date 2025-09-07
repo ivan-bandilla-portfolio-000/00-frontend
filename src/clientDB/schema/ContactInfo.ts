@@ -16,4 +16,5 @@ schemaBuilder.createTable('contact_info')
     .addColumn('linkedin_url', lf.Type.STRING).addNullable(['linkedin_url'])
     .addColumn('github_username', lf.Type.STRING).addNullable(['github_username'])
     .addColumn('github_url', lf.Type.STRING).addNullable(['github_url'])
+    .addColumn('contact_qr_code', lf.Type.STRING).addNullable(['contact_qr_code'])
     .addPrimaryKey(['id'], true);

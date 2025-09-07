@@ -22,6 +22,7 @@ import { FormService } from "@/services/FormService";
 import { NonceManager } from "@/features/nonce/client/services/NonceManager";
 import SectionLoader from "@/components/SectionLoader";
 import { useClientDB } from "@/clientDB/context";
+import { fetchInlineSvg } from "@/app/helpers/image";
 const Hyperspeed = lazy(() => import('@/components/blocks/backgrounds/Hyperspeed/Hyperspeed'));
 
 const hyperspeedRef = createRef<any>();
@@ -95,6 +96,8 @@ const DeferredBackground: React.FC = () => {
 const ContactInfoSection = () => {
     const [loading, setLoading] = useState(true);
     const [info, setInfo] = useState<ContactInfo | null>(null);
+    const [qrSvg, setQrSvg] = useState<string | null>(null);
+    const [qrEnlarged, setQrEnlarged] = useState(false);
     const db = useClientDB(); // get DB at top-level
 
     useEffect(() => {
@@ -111,6 +114,20 @@ const ContactInfoSection = () => {
         return () => { alive = false; };
     }, [db]);
 
+    useEffect(() => {
+        let alive = true;
+        if (!info?.contact_qr_code) {
+            setQrSvg(null);
+            return () => { alive = false; };
+        }
+        (async () => {
+            const svg = await fetchInlineSvg(info.contact_qr_code, { timeoutMs: 5000, cache: "force-cache", sanitize: true });
+            if (!alive) return;
+            setQrSvg(svg);
+        })();
+        return () => { alive = false; };
+    }, [info?.contact_qr_code]);
+
     if (loading) {
         return (
             <SectionLoader />
@@ -121,7 +138,41 @@ const ContactInfoSection = () => {
 
     return (
         <>
+            {info.contact_qr_code ? (
+                <div
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={qrEnlarged}
+                    aria-label={qrEnlarged ? "Collapse contact QR code" : "Enlarge contact QR code"}
+                    onClick={(e) => { e.stopPropagation(); setQrEnlarged(v => !v); }}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setQrEnlarged(v => !v);
+                        }
+                    }}
+                    className={`absolute inset-0 top-[15%] right mx-auto bg-background dark:bg-black text-foreground dark:text-primary transition-all duration-200 cursor-pointer ${qrEnlarged ? "h-40 w-40" : "h-8 w-8"}`}
+                >
+                    <button
+                        type="button"
+                        aria-label="Close contact QR"
+                        onClick={(e) => { e.stopPropagation(); setQrEnlarged(false); }}
+                        className={`pointer-events-auto cursor-pointer absolute -top-3 -right-3 z-20 inline-flex items-center justify-center rounded-full w-6 h-6 text-sm transition-opacity duration-200 ${qrEnlarged ? 'opacity-100 visible' : 'opacity-0 invisible'
+                            } bg-white/90 dark:bg-black/70 dark:border-foreground shadow`}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                    </button>
+
+                    {qrSvg ? (
+                        <div className="w-full h-full" dangerouslySetInnerHTML={{ __html: qrSvg }} />
+                    ) : null}
+                </div>
+            ) : null}
             <address className="space-y-2">
+
                 <ContactItem type="email" label="Email:">
                     {info.email ? (
                         <CopiableLink type="email" href={`mailto:${info.email}`}>
@@ -198,7 +249,7 @@ const Contact = () => {
     return (
         <div className="relative z-50 container h-full pointer-events-none">
             <div className="flex flex-col lg:flex-row lg:h-[80svh] gap-16 pointer-events-none">
-                <Card className="flex-[0.90] opacity-[95%] gap-10 py-10 lg:px-6 pointer-events-auto">
+                <Card className="relative flex-[0.90] opacity-[95%] gap-10 py-10 lg:px-6 pointer-events-auto group/contact-info">
                     <CardHeader>
                         <CardTitle className="poppins-text text-4xl font-black">Other Contact</CardTitle>
                         {/* <CardDescription>Card Description</CardDescription> */}
