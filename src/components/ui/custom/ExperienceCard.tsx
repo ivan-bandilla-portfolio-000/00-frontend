@@ -27,6 +27,7 @@ type ExperienceCardProps = React.HTMLAttributes<HTMLDivElement> &
     MotionProps & {
         item: ExperienceUI; // use the UI type directly
         onSwap?: (isFirstVisible: boolean) => void;
+        parentApi?: CarouselApi;
     };
 
 const formatMonthYear = (date: Date | string) =>
@@ -55,7 +56,7 @@ const computeDuration = (start: Date | string, end?: Date | string) => {
 
 const ExperienceCard = React.forwardRef<HTMLDivElement, ExperienceCardProps>(
     (props, ref) => {
-        const { item, className, onClick, ...rest } = props;
+        const { item, className, onClick, parentApi, ...rest } = props;
 
         const [open, setOpen] = React.useState(false);
 
@@ -63,7 +64,6 @@ const ExperienceCard = React.forwardRef<HTMLDivElement, ExperienceCardProps>(
             setOpen(true);
         };
 
-        console.log("ExperienceCard item:", item);
 
         const thumbnails =
             item.thumbnails && item.thumbnails.length > 0
@@ -81,6 +81,23 @@ const ExperienceCard = React.forwardRef<HTMLDivElement, ExperienceCardProps>(
         const [carouselApi, setCarouselApi] = React.useState<CarouselApi>();
         const [current, setCurrent] = React.useState(0);
         const [count, setCount] = React.useState(0);
+
+        React.useEffect(() => {
+            if (!carouselApi || !parentApi) return;
+
+            const disableParent = () => parentApi.reInit({ watchDrag: false });
+            const enableParent = () => parentApi.reInit({ watchDrag: true });
+
+            carouselApi.on("pointerDown", disableParent);
+            carouselApi.on("pointerUp", enableParent);
+            carouselApi.on("settle", enableParent);
+
+            // Safety in case component unmounts mid-drag
+            return () => {
+                try { enableParent(); } catch { }
+            };
+        }, [carouselApi, parentApi]);
+
 
         React.useEffect(() => {
             if (!carouselApi) return;
@@ -116,11 +133,16 @@ const ExperienceCard = React.forwardRef<HTMLDivElement, ExperienceCardProps>(
                 {...rest}
             >
                 <div className="relative w-full">
-                    <Carousel setApi={setCarouselApi} className="w-full">
-                        <CarouselContent className="">
+                    <Carousel setApi={setCarouselApi} className="w-full"
+                    >
+                        <CarouselContent
+                            className=""
+                            style={{ touchAction: "pan-y" }}
+                        >
                             {thumbnails.map((src, index) => (
                                 <CarouselItem key={src} className="basis-full hover">
-                                    <div className="relative aspect-video w-full overflow-clip transition-all ease-in-out hover:scale-105 active:scale-105 border rounded-md ">
+                                    <div className="relative aspect-video w-full overflow-clip transition-all ease-in-out hover:scale-105 active:scale-105 border rounded-md "
+                                    >
                                         <img
                                             src={src}
                                             alt={alts[index] || `${item.company} preview ${index + 1}`}

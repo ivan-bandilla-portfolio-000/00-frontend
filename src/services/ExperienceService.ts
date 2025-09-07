@@ -36,7 +36,7 @@ export class ExperienceService extends BaseService {
         const rows = items.map(item => {
             const roleName: string | undefined = item.role || item.role_name;
             const role_id = roleName ? (roleIdMap.get(roleName.toLowerCase()) ?? null) : null;
-            console.log("Mapping experience item:", item, "to role_id:", role_id);
+
             return experiencesTable.createRow({
                 company: item.company,
                 role_id,
@@ -91,7 +91,7 @@ export class ExperienceService extends BaseService {
 
         if (existing.length === 0) {
             const rows = await ExperienceService.fetchExperiencesFromApi();
-            console.log("Fetched experiences from API:", rows);
+
             await ExperienceService.saveExperiences(db, rows);
         }
 
