@@ -224,31 +224,55 @@ export async function fetchInlineSvg(url?: string | null, options: SvgFetchOptio
 
         if (!sanitize) return text;
 
-        // Basic sanitization:
-        // - remove <script>...</script>
-        // - remove inline event handlers like onclick="..."
-        // - remove javascript: pseudo-protocol occurrences
-        let cleaned = text.replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "");
-        cleaned = cleaned.replace(/\son\w+\s*=\s*(['"])[\s\S]*?\1/gi, "");
-        cleaned = cleaned.replace(/javascript:/gi, "");
+        // Use DOMParser for robust sanitization
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(text, "image/svg+xml");
 
-        cleaned = cleaned.replace(/<svg\b([^>]*)>/i, (_match, attrs = "") => {
-            // remove width/height attributes
-            let a = attrs.replace(/\s(?:width|height)\s*=\s*(['"])[\s\S]*?\1/gi, "");
-            // remove width/height declarations from inline style attribute (if present)
-            a = a.replace(/\sstyle\s*=\s*(['"])([\s\S]*?)\1/gi, (_m: string, q: string, styleContent: string) => {
-                const cleanedStyle = styleContent.replace(/(?:^|;)\s*(?:width|height)\s*:\s*[^;]+;?/gi, "");
-                return ` style=${q}${cleanedStyle}${q}`;
+        // Remove all <script> elements
+        doc.querySelectorAll("script").forEach((el) => el.remove());
+
+        // Remove all event handler attributes (on*)
+        doc.querySelectorAll("*").forEach((el) => {
+            [...el.attributes].forEach((attr) => {
+                if (/^on/i.test(attr.name)) {
+                    el.removeAttribute(attr.name);
+                }
+                // Remove href/src with javascript: scheme
+                const cleanedValue = attr.value.replace(/\s/g, "").toLowerCase();
+                if (
+                    /^(href|src)$/i.test(attr.name) &&
+                    (cleanedValue.startsWith("javascript:") ||
+                        cleanedValue.startsWith("data:") ||
+                        cleanedValue.startsWith("vbscript:"))
+                ) {
+                    el.removeAttribute(attr.name);
+                }
             });
-            // ensure preserveAspectRatio exists
-            if (!/preserveAspectRatio\s*=/i.test(a)) {
-                a += ' preserveAspectRatio="xMidYMid meet"';
-            }
-            // ensure responsive sizing
-            a += ' width="100%" height="100%"';
-            return `<svg${a}>`;
         });
 
+        // Remove width/height attributes from <svg>
+        const svg = doc.querySelector("svg");
+        if (svg) {
+            svg.removeAttribute("width");
+            svg.removeAttribute("height");
+            // Remove width/height from style
+            const style = svg.getAttribute("style");
+            if (style) {
+                svg.setAttribute(
+                    "style",
+                    style.replace(/(?:^|;)\s*(?:width|height)\s*:\s*[^;]+;?/gi, "")
+                );
+            }
+            // Ensure preserveAspectRatio
+            if (!svg.hasAttribute("preserveAspectRatio")) {
+                svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+            }
+            svg.setAttribute("width", "100%");
+            svg.setAttribute("height", "100%");
+        }
+
+        const serializer = new XMLSerializer();
+        const cleaned = serializer.serializeToString(doc);
         return cleaned;
     } catch {
         return null;
