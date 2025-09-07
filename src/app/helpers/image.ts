@@ -236,7 +236,7 @@ export async function fetchInlineSvg(url?: string | null, options: SvgFetchOptio
             // remove width/height attributes
             let a = attrs.replace(/\s(?:width|height)\s*=\s*(['"])[\s\S]*?\1/gi, "");
             // remove width/height declarations from inline style attribute (if present)
-            a = a.replace(/\sstyle\s*=\s*(['"])([\s\S]*?)\1/gi, (_m, q, styleContent) => {
+            a = a.replace(/\sstyle\s*=\s*(['"])([\s\S]*?)\1/gi, (_m: string, q: string, styleContent: string) => {
                 const cleanedStyle = styleContent.replace(/(?:^|;)\s*(?:width|height)\s*:\s*[^;]+;?/gi, "");
                 return ` style=${q}${cleanedStyle}${q}`;
             });
