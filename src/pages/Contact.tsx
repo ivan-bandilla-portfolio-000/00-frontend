@@ -175,7 +175,7 @@ const ContactInfoSection = () => {
 
                 <ContactItem type="email" label="Email:">
                     {info.email ? (
-                        <CopiableLink type="email" href={`mailto:${info.email}`}>
+                        <CopiableLink type="email" href={`${info.email}`}>
                             {info.email}
                         </CopiableLink>
                     ) : (
@@ -185,7 +185,7 @@ const ContactInfoSection = () => {
 
                 <ContactItem type="phone" label="Phone:">
                     {info.phone ? (
-                        <CopiableLink type="tel" href={`tel:${info.phone}`}>
+                        <CopiableLink type="tel" href={`${info.phone}`}>
                             {info.phone}
                         </CopiableLink>
                     ) : (
