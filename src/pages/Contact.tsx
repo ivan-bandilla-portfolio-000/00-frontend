@@ -152,7 +152,7 @@ const ContactInfoSection = () => {
                             setQrEnlarged(v => !v);
                         }
                     }}
-                    className={`absolute inset-0 top-[15%] right mx-auto bg-background dark:bg-black text-foreground dark:text-primary transition-all duration-200 cursor-pointer ${qrEnlarged ? "h-40 w-40" : "h-8 w-8"}`}
+                    className={`absolute inset-0  top-[calc(7%_+_2.25rem_+_0.75vh)] right mx-auto bg-background dark:bg-black text-foreground dark:text-primary transition-all duration-200 cursor-pointer ${qrEnlarged ? "h-40 w-40" : "h-8 w-8"}`}
                 >
                     <button
                         type="button"
