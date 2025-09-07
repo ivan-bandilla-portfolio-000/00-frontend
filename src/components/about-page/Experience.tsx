@@ -42,7 +42,11 @@ const Experience = () => {
                     <CarouselContent className="">
                         {items.map((item, idx) => (
                             <CarouselItem key={`carousel-item-${idx}`} className="md:basis-1/2 lg:basis-1/3 ">
-                                <ExperienceCard key={`${item.company}-${idx}`} item={item} className="dark:ring-1 dark:ring-amber-900/50" />
+                                <ExperienceCard
+                                    key={`${item.company}-${idx}`} item={item}
+                                    className="dark:ring-1 dark:ring-amber-900/50"
+                                    parentApi={carouselAPi}
+                                />
                             </CarouselItem>
                         ))}
                     </CarouselContent>
