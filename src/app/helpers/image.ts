@@ -238,9 +238,12 @@ export async function fetchInlineSvg(url?: string | null, options: SvgFetchOptio
                     el.removeAttribute(attr.name);
                 }
                 // Remove href/src with javascript: scheme
+                const cleanedValue = attr.value.replace(/\s/g, "").toLowerCase();
                 if (
                     /^(href|src)$/i.test(attr.name) &&
-                    attr.value.replace(/\s/g, "").toLowerCase().startsWith("javascript:")
+                    (cleanedValue.startsWith("javascript:") ||
+                        cleanedValue.startsWith("data:") ||
+                        cleanedValue.startsWith("vbscript:"))
                 ) {
                     el.removeAttribute(attr.name);
                 }
