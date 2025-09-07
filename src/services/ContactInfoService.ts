@@ -17,6 +17,7 @@ type ContactInfoRow = {
     linkedin_url: string | null;
     github_username: string | null;
     github_url: string | null;
+    contact_qr_code: string | null;
 };
 
 export type ContactInfo = {
@@ -29,6 +30,7 @@ export type ContactInfo = {
     phone?: string;
     linkedin: { username?: string; url?: string };
     github: { username?: string; url?: string };
+    contact_qr_code?: string | null;
 };
 
 // Make fields optional to reflect reality of mocks/APIs
@@ -44,6 +46,7 @@ type GqlContactInfo = {
     linkedin_url?: string | null;
     github_username?: string | null;
     github_url?: string | null;
+    contact_qr_code?: string | null;
 };
 
 type RestContactInfo = {
@@ -61,6 +64,7 @@ type RestContactInfo = {
     linkedin_url?: string | null;
     github_username?: string | null;
     github_url?: string | null;
+    contact_qr_code?: string | null;
 };
 
 let seedInFlight: Promise<void> | null = null;
@@ -94,6 +98,8 @@ export class ContactInfoService extends BaseService {
         const zip = locObj?.zip ?? (item as any)?.zip ?? null;
         const country = locObj?.country ?? (item as any)?.country ?? null;
 
+        const qr = (item as any)?.contact_qr_code ?? null;
+
         return {
             first_name: s((item as any)?.first_name),
             last_name: s((item as any)?.last_name),
@@ -108,7 +114,8 @@ export class ContactInfoService extends BaseService {
                 state: o(state),
                 zip: o(zip),
                 country: o(country),
-            }
+            },
+            contact_qr_code: o(qr),
         };
     }
 
@@ -138,6 +145,7 @@ export class ContactInfoService extends BaseService {
             phone: r.phone ?? undefined,
             linkedin: { username: r.linkedin_username ?? undefined, url: r.linkedin_url ?? undefined },
             github: { username: r.github_username ?? undefined, url: r.github_url ?? undefined },
+            contact_qr_code: r.contact_qr_code ?? undefined,
             // convert flat DB columns into nested object for consumers
             location: {
                 city: r.city ?? undefined,
@@ -207,6 +215,7 @@ export class ContactInfoService extends BaseService {
                 linkedin_url: info.linkedin?.url ?? null,
                 github_username: info.github?.username ?? null,
                 github_url: info.github?.url ?? null,
+                contact_qr_code: info.contact_qr_code ?? null,
                 // persist flat columns in schema
                 city,
                 state,

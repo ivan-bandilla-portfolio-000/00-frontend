@@ -187,3 +187,72 @@ export const createImageErrorHandler = (options: ImageHandlerOptions = {}) => {
         void handleImageError(targetElement, options);
     };
 };
+
+export type SvgFetchOptions = {
+    timeoutMs?: number;
+    cache?: RequestCache;
+    sanitize?: boolean;
+    maxBytes?: number;
+};
+
+export async function fetchInlineSvg(url?: string | null, options: SvgFetchOptions = {}): Promise<string | null> {
+    if (!url || typeof url !== "string") return null;
+
+    const {
+        timeoutMs = 5000,
+        cache = "force-cache",
+        sanitize = true,
+        maxBytes = 200_000,
+    } = options;
+
+    const controller = new AbortController();
+    const timeoutId = timeoutMs > 0 ? window.setTimeout(() => controller.abort(), timeoutMs) : undefined;
+
+    try {
+        const res = await fetch(url, { cache, signal: controller.signal });
+        if (!res.ok) return null;
+
+        const contentType = (res.headers.get("content-type") || "").toLowerCase();
+        // allow SVG or XML-ish responses; some CDNs may return text/xml or image/svg+xml
+        if (!contentType.includes("svg") && !contentType.includes("xml")) {
+            // still attempt to read (some servers mis-report), but guard by size below
+        }
+
+        const text = await res.text();
+        if (!text) return null;
+        if (text.length > maxBytes) return null;
+
+        if (!sanitize) return text;
+
+        // Basic sanitization:
+        // - remove <script>...</script>
+        // - remove inline event handlers like onclick="..."
+        // - remove javascript: pseudo-protocol occurrences
+        let cleaned = text.replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "");
+        cleaned = cleaned.replace(/\son\w+\s*=\s*(['"])[\s\S]*?\1/gi, "");
+        cleaned = cleaned.replace(/javascript:/gi, "");
+
+        cleaned = cleaned.replace(/<svg\b([^>]*)>/i, (_match, attrs = "") => {
+            // remove width/height attributes
+            let a = attrs.replace(/\s(?:width|height)\s*=\s*(['"])[\s\S]*?\1/gi, "");
+            // remove width/height declarations from inline style attribute (if present)
+            a = a.replace(/\sstyle\s*=\s*(['"])([\s\S]*?)\1/gi, (_m: string, q: string, styleContent: string) => {
+                const cleanedStyle = styleContent.replace(/(?:^|;)\s*(?:width|height)\s*:\s*[^;]+;?/gi, "");
+                return ` style=${q}${cleanedStyle}${q}`;
+            });
+            // ensure preserveAspectRatio exists
+            if (!/preserveAspectRatio\s*=/i.test(a)) {
+                a += ' preserveAspectRatio="xMidYMid meet"';
+            }
+            // ensure responsive sizing
+            a += ' width="100%" height="100%"';
+            return `<svg${a}>`;
+        });
+
+        return cleaned;
+    } catch {
+        return null;
+    } finally {
+        if (typeof timeoutId !== "undefined") clearTimeout(timeoutId);
+    }
+}
