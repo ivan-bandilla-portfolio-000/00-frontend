@@ -133,8 +133,8 @@ export const FullPagePdf: React.FC<{
     return (
         <Tabs defaultValue="cloud-pdf" className="h-full">
             <TabsList className="p-2">
-                <TabsTrigger value="cloud-pdf" className="cursor-pointer">Cloud PDF</TabsTrigger>
                 <TabsTrigger value="iframe" className="cursor-pointer">Iframe</TabsTrigger>
+                <TabsTrigger value="cloud-pdf" className="cursor-pointer">Cloud PDF</TabsTrigger>
             </TabsList>
 
             <TabsContent value="cloud-pdf" className="h-full">
