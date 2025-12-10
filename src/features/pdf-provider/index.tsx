@@ -65,11 +65,19 @@ export const PdfViewerDialog: React.FC<PdfViewerProps> = ({
                 </DialogHeader>
 
                 {showProviderTabs ? (
-                    <Tabs defaultValue="cloud-pdf" className="h-full">
+                    <Tabs defaultValue="iframe" className="h-full">
                         <TabsList className="mx-auto">
-                            <TabsTrigger value="cloud-pdf" className="cursor-pointer">Cloud PDF</TabsTrigger>
                             <TabsTrigger value="iframe" className="cursor-pointer">Iframe</TabsTrigger>
+                            <TabsTrigger value="cloud-pdf" className="cursor-pointer">Cloud PDF</TabsTrigger>
                         </TabsList>
+
+                        <TabsContent value="iframe" className="h-full">
+                            {fallbackSrc ? (
+                                <Iframe name="pdf-iframe" title={title} src={fallbackSrc} />
+                            ) : (
+                                <div className="p-4 text-center">No iframe source provided.</div>
+                            )}
+                        </TabsContent>
 
                         <TabsContent value="cloud-pdf" className="h-full">
                             <PdfErrorBoundary
@@ -83,26 +91,23 @@ export const PdfViewerDialog: React.FC<PdfViewerProps> = ({
                                 <CloudPdf docID={docID} />
                             </PdfErrorBoundary>
                         </TabsContent>
-
-                        <TabsContent value="iframe" className="h-full">
-                            {fallbackSrc ? (
-                                <Iframe name="pdf-iframe" title={title} src={fallbackSrc} />
-                            ) : (
-                                <div className="p-4 text-center">No iframe source provided.</div>
-                            )}
-                        </TabsContent>
                     </Tabs>
                 ) : (
-                    <PdfErrorBoundary
-                        fallback={
-                            fallbackSrc ? (
-                                <Iframe name="pdf-iframe" title={title} src={fallbackSrc} />
-                            ) : null
-                        }
-                    >
-                        {/* @ts-ignore */}
-                        <CloudPdf docID={docID} />
-                    </PdfErrorBoundary>
+                    // When showing a single viewer, prefer iframe if we have a fallback src, otherwise fall back to the cloud pdf viewer
+                    (fallbackSrc ? (
+                        <Iframe name="pdf-iframe" title={title} src={fallbackSrc} />
+                    ) : (
+                        <PdfErrorBoundary
+                            fallback={
+                                fallbackSrc ? (
+                                    <Iframe name="pdf-iframe" title={title} src={fallbackSrc} />
+                                ) : null
+                            }
+                        >
+                            {/* @ts-ignore */}
+                            <CloudPdf docID={docID} />
+                        </PdfErrorBoundary>
+                    ))
                 )}
             </DialogContent>
         </Dialog>
@@ -116,7 +121,10 @@ export const FullPagePdf: React.FC<{
     showProviderTabs?: boolean;
 }> = ({ docID, fallbackSrc, title = "PDF Viewer", showProviderTabs = true }) => {
     if (!showProviderTabs) {
-        return (
+        // Prefer iframe when a fallback src is provided; otherwise, render CloudPdf wrapped in an error boundary
+        return fallbackSrc ? (
+            <Iframe name="pdf-iframe" title={title} src={fallbackSrc} />
+        ) : (
             <PdfErrorBoundary
                 fallback={
                     fallbackSrc ? (
@@ -131,11 +139,19 @@ export const FullPagePdf: React.FC<{
     }
 
     return (
-        <Tabs defaultValue="cloud-pdf" className="h-full">
+        <Tabs defaultValue="iframe" className="h-full">
             <TabsList className="p-2">
                 <TabsTrigger value="iframe" className="cursor-pointer">Iframe</TabsTrigger>
                 <TabsTrigger value="cloud-pdf" className="cursor-pointer">Cloud PDF</TabsTrigger>
             </TabsList>
+
+            <TabsContent value="iframe" className="h-full">
+                {fallbackSrc ? (
+                    <Iframe name="pdf-iframe" title={title} src={fallbackSrc} />
+                ) : (
+                    <div className="p-4 text-center">No iframe source provided.</div>
+                )}
+            </TabsContent>
 
             <TabsContent value="cloud-pdf" className="h-full">
                 <PdfErrorBoundary
@@ -148,14 +164,6 @@ export const FullPagePdf: React.FC<{
                     {/* @ts-ignore */}
                     <CloudPdf docID={docID} />
                 </PdfErrorBoundary>
-            </TabsContent>
-
-            <TabsContent value="iframe" className="h-full">
-                {fallbackSrc ? (
-                    <Iframe name="pdf-iframe" title={title} src={fallbackSrc} />
-                ) : (
-                    <div className="p-4 text-center">No iframe source provided.</div>
-                )}
             </TabsContent>
         </Tabs>
     );
